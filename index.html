@@ -70,6 +70,9 @@ table.mt td.dt input{text-align:left;min-width:128px}
 .tbl tr.wlate input[data-f=deadline]{border-color:var(--bad);color:var(--bad);font-weight:700}
 .tbl tr.wdone td:nth-child(2) textarea{color:var(--muted);text-decoration:line-through}
 select.pill[data-v=herinnerd]{background-color:var(--warn-soft);color:var(--warn)}
+.tlink{background:none;border:0;padding:0;font:inherit;text-align:left;cursor:pointer;color:inherit}
+.tlink:hover{color:var(--blue);text-decoration:underline}
+.icon-btn.edit:hover{background:var(--blue-soft);color:var(--blue)}
 .pc td input[type=date]{width:132px;text-align:left;padding:4px 6px;font-size:13px}
 .pc td .mon{display:block;font-size:11.5px;margin-top:2px;white-space:nowrap}
 .bu{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0 4px;font-size:13.5px}
@@ -266,7 +269,7 @@ table.tbl tfoot td.stk{background:#f8faff}
 
 /* takenoverzicht */
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(660px,1fr));gap:14px;align-items:start}
-.pc{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.pc{min-width:0;background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 .pc-head{width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;border:0;background:none;text-align:left;border-radius:var(--radius)}
 .pc-head:hover{background:#f8faff}
 .avatar{width:38px;height:38px;border-radius:50%;background:var(--blue-soft);color:var(--blue);font-weight:800;display:grid;place-items:center;flex:none}
@@ -274,7 +277,7 @@ table.tbl tfoot td.stk{background:#f8faff}
 .pc-name small{display:block;font-weight:500;color:var(--muted);font-size:13px}
 .pc.open>.pc-head .chev{transform:rotate(180deg)}
 .pc-body{display:none;border-top:1px solid var(--line);padding:6px 16px 14px}
-.pc.open .pc-body{display:block}
+.pc.open .pc-body{display:block;overflow-x:auto}
 .pc table{width:100%;border-collapse:collapse;font-size:13.5px}
 .pc th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:8px 6px}
 .pc td{padding:7px 6px;border-top:1px solid var(--line);vertical-align:middle}
@@ -395,7 +398,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-con
   .kviz{grid-template-columns:1fr}
   .scen{grid-template-columns:1fr}
   .rdgrid{grid-template-columns:1fr 1fr}
-  .pgrid{grid-template-columns:1fr}
+  .pgrid{grid-template-columns:minmax(0,1fr)}
 }
 @media(max-width:620px){
   .wrap{padding:0 16px}
@@ -490,6 +493,7 @@ const ICONS={
   'clipboard-list':'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
   hourglass:'<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
+  pencil:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
   crosshair:'<circle cx="12" cy="12" r="10"/><line x1="22" x2="18" y1="12" y2="12"/><line x1="6" x2="2" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="2"/><line x1="12" x2="12" y1="22" y2="18"/>'
 };
 const icon=(n,s)=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${s?` style="width:${s}px;height:${s}px"`:''}>${ICONS[n]}</svg>`;
@@ -885,6 +889,12 @@ BIND['wait.sum']=()=>{
   <div class="card sum"><div class="lbl">Ontvangen</div><div class="val ok">${got}</div><div class="sub">afgerond</div></div>
   <div class="card sum"><div class="lbl">Volgende verwachte datum</div><div class="val">${next?fmtD(next.deadline):'–'}</div><div class="sub">${next?esc((next.wat||'').slice(0,46)+((next.wat||'').length>46?'…':''))+' · '+esc(next.van||''):'geen datum gepland'}</div></div>`;
 };
+const phStat=id=>{const ts=S.plan.filter(t=>t.fase===id);return {n:ts.length,p:ts.length?Math.round(avg(ts.map(tPct))):0}};
+BIND['ph.pct']=id=>phStat(id).p+'%';
+BIND['ph.w']=id=>phStat(id).p;
+BIND['ph.sub']=id=>{const x=phStat(id);return `${x.n} taken · ${x.p}%`};
+BIND['t.w']=id=>{const t=S.plan.find(x=>x.id===id);return t?tPct(t):0};
+BIND['t.pt']=id=>{const t=S.plan.find(x=>x.id===id);return t?tPct(t)+'%':''};
 BIND['pt.row']=a=>{const [id,p]=a.split('|');const t=S.plan.find(x=>x.id===id);return nf(sum([t.uren&&t.uren[p]]),1)};
 
 /* ============================================================
@@ -1138,13 +1148,13 @@ function viewTaken(){
     const open=UI.open['p'+p]!==false;
     return `<section class="pc${open?' open':''}" id="p${slug(p)}">
       <button class="pc-head" data-act="tog" data-id="p${p}" aria-expanded="${open}"><span class="avatar">${esc(p==='Team'?'T':p.split(' ').map(x=>x[0]).join('').slice(0,2))}</span><span class="pc-name">${p==='Team'?'Hele team':esc(p)}<small ${B('pt.sub',p)}></small></span><b ${B('pt.hours',p)}></b><span class="chev">${icon('chevron-down',20)}</span></button>
-      <div class="pc-body">${p==='Team'?'<p class="hint">Uren die je hier bij “Hele team” invult worden niet doorgerekend naar Financiën. Registreer ze per persoon.</p>':''}${lp?`<div class="bu"><label>Begrote uren <input class="num" type="number" step="any" inputmode="decimal" ${da('fin.loon',lp.id,'bu')} value="${lp.bu==null?'':lp.bu}"></label><span class="muted" ${B('pt.res',p)}></span></div>`:''}${ts.length?`<table><thead><tr><th>Taak</th><th>Start</th><th>Deadline</th><th>Voortgang</th><th>Bestede uren</th></tr></thead><tbody>
-      ${ts.map(t=>`<tr><td><span class="dot" style="background:${t.kleur||FCOL[t.fase]}"></span>${esc(t.naam)}<div class="muted" style="font-size:12px;margin-left:16px">${t.fase}${t.owners.length>1?' · met '+t.owners.filter(o=>o!==p).join(', '):''}</div></td><td>${inpD('plan',t.id,'start',t.start)}</td><td>${inpD('plan',t.id,'end',t.end)}</td><td><div class="bar"><i style="width:${tPct(t)}%"></i></div><small class="muted">${tPct(t)}%</small></td><td>${inpN('plan',t.id,'uren.'+p,(t.uren||{})[p],'placeholder="0"')}${p==='Team'?'':`<small class="muted mon" ${B('pt.mon',t.id)}></small>`}</td></tr>`).join('')}
+      <div class="pc-body">${p==='Team'?'<p class="hint">Uren die je hier bij “Hele team” invult worden niet doorgerekend naar Financiën. Registreer ze per persoon.</p>':''}${lp?`<div class="bu"><label>Begrote uren <input class="num" type="number" step="any" inputmode="decimal" ${da('fin.loon',lp.id,'bu')} value="${lp.bu==null?'':lp.bu}"></label><span class="muted" ${B('pt.res',p)}></span></div>`:''}${ts.length?`<table><thead><tr><th>Taak</th><th>Start</th><th>Deadline</th><th>Voortgang</th><th>Bestede uren</th><th></th></tr></thead><tbody>
+      ${ts.map(t=>`<tr><td><span class="dot" style="background:${t.kleur||FCOL[t.fase]}"></span><button class="tlink" data-act="edittask" data-id="${t.id}" title="Taak bewerken">${esc(t.naam)}</button><div class="muted" style="font-size:12px;margin-left:16px">${t.fase}${t.owners.length>1?' · met '+t.owners.filter(o=>o!==p).join(', '):''}</div></td><td>${inpD('plan',t.id,'start',t.start)}</td><td>${inpD('plan',t.id,'end',t.end)}</td><td><div class="vgin"><input type="number" min="0" max="100" ${da('plan',t.id,'vg')} value="${tPct(t)}" aria-label="Voortgang in procenten"><span>%</span></div><div class="bar" style="margin-top:5px"><i ${B('t.w',t.id,'data-t="w"')} style="width:${tPct(t)}%"></i></div></td><td>${inpN('plan',t.id,'uren.'+p,(t.uren||{})[p],'placeholder="0"')}${p==='Team'?'':`<small class="muted mon" ${B('pt.mon',t.id)}></small>`}</td><td class="nowrap"><button class="icon-btn edit" data-act="edittask" data-id="${t.id}" title="Taak bewerken (naam, fase, eigenaren, datums, kleur)" aria-label="Taak bewerken">${icon('pencil')}</button><button class="icon-btn" data-act="deltask" data-id="${t.id}" data-p="${esc(p)}" title="Taak weghalen" aria-label="Taak weghalen">${icon('trash-2')}</button></td></tr>`).join('')}
       </tbody></table>`:'<p class="muted" style="padding:12px 0">Nog geen taken. Voeg een taak toe in de planning.</p>'}
       <div class="dfoot"><button class="btn sm" data-act="addtask" data-id="${esc(p)}">${icon('plus',16)}Taak voor ${p==='Team'?'het team':esc(p)}</button></div></div></section>`;
   }).join('');
   const allOpen=people.every(p=>UI.open['p'+p]!==false);
-  return `<div class="panel-head"><div><h2>Takenoverzicht</h2><p>Per teamlid de taken uit de planning, met voortgang en bestede uren. Start en deadline kun je hier ook aanpassen. De uren die je invult worden doorgerekend naar Financiën, in de maand van de deadline van de taak.</p></div><button class="btn" data-act="togpeople">${icon(allOpen?'chevrons-down-up':'chevrons-up-down')}${allOpen?'Alles inklappen':'Alles uitklappen'}</button></div>
+  return `<div class="panel-head"><div><h2>Takenoverzicht</h2><p>Per teamlid de taken uit de planning, met voortgang en bestede uren. Klik op een taak of het potloodje om naam, fase, eigenaren, datums en kleur te bewerken. Start, deadline en voortgang kun je ook direct in de tabel aanpassen, net als in de planning. Het prullenbakje haalt de taak weg. De uren die je invult worden doorgerekend naar Financiën, in de maand van de deadline van de taak.</p></div><button class="btn" data-act="togpeople">${icon(allOpen?'chevrons-down-up':'chevrons-up-down')}${allOpen?'Alles inklappen':'Alles uitklappen'}</button></div>
   <div class="pgrid">${cards}</div>`;
 }
 
@@ -1153,7 +1163,7 @@ function weekLabel(i){return 'W'+(i+1)}
 function viewPlan(){
   const f=UI.f.plan||'';
   const strip=FASES.map(fa=>{const ts=S.plan.filter(t=>t.fase===fa.id);const p=ts.length?Math.round(avg(ts.map(tPct))):0;
-    return `<button class="phc" style="--c:${fa.c}" data-act="gophase" data-id="${fa.id}"><span class="l"><i>${fa.letter}</i>${fa.id}</span><div class="p">${fa.per} · ${ts.length} taken</div><div class="pc2"><span>Voortgang</span><span>${p}%</span></div><div class="bar"><i style="width:${p}%"></i></div></button>`}).join('');
+    return `<button class="phc" style="--c:${fa.c}" data-act="gophase" data-id="${fa.id}"><span class="l"><i>${fa.letter}</i>${fa.id}</span><div class="p">${fa.per} · ${ts.length} taken</div><div class="pc2"><span>Voortgang</span><span ${B('ph.pct',fa.id)}>${p}%</span></div><div class="bar"><i ${B('ph.w',fa.id,'data-t="w"')} style="width:${p}%"></i></div></button>`}).join('');
   // header
   let months='',weeks='';
   let d=0;
@@ -1173,12 +1183,12 @@ function viewPlan(){
     if(f&&!ts.length)return;
     const open=!UI.closed['ph'+fa.id];
     const a=all.length?Math.min(...all.map(tStart)):0,b=all.length?Math.max(...all.map(tEnd)):0,p=all.length?Math.round(avg(all.map(tPct))):0;
-    rows+=`<div class="grow ph-row${open?' open':''}" id="ph-${fa.id}"><div class="lc"><button class="ph-head" data-act="phtog" data-id="${fa.id}" aria-expanded="${open}"><span class="chev">${icon('chevron-down')}</span><span class="dot" style="background:${fa.c}"></span>${fa.id}<small>${all.length} taken · ${p}%</small></button></div>
-      <div class="rc">${all.length?`<div class="ph-bar" style="--c:${fa.c};left:${a*DAYW}px;width:${(b-a+1)*DAYW}px" title="${fa.id}: ${fmtD(fromDay(a))} – ${fmtD(fromDay(b))}"><i style="width:${p}%"></i></div>`:''}</div></div>`;
+    rows+=`<div class="grow ph-row${open?' open':''}" id="ph-${fa.id}"><div class="lc"><button class="ph-head" data-act="phtog" data-id="${fa.id}" aria-expanded="${open}"><span class="chev">${icon('chevron-down')}</span><span class="dot" style="background:${fa.c}"></span>${fa.id}<small ${B('ph.sub',fa.id)}>${all.length} taken · ${p}%</small></button></div>
+      <div class="rc">${all.length?`<div class="ph-bar" style="--c:${fa.c};left:${a*DAYW}px;width:${(b-a+1)*DAYW}px" title="${fa.id}: ${fmtD(fromDay(a))} – ${fmtD(fromDay(b))}"><i ${B('ph.w',fa.id,'data-t="w"')} style="width:${p}%"></i></div>`:''}</div></div>`;
     if(open)ts.forEach(t=>{
       const c=t.kleur||fa.c,s=tStart(t),e=tEnd(t);
-      rows+=`<div class="grow t-row" data-tid="${t.id}"><div class="lc" style="--c:${c}"><button class="cdot" data-act="color" data-id="${t.id}" title="Kleur aanpassen" aria-label="Kleur aanpassen"></button><button class="tname" data-act="edittask" data-id="${t.id}" title="Taak bewerken"><span>${esc(t.naam)}</span><small>${fmtD(t.start)} – ${fmtD(t.end)} · ${esc(t.owners.join(', ')||'geen eigenaar')}</small></button><label class="vgin"><span class="sr">Voortgang</span><input type="number" min="0" max="100" ${da('plan',t.id,'vg')} data-post="plan" value="${tPct(t)}"><span>%</span></label></div>
-      <div class="rc"><div class="tbar" data-id="${t.id}" style="--c:${c};left:${s*DAYW}px;width:${Math.max(1,e-s+1)*DAYW}px" title="${esc(t.naam)}: ${fmtD(t.start)} – ${fmtD(t.end)} (${tPct(t)}%)"><div class="fill" style="width:${tPct(t)}%"></div><span class="hd l" data-h="l"></span><span class="hd r" data-h="r"></span><span class="pt">${tPct(t)}%</span></div></div></div>`});
+      rows+=`<div class="grow t-row" data-tid="${t.id}"><div class="lc" style="--c:${c}"><button class="cdot" data-act="color" data-id="${t.id}" title="Kleur aanpassen" aria-label="Kleur aanpassen"></button><button class="tname" data-act="edittask" data-id="${t.id}" title="Taak bewerken"><span>${esc(t.naam)}</span><small>${fmtD(t.start)} – ${fmtD(t.end)} · ${esc(t.owners.join(', ')||'geen eigenaar')}</small></button><label class="vgin"><span class="sr">Voortgang</span><input type="number" min="0" max="100" ${da('plan',t.id,'vg')} value="${tPct(t)}"><span>%</span></label></div>
+      <div class="rc"><div class="tbar" data-id="${t.id}" style="--c:${c};left:${s*DAYW}px;width:${Math.max(1,e-s+1)*DAYW}px" title="${esc(t.naam)}: ${fmtD(t.start)} – ${fmtD(t.end)} (${tPct(t)}%)"><div class="fill" ${B('t.w',t.id,'data-t="w"')} style="width:${tPct(t)}%"></div><span class="hd l" data-h="l"></span><span class="hd r" data-h="r"></span><span class="pt" ${B('t.pt',t.id)}>${tPct(t)}%</span></div></div></div>`});
   });
   const allPh=FASES.every(fa=>!UI.closed['ph'+fa.id]);
   return `<div class="panel-head"><div><h2>Planning / fasering</h2><p>Fases van het DMAIC-model met daaronder alle taken van het project. Sleep een balk om hem te verschuiven, sleep de randen om start of deadline te wijzigen, klik op een balk of naam om te bewerken.</p></div><button class="btn cta" data-act="addtask" data-id="">${icon('plus')}Taak toevoegen</button></div>
@@ -1265,6 +1275,13 @@ const ACT={
   wdone(a){const w=S.wait.find(x=>x.id===a.dataset.id);w.status='Ontvangen';w.ontvangen=todayStr();save();render();toast('Afgerond: ontvangen')},
   wreopen(a){const w=S.wait.find(x=>x.id===a.dataset.id);w.status='Wachtend';w.ontvangen='';save();render()},
   delwait(a){if(confirm('Deze waiting for verwijderen?')){S.wait=S.wait.filter(x=>x.id!==a.dataset.id);save();render()}},
+  deltask(a){
+    const t=S.plan.find(x=>x.id===a.dataset.id),p=a.dataset.p;if(!t)return;
+    if(t.owners.length>1){
+      const rest=t.owners.filter(o=>o!==p).join(', ');
+      if(confirm(`“${t.naam}” is ook van ${rest}. Alleen ${p} van deze taak halen? De taak blijft in de planning staan voor ${rest}.`)){t.owners=t.owners.filter(o=>o!==p);if(t.uren)delete t.uren[p];save();render()}
+    }else if(confirm(`“${t.naam}” verwijderen? De taak verdwijnt ook uit de planning.`)){S.plan=S.plan.filter(x=>x.id!==t.id);save();render()}
+  },
   gomeet(a){const id=a.dataset.id;UI.tab='meet';UI.f.meet='alle';UI.open['m'+id]=true;saveUI();render(false);const el=$('#m'+id);el&&el.scrollIntoView({block:'center'})},
   mfilter(a){UI.f.meet=a.dataset.id;saveUI();render()},
   addmeet(){const m={id:uid(),datum:todayStr(),titel:'',soort:'KPI-meting',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
