@@ -152,7 +152,15 @@ select.pill[data-v=hoog]{background-color:var(--bad-soft);color:var(--bad)}
 .sd-head{width:100%;display:flex;align-items:center;gap:12px;padding:14px 18px;background:none;border:0;text-align:left;border-radius:var(--radius)}
 .sd-head:hover{background:#f8faff}
 .chev{display:grid;place-items:center;transition:transform .2s;color:var(--blue)}
-.open>.sd-head .chev,.open>.note-head .chev,.open>.ph-head .chev{transform:rotate(180deg)}
+.open>.sd-head .chev,.open>.note-head .chev,.open>.ph-head .chev,.note.open .note-top .chev{transform:rotate(180deg)}
+.note-top{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding-right:12px}
+.note-top .note-head{flex:1 1 250px;min-width:0}
+.note-top .btn{margin:0 0 8px 12px}
+@media(min-width:700px){.note-top .btn{margin:0}}
+.note-top .btn{flex:none}
+@media(max-width:620px){.note .note-head{flex-wrap:wrap}.note .note-head b{flex:1 1 100%;order:3;white-space:normal;overflow:visible}}
+.note.klaar{opacity:.8}
+.note.klaar .note-head b{color:var(--muted)}
 .sd-title{flex:1;font-size:16px}
 .sd-title b{color:var(--blue)}
 .sd-mini{display:flex;align-items:center;gap:10px;font-weight:800}
@@ -769,7 +777,7 @@ const B=(key,a,extra='')=>`data-b="${key}"${a!=null?` data-a="${esc(a)}"`:''} ${
 /* tegels */
 BIND['tile.kpi']=()=>pctTxt(allPct())+' van de normen';
 BIND['tile.risks']=()=>{const o=S.risks.filter(r=>!['Opgelost','Gesloten'].includes(r.status)).length;const m=Math.max(0,...S.risks.map(score));return `${o} open · max score ${m}`};
-BIND['tile.notes']=()=>`${S.notes.length} items`;
+BIND['tile.notes']=()=>{const k=S.notes.filter(noteDone).length;return `${S.notes.length-k} actueel · ${k} afgerond`};
 BIND['tile.fin']=()=>{const c=fc();return c.totB?`${Math.round(c.totW/c.totB*100)}% van begroting`:'–'};
 BIND['tile.taken']=()=>nf(sum(S.plan.map(t=>sum(Object.values(t.uren||{})))),0)+' uur geregistreerd';
 BIND['tile.plan']=()=>pctTxt(avg(S.plan.map(t=>tPct(t)/100)))+' voortgang';
@@ -993,18 +1001,21 @@ function viewRisks(){
 }
 
 /* ---------- Notities & afspraken ---------- */
+const noteDone=n=>!!n.klaar||(n.type==='Bijsturingsactie'&&n.status==='Afgerond');
 const NTYPES=['Notitie','Afspraak','Bijsturingsactie'];
 function viewNotes(){
-  const f=UI.f.notes||'alle';
-  const items=[...S.notes].filter(n=>f==='alle'||n.type===f).sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
+  const f=UI.f.notes||'alle',st=UI.f.nstate||'actueel';
+  const nAct=S.notes.filter(n=>!noteDone(n)).length,nKlaar=S.notes.length-nAct;
+  const items=[...S.notes].filter(n=>(f==='alle'||n.type===f)&&(st==='alles'||(st==='afgerond')===noteDone(n))).sort((a,b)=>(b.datum||'').localeCompare(a.datum||''));
   const chip=(v,l)=>`<button class="chip${f===v?' on':''}" data-act="nfilter" data-id="${v}">${l}</button>`;
+  const schip=(x,l)=>`<button class="chip${st===x?' on':''}" data-act="nstate" data-id="${x}">${l}</button>`;
   const kpiOpt=[['','Geen KPI gekoppeld'],...S.kpis.map(k=>[k.id,`${k.id} · ${k.titel}`])];
   const list=items.map(n=>{
-    const open=!!UI.open['n'+n.id];
+    const open=!!UI.open['n'+n.id],done=noteDone(n);
     const extra=n.type==='Afspraak'?`<div><label>Tijd</label><input type="time" ${da('notes',n.id,'tijd')} value="${esc(n.tijd)}"></div><div><label>Deelnemers</label>${inpT('notes',n.id,'wie',n.wie,'Wie doen er mee?')}</div><div><label>Plaats / online</label>${inpT('notes',n.id,'plaats',n.plaats,'Waar?')}</div>`
-      :n.type==='Bijsturingsactie'?`<div><label>Gekoppelde KPI</label>${selN('notes',n.id,'kpi',kpiOpt,n.kpi)}</div><div><label>Status</label>${selP('notes',n.id,'status',['Open','Bezig','Afgerond'],n.status)}</div><div class="wide"><label>Aanleiding (bijsturingssignaal)</label>${txa('notes',n.id,'aanleiding',n.aanleiding,'Welk signaal vraagt om bijsturing?')}</div>`:'';
-    return `<article class="note${open?' open':''}" data-t="${slug(n.type)}" id="n${n.id}">
-      <button class="note-head" data-act="tog" data-id="n${n.id}" aria-expanded="${open}"><span class="chev">${icon('chevron-down')}</span>${badge(n.type==='Notitie'?'':n.type==='Afspraak'?'meas':'warn',n.type)}<b ${B('note.title',n.id)}></b><span class="muted nowrap">${fmtD(n.datum)}${n.tijd?' · '+esc(n.tijd):''}</span></button>
+      :n.type==='Bijsturingsactie'?`<div><label>Gekoppelde KPI</label>${selN('notes',n.id,'kpi',kpiOpt,n.kpi)}</div><div><label>Status</label>${selP('notes',n.id,'status',['Open','Bezig','Afgerond'],n.status).replace('data-c','data-re="1" data-c')}</div><div class="wide"><label>Aanleiding (bijsturingssignaal)</label>${txa('notes',n.id,'aanleiding',n.aanleiding,'Welk signaal vraagt om bijsturing?')}</div>`:'';
+    return `<article class="note${open?' open':''}${done?' klaar':''}" data-t="${slug(n.type)}" id="n${n.id}"><div class="note-top">
+      <button class="note-head" data-act="tog" data-id="n${n.id}" aria-expanded="${open}"><span class="chev">${icon('chevron-down')}</span>${badge(n.type==='Notitie'?'':n.type==='Afspraak'?'meas':'warn',n.type)}<b ${B('note.title',n.id)}></b>${done?badge('ok','Afgerond'+(n.klaarOp?' '+fmtD(n.klaarOp):'')):''}<span class="muted nowrap">${fmtD(n.datum)}${n.tijd?' · '+esc(n.tijd):''}</span></button>${done?`<button class="btn sm" data-act="nreopen" data-id="${n.id}">Heropenen</button>`:`<button class="btn sm" data-act="ndone" data-id="${n.id}" title="Afronden: blijft bewaard, maar gaat uit de lijst">${icon('check',16)}Afronden</button>`}</div>
       <div class="note-body"><div class="ngrid">
         <div><label>Soort</label>${selP('notes',n.id,'type',NTYPES,n.type).replace('data-c','data-re="1" data-c')}</div>
         <div><label>Datum</label>${inpD('notes',n.id,'datum',n.datum)}</div>
@@ -1016,7 +1027,8 @@ function viewNotes(){
   return `<div class="panel-head"><div><h2>Notities & afspraken</h2><p>Leg afspraken, notities en bijsturingsacties vast. Open een item om het aan te passen.</p></div></div>
   <div class="toolbar"><button class="btn cta" data-act="addnote" data-id="Notitie">${icon('plus')}Notitie</button><button class="btn cta" data-act="addnote" data-id="Afspraak">${icon('plus')}Afspraak</button><button class="btn cta" data-act="addnote" data-id="Bijsturingsactie">${icon('plus')}Bijsturingsactie</button><span class="grow"></span>
     <div class="chips" role="group" aria-label="Filter">${chip('alle','Alle')}${chip('Notitie','Notities')}${chip('Afspraak','Afspraken')}${chip('Bijsturingsactie','Bijsturingsacties')}</div></div>
-  ${list||'<div class="empty-state">Nog niets vastgelegd in deze categorie.</div>'}`;
+  <div class="toolbar" style="margin-top:-4px"><span class="muted">Tonen</span><div class="chips" role="group" aria-label="Actueel of afgerond">${schip('actueel','Actueel ('+nAct+')')}${schip('afgerond','Afgerond ('+nKlaar+')')}${schip('alles','Alles')}</div></div>
+  ${list||'<div class="empty-state">'+(st==='afgerond'?'Nog niets afgerond. Afgeronde items blijven hier bewaard.':'Niets actueels in deze categorie.')+'</div>'}`;
 }
 
 /* ---------- Meetmomenten (logboek) ---------- */
@@ -1266,8 +1278,11 @@ const ACT={
   gosd(a){const n=a.dataset.id;UI.open['sd'+n]=true;saveUI();const s=$('#sd'+n);s.classList.add('open');$$('textarea',s).forEach(autosize);syncTogAll();s.scrollIntoView({behavior:'smooth',block:'start'})},
   addrisk(){const r={id:uid(),fase:'Algemeen',risico:'',gevolg:'',kans:'Midden',impact:'Midden',intern:'Intern',maatregel:'',voorzorg:'',eigenaar:'Veerle',status:'Open'};S.risks.push(r);UI.open['r'+r.id]=true;save();saveUI();render();const t=$('#r'+r.id+' textarea');t&&t.focus()},
   delrisk(a){if(confirm('Dit risico verwijderen?')){S.risks=S.risks.filter(x=>x.id!==a.dataset.id);save();render()}},
+  nstate(a){UI.f.nstate=a.dataset.id;saveUI();render()},
+  ndone(a){const n=S.notes.find(x=>x.id===a.dataset.id);n.klaar=true;n.klaarOp=todayStr();if(n.type==='Bijsturingsactie')n.status='Afgerond';save();render();toast('Afgerond: bewaard onder “Afgerond”')},
+  nreopen(a){const n=S.notes.find(x=>x.id===a.dataset.id);n.klaar=false;n.klaarOp='';if(n.status==='Afgerond')n.status='Open';save();render()},
   nfilter(a){UI.f.notes=a.dataset.id;saveUI();render()},
-  addnote(a){const type=a.dataset.id;const n={id:uid(),type,datum:todayStr(),titel:'',tekst:'',tijd:'',wie:'',plaats:'',kpi:'',status:'Open',aanleiding:''};S.notes.push(n);UI.open['n'+n.id]=true;if(UI.f.notes&&UI.f.notes!=='alle'&&UI.f.notes!==type)UI.f.notes='alle';save();saveUI();render();const el=$('#n'+n.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
+  addnote(a){const type=a.dataset.id;const n={id:uid(),type,datum:todayStr(),titel:'',tekst:'',tijd:'',wie:'',plaats:'',kpi:'',status:'Open',aanleiding:''};S.notes.push(n);UI.open['n'+n.id]=true;if(UI.f.notes&&UI.f.notes!=='alle'&&UI.f.notes!==type)UI.f.notes='alle';UI.f.nstate='actueel';save();saveUI();render();const el=$('#n'+n.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delnote(a){if(confirm('Dit item verwijderen?')){S.notes=S.notes.filter(x=>x.id!==a.dataset.id);save();render()}},
   addmile(){const m={id:uid(),datum:todayStr(),titel:'',soort:'Mijlpaal',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   wfilter(a){UI.f.wait=a.dataset.id;saveUI();render()},
