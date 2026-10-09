@@ -59,7 +59,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 button:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 
 /* tiles */
-.tiles{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;padding:20px 0 6px}
+.tiles{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;padding:20px 0 6px}
 .sd-nul{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 0 12px;font-size:13.5px}
 .sd-nul label{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
 .sd-nul input{width:150px}
@@ -67,6 +67,8 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offse
 table.mt td.dt input{text-align:left;min-width:128px}
 .note[data-t=gepland]{border-left-color:var(--blue)}
 .note[data-t=uitgevoerd]{border-left-color:var(--ok)}
+.pc td input[type=date]{width:132px;text-align:left;padding:4px 6px;font-size:13px}
+.pc td .mon{display:block;font-size:11.5px;margin-top:2px;white-space:nowrap}
 .bu{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0 4px;font-size:13.5px}
 .bu label{display:flex;align-items:center;gap:8px;font-weight:700}
 .bu input{width:90px}
@@ -255,10 +257,12 @@ table.tbl td.r{white-space:nowrap}
 .stk{position:sticky;left:0;background:#fff;z-index:1}
 table.tbl th.stk{background:#f8faff;z-index:2}
 table.tbl tfoot td.stk{background:#f8faff}
-.mn input{width:68px}
+.mn{min-width:74px}
+.mn .au{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;padding:0 4px 3px}
+.mn input{width:68px;padding:2px 4px;font-size:12px;height:24px;color:var(--muted)}
 
 /* takenoverzicht */
-.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(480px,1fr));gap:14px;align-items:start}
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(660px,1fr));gap:14px;align-items:start}
 .pc{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
 .pc-head{width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;border:0;background:none;text-align:left;border-radius:var(--radius)}
 .pc-head:hover{background:#f8faff}
@@ -539,24 +543,6 @@ function defaults(){
     K('5.1',5,'Systeemgebruik aanvragen (%)','Strategisch','%',90,'≥ 90% van de ±30 aanvragen wordt zelfstandig ingevoerd en verwerkt via de nieuwe werkwijze.','Minder dan 60%: navragen waarom een aanvraag buiten het systeem om is gegaan en de drempel wegnemen.','Elke aanvraag langs en de bron checken.',[n,n,50,60,65,70,75,80,85,90,90]),
     K('5.2',5,'Verwerkingspercentage (aanvragen die leiden tot project)','Proces','%',null,'Geen vaste norm: volgen.','Laag percentage: met het team bespreken waarom aanvragen niet tot een project leiden en of norm of proces moet worden aangepast.','Aantal aanvragen dat leidt tot een project.',[n,n,n,n,n,n,n,n,n,n,n])
   ];
-  const A=(actie,sd,prio,dl,wie,status,notitie='')=>({id:uid(),actie,sd,prio,dl,wie,status,notitie});
-  const acties=[
-    A('Showroom plannen: bepalen wat en waar we willen bestellen',3,'Hoog','2026-10-09','Daan','Bezig','Plan showroom uiterlijk vrijdag 9 oktober.'),
-    A('Aanvraagformulier in Teams inrichten',1,'Hoog','2026-10-09','Sara','Bezig'),
-    A('Online meeting met AskHAN: checken of alles klaar is voor livegang',1,'Hoog','2026-10-09','Sara','Open','Maatregel bij risico “TopDesk niet op tijd online”.'),
-    A('Testcases doorlopen met de groep',1,'Hoog','2026-10-09','Sam J','Bezig','Testcase maken met Sam J, daarna doorlopen met het team.'),
-    A('Nulmeting afstemming en verwerkingstijd afronden',2,'Hoog','2026-10-09','Veerle','Bezig'),
-    A('Dashboard in gebruik nemen en elke maandag bijwerken',0,'Hoog','2026-10-09','Veerle','Bezig'),
-    A('Voorschot (€ 1.000) aanmaken vóór de vakantie',0,'Midden','2026-10-09','Senna','Open'),
-    A('Livegang Impact Desk-route',1,'Hoog','2026-10-12','Sara','Open'),
-    A('PDCA-evaluatie 1 voorbereiden',0,'Midden','2026-10-13','Veerle','Open'),
-    A('Team trainen in TopDesk (cursus Sara en Anouk)',2,'Hoog','2026-10-16','Sara','Open'),
-    A('Handleiding maken',2,'Midden','2026-10-16','Veerle','Open'),
-    A('Communicatie- en campagneplan opstellen',3,'Hoog','2026-10-16','Sara','Open','Samen met Sam V.'),
-    A('Portfolio van diensten: raamwerk opleveren',3,'Midden','2026-10-16','Sam V','Open','Raamwerk 16 oktober, definitief 1 november.'),
-    A('Eerste 5 aanvragen met de nieuwe werkwijze doorlopen',1,'Hoog','2026-11-01','Team','Open','Meetmoment 2 november: ≥ 4 van 5 correct.'),
-    A('PR-stunt: plan en datum bepalen',3,'Midden','','Senna','Open','Budget ± € 200.')
-  ];
   const R=(fase,risico,gevolg,kans,impact,intern,maatregel,voorzorg,eigenaar)=>({id:uid(),fase,risico,gevolg,kans,impact,intern,maatregel,voorzorg,eigenaar,status:'Open'});
   const risks=[
     R('Control','Teamleden hebben te weinig tijd naast eigen werk','Taken lopen vertraging op, kwaliteit van opvolging van aanvragen daalt.','Hoog','Hoog','Intern','Prioriteiten herschikken; taken tijdelijk overdragen aan een ander teamlid.','Vaste uren in rooster; taken klein houden met deadline.','Veerle'),
@@ -644,7 +630,7 @@ function defaults(){
     T('Afronding','Nazorgmeting kanaalaandeel',['Veerle'],'2027-01-04','2027-01-08',0),
     T('Afronding','Afstudeerdossier afronden en inleveren',['Veerle'],'2026-12-14','2027-01-08',0)
   ];
-  return {v:1,kpis,acties,risks,notes,meet,fin,plan};
+  return {v:1,kpis,risks,notes,meet,fin,plan};
 }
 /* oudere back-ups en opgeslagen gegevens aanvullen met nieuwe onderdelen */
 function migrate(){
@@ -664,6 +650,7 @@ function loadState(){
   migrate();
   try{UI=JSON.parse(localStorage.getItem(UISTORE))}catch(e){}
   UI=Object.assign({tab:'kpi',open:{sd1:true},closed:{},f:{}},UI||{});
+  if(!VIEWS[UI.tab])UI.tab='kpi';
 }
 let saveT;
 function setSaved(ok){$('#saveState').textContent=ok?'Opgeslagen in deze browser':'Opslaan in browser niet mogelijk – maak een back-up'}
@@ -710,11 +697,21 @@ const scoreLbl=s=>s>=6?'hoog':s>=3?'midden':'laag';
 
 let FIN=null;
 const fc=()=>FIN||(FIN=finCalc());
+/* Uren uit het Takenoverzicht, per persoon verdeeld over sep–jan op basis van de deadline van de taak */
+const MIDX=iso=>{const y=+iso.slice(0,4),m=+iso.slice(5,7)-1;return clamp(y===2026?m-8:y===2027?m+4:(y<2026?-1:99),0,MONTHS.length-1)};
+function autoHours(){
+  const a={};
+  S.plan.forEach(t=>{if(!t.end)return;const i=MIDX(t.end);Object.entries(t.uren||{}).forEach(([p,h])=>{h=+h||0;if(h&&t.owners.includes(p))(a[p]=a[p]||MONTHS.map(()=>0))[i]+=h})});
+  return a;
+}
 function finCalc(){
+  const AH=autoHours();
   const loon=S.fin.loon.map(p=>{
-    const uren=sum(p.u),kosten=uren*(p.tarief||0),begr=p.begr!=null?p.begr:(p.bu||0)*(p.tarief||0);
-    return {id:p.id,uren,kosten,begr,afw:kosten-begr};
+    const au=AH[p.naam]||MONTHS.map(()=>0),u=MONTHS.map((_,i)=>au[i]+(+p.u[i]||0));
+    const uren=sum(u),kosten=uren*(p.tarief||0),begr=p.begr!=null?p.begr:(p.bu||0)*(p.tarief||0);
+    return {id:p.id,uren,kosten,begr,afw:kosten-begr,au,u,tarief:p.tarief||0};
   });
+  const unmapped=sum(Object.entries(AH).filter(([n])=>!S.fin.loon.some(x=>x.naam===n)).map(([,v])=>sum(v)));
   const lrow=S.fin.kosten.find(r=>r.auto==='loon');
   const loonSum=sum(loon.map(x=>x.begr)),loonB=lrow&&lrow.begroot!=null?lrow.begroot:loonSum,loonW=sum(loon.map(x=>x.kosten));
   const rows=S.fin.kosten.map(r=>{
@@ -723,8 +720,8 @@ function finCalc(){
   });
   const totB=sum(rows.map(r=>r.b)),totW=sum(rows.map(r=>r.w));
   const overB=sum(rows.filter(r=>!r.auto).map(r=>r.b)),overW=sum(rows.filter(r=>!r.auto).map(r=>r.w));
-  const mU=MONTHS.map((_,i)=>sum(S.fin.loon.map(p=>p.u[i]))),mK=MONTHS.map((_,i)=>sum(S.fin.loon.map(p=>(p.u[i]||0)*(p.tarief||0))));
-  return {loon,loonB,loonSum,loonW,rows,totB,totW,overB,overW,mU,mK,uren:sum(loon.map(x=>x.uren)),buren:sum(S.fin.loon.map(p=>p.bu))};
+  const mU=MONTHS.map((_,i)=>sum(loon.map(x=>x.u[i]))),mK=MONTHS.map((_,i)=>sum(loon.map(x=>x.u[i]*x.tarief)));
+  return {unmapped,loon,loonB,loonSum,loonW,rows,totB,totW,overB,overW,mU,mK,uren:sum(loon.map(x=>x.uren)),buren:sum(S.fin.loon.map(p=>p.bu))};
 }
 const afwHtml=(w,b,d=0)=>{if(!w)return '<span class="muted">–</span>';const a=w-b;return `<span class="${a>0?'bad-t':'ok-t'}">${a>0?'+':a<0?'−':''}${eur(Math.abs(a),d).replace('−','')}</span>`};
 
@@ -753,7 +750,6 @@ const B=(key,a,extra='')=>`data-b="${key}"${a!=null?` data-a="${esc(a)}"`:''} ${
 
 /* tegels */
 BIND['tile.kpi']=()=>pctTxt(allPct())+' van de normen';
-BIND['tile.acties']=()=>{const o=S.acties.filter(a=>a.status!=='Afgerond').length;return `${o} open · ${S.acties.length-o} klaar`};
 BIND['tile.risks']=()=>{const o=S.risks.filter(r=>!['Opgelost','Gesloten'].includes(r.status)).length;const m=Math.max(0,...S.risks.map(score));return `${o} open · max score ${m}`};
 BIND['tile.notes']=()=>`${S.notes.length} items`;
 BIND['tile.fin']=()=>{const c=fc();return c.totB?`${Math.round(c.totW/c.totB*100)}% van begroting`:'–'};
@@ -804,18 +800,6 @@ function chartSvg(k){
   return s+'</svg>';
 }
 
-/* acties */
-const aLate=a=>a.dl&&a.dl<todayStr()&&a.status!=='Afgerond';
-BIND['act.sum']=()=>{
-  const n=S.acties.length,done=S.acties.filter(a=>a.status==='Afgerond').length,bezig=S.acties.filter(a=>a.status==='Bezig').length,open=S.acties.filter(a=>a.status==='Open').length,late=S.acties.filter(aLate).length,hi=S.acties.filter(a=>a.prio==='Hoog'&&a.status!=='Afgerond').length;
-  const p=n?done/n:0;
-  return `<div class="card sum big"><div class="lbl">Voortgang actielijst</div><div class="val">${pctTxt(p)}</div><div class="bar"><i style="width:${Math.round(p*100)}%"></i></div><div class="sub">${done} van ${n} acties afgerond</div></div>
-  <div class="card sum"><div class="lbl">Open</div><div class="val">${open}</div><div class="sub">nog te starten</div></div>
-  <div class="card sum"><div class="lbl">Bezig</div><div class="val">${bezig}</div><div class="sub">in uitvoering</div></div>
-  <div class="card sum"><div class="lbl">Te laat</div><div class="val ${late?'bad':''}">${late}</div><div class="sub">deadline verstreken</div></div>
-  <div class="card sum"><div class="lbl">Hoge prioriteit open</div><div class="val ${hi?'warn':''}">${hi}</div><div class="sub">eerst oppakken</div></div>`;
-};
-BIND['act.row']=id=>{const a=S.acties.find(x=>x.id===id);return a?(aLate(a)?'late':a.status==='Afgerond'?'done':''):''};
 
 /* risico's */
 BIND['risk.score']=id=>{const r=S.risks.find(x=>x.id===id);const s=score(r);return `<span class="score ${scoreCls(s)}"><b>${s}</b><span>${scoreLbl(s)}</span></span>`};
@@ -856,6 +840,9 @@ BIND['fin.lBin']=id=>String(r2(fc().loon.find(x=>x.id===id).begr));
 BIND['fin.rowBin']=id=>String(r2(fc().rows.find(x=>x.id===id).b));
 BIND['fin.rowNote']=id=>{const r=S.fin.kosten.find(x=>x.id===id);return r&&r.begroot!=null?`Handmatig aangepast · som van personen: ${eur(fc().loonSum)}`:'Som van de begrote loonkosten per persoon'};
 BIND['fin.lA']=id=>{const x=fc().loon.find(y=>y.id===id);return x.uren>0?afwHtml(x.kosten,x.begr,2):'<span class="muted">–</span>'};
+BIND['fin.au']=a=>{const [id,i]=a.split('|');const v=fc().loon.find(x=>x.id===id).au[+i];return v?nf(v,1):'<span class="muted">0</span>'};
+BIND['fin.unm']=()=>{const u=fc().unmapped;return u?`${nf(u,1)} uur uit het Takenoverzicht (bijvoorbeeld bij “Hele team”) hoort niet bij een persoon in dit overzicht en wordt niet doorgerekend. Registreer die uren per persoon.`:''};
+BIND['pt.mon']=id=>{const t=S.plan.find(x=>x.id===id);if(!t||!t.end)return '';const m=+t.end.slice(5,7)-1,y=+t.end.slice(0,4),idx=MIDX(t.end);const real=MONL[m]+(y!==2026?' '+y:'');const fm=['september','oktober','november','december','januari'][idx];return real===fm||real.startsWith(fm)?`telt mee in ${fm}`:`${real}: telt mee in ${fm}`};
 BIND['fin.mU']=i=>nf(fc().mU[+i],1);
 BIND['fin.mK']=i=>eur(fc().mK[+i],2);
 BIND['fin.lUt']=()=>nf(fc().uren,1);
@@ -890,7 +877,6 @@ const del=(act,id,label='Verwijderen')=>`<button class="icon-btn" data-act="${ac
 
 const TABS=[
   {id:'kpi',label:'Subdoelen en KPI’s',icon:'target',stat:'tile.kpi'},
-  {id:'acties',label:'Actielijst / to-do',icon:'list-checks',stat:'tile.acties'},
   {id:'risks',label:'Risico’s',icon:'triangle-alert',stat:'tile.risks'},
   {id:'notes',label:'Notities & afspraken',icon:'file-text',stat:'tile.notes'},
   {id:'meet',label:'Meetmomenten',icon:'clipboard-list',stat:'tile.meet'},
@@ -943,33 +929,6 @@ function kpiHtml(k){
       <div class="meth"><span class="kl">Hoe meten</span>${txa('kpis',k.id,'meting',k.meting)}</div></div>
     </div>
   </article>`;
-}
-
-/* ---------- Actielijst ---------- */
-function viewActies(){
-  const f=UI.f.acties||{};
-  let rows=S.acties.filter(a=>(!f.status||a.status===f.status)&&(!f.wie||a.wie===f.wie)&&(f.sd==null||f.sd===''||String(a.sd)===f.sd));
-  const so=f.sort||'dl',pr={Hoog:0,Midden:1,Laag:2},st={Bezig:0,Open:1,'On hold':2,Afgerond:3};
-  rows=[...rows].sort((a,b)=>so==='dl'?((a.dl||'9999')<(b.dl||'9999')?-1:(a.dl||'9999')>(b.dl||'9999')?1:0):so==='prio'?pr[a.prio]-pr[b.prio]:so==='status'?st[a.status]-st[b.status]:0);
-  const body=rows.map(a=>`<tr ${B('act.row',a.id,'data-t="cls"')}>
-    <td style="min-width:240px">${txa('acties',a.id,'actie',a.actie,'Omschrijf de actie')}</td>
-    <td style="min-width:190px">${selN('acties',a.id,'sd',SDOPT,a.sd)}</td>
-    <td>${selP('acties',a.id,'prio',['Hoog','Midden','Laag'],a.prio)}</td>
-    <td style="min-width:140px">${inpD('acties',a.id,'dl',a.dl)}</td>
-    <td style="min-width:120px">${selN('acties',a.id,'wie',PEOPLE,a.wie)}</td>
-    <td>${selP('acties',a.id,'status',['Open','Bezig','Afgerond','On hold'],a.status)}</td>
-    <td style="min-width:220px">${txa('acties',a.id,'notitie',a.notitie,'Notitie')}</td>
-    <td>${del('delact',a.id)}</td></tr>`).join('');
-  return `<div class="panel-head"><div><h2>Actielijst / to-do</h2><p>Elke actie met subdoel, prioriteit, deadline, verantwoordelijke en status. Afgeronde acties tellen mee in de voortgang bovenaan.</p></div><button class="btn cta" data-act="addact">${icon('plus')}Actie toevoegen</button></div>
-  <div class="sumgrid" ${B('act.sum')}></div>
-  <div class="toolbar">
-    <label>Status <select data-ui="f.acties.status"><option value="">Alle</option>${opt(['Open','Bezig','Afgerond','On hold'],f.status)}</select></label>
-    <label>Verantwoordelijke <select data-ui="f.acties.wie"><option value="">Iedereen</option>${opt(PEOPLE,f.wie)}</select></label>
-    <label>Subdoel <select data-ui="f.acties.sd"><option value="">Alle</option>${opt(SDOPT,f.sd)}</select></label>
-    <label>Sorteren op <select data-ui="f.acties.sort">${opt([['dl','Deadline'],['prio','Prioriteit'],['status','Status'],['man','Volgorde van invoer']],so)}</select></label>
-  </div>
-  <div class="tw"><table class="tbl"><thead><tr><th>Actie / taak</th><th>Subdoel</th><th>Prioriteit</th><th>Deadline</th><th>Verantwoordelijke</th><th>Status</th><th>Notitie</th><th></th></tr></thead>
-  <tbody>${body||'<tr><td colspan="8"><div class="empty-state">Geen acties gevonden met deze filters.</div></td></tr>'}</tbody></table></div>`;
 }
 
 /* ---------- Risico's ---------- */
@@ -1069,7 +1028,7 @@ function viewFin(){
   const loon=S.fin.loon.map(p=>`<tr>
     <td class="stk" style="min-width:140px"><input class="" ${da('fin.loon',p.id,'naam')} value="${esc(p.naam)}" placeholder="Naam" style="font-weight:700"><div class="hint" style="margin:2px 0 0">${esc(p.rol)}</div></td>
     <td style="width:96px">${inpN('fin.loon',p.id,'tarief',p.tarief,'placeholder="€/uur"')}</td>
-    ${MONTHS.map((m,i)=>`<td class="mn">${inpN('fin.loon',p.id,'u.'+i,p.u[i],'placeholder="0"')}</td>`).join('')}
+    ${MONTHS.map((m,i)=>`<td class="mn"><div class="au" ${B('fin.au',p.id+'|'+i)}></div>${inpN('fin.loon',p.id,'u.'+i,p.u[i],'placeholder="+0" title="Extra uren (handmatig) bovenop de uren uit het Takenoverzicht"')}</td>`).join('')}
     <td class="r" ${B('fin.lU',p.id)}></td>
     <td class="r" style="font-weight:700" ${B('fin.lK',p.id)}></td>
     <td style="width:90px">${inpN('fin.loon',p.id,'bu',p.bu)}</td>
@@ -1080,7 +1039,7 @@ function viewFin(){
   const sc=(key,naam,cls)=>{const s=S.fin.scen[key];return `<div class="card sc ${cls}"><h4>${naam}</h4>
     <div class="two"><div><span class="fl">Uren t.o.v. begroot (%)</span>${inpN('fin.scen.'+key,null,'urenPct',s.urenPct)}</div><div><span class="fl">Overige kosten (%)</span>${inpN('fin.scen.'+key,null,'overigPct',s.overigPct)}</div></div>
     <dl ${B('fin.sc',key)}></dl><span class="fl">Wat gebeurt er</span>${txa('fin.scen.'+key,null,'tekst',s.tekst)}</div>`};
-  return `<div class="panel-head"><div><h2>Financiën</h2><p>Algemeen overzicht, kosten, loonkosten per maand (september t/m januari) en drie scenario’s. Loonkosten = uren × tarief en komen automatisch in het overzicht.</p></div></div>
+  return `<div class="panel-head"><div><h2>Financiën</h2><p>Algemeen overzicht, kosten, loonkosten per maand (september t/m januari) en drie scenario’s. Loonkosten = uren × tarief; de uren komen automatisch uit het Takenoverzicht.</p></div></div>
   <div class="sumgrid" ${B('fin.sum')}></div>
 
   <h3 class="sec-title">Kosten</h3>
@@ -1090,10 +1049,11 @@ function viewFin(){
   <p class="hint">Afwijking = werkelijk − begroot. Rood is boven de begroting, groen eronder. Zolang kosten nog lopen is een negatieve afwijking normaal: kijk vooral naar “Nog beschikbaar” bovenaan. Zonder ingevulde kosten blijft de afwijking leeg.</p>
 
   <h3 class="sec-title">Loonkosten per persoon per maand</h3>
-  <div class="toolbar" style="margin-top:0"><span class="muted">Vul het uurtarief en de gewerkte uren per maand in.</span><span class="grow"></span><button class="btn cta sm" data-act="addloon">${icon('plus',16)}Persoon toevoegen</button></div>
+  <div class="toolbar" style="margin-top:0"><span class="muted" style="max-width:80ch">Het uurtarief vul je hier in. De uren komen automatisch uit het Takenoverzicht, in de maand van de deadline van de taak. Heb je extra uren die daar niet in staan, typ ze dan onder het getal.</span><span class="grow"></span><button class="btn cta sm" data-act="addloon">${icon('plus',16)}Persoon toevoegen</button></div>
   <div class="tw"><table class="tbl"><thead><tr><th class="stk">Persoon</th><th>Tarief €/u</th>${MONTHS.map(m=>`<th class="r">${m}<br><span style="font-weight:500;text-transform:none;letter-spacing:0">uren</span></th>`).join('')}<th class="r">Totaal uren</th><th class="r">Loonkosten</th><th>Begrote uren</th><th class="r">Begroot (€)</th><th class="r">Afwijking</th><th>Toelichting</th><th></th></tr></thead><tbody>${loon}</tbody>
   <tfoot><tr><td class="stk">Totaal uren per maand</td><td></td>${MONTHS.map((m,i)=>`<td class="r" ${B('fin.mU',i)}></td>`).join('')}<td class="r" ${B('fin.lUt')}></td><td class="r" ${B('fin.lKt')}></td><td></td><td class="r" ${B('fin.lBt')}></td><td class="r" ${B('fin.lAt')}></td><td colspan="2"></td></tr>
   <tr><td class="stk">Loonkosten per maand</td><td></td>${MONTHS.map((m,i)=>`<td class="r" ${B('fin.mK',i)}></td>`).join('')}<td colspan="7"></td></tr></tfoot></table></div>
+  <p class="hint bad-t" ${B('fin.unm')}></p>
   <p class="hint">Begroot (€) is standaard begrote uren × tarief volgens het projectplan, maar je kunt het bedrag per persoon overschrijven (leeg laten = automatisch). Het totaal van de loonkosten in de tabel Kosten kun je ook direct aanpassen. Veerle staat niet in die begroting; vul haar tarief in als je haar uren wilt meerekenen.</p>
 
   <h3 class="sec-title">Scenario’s</h3>
@@ -1110,13 +1070,13 @@ function viewTaken(){
     const open=UI.open['p'+p]!==false;
     return `<section class="pc${open?' open':''}" id="p${slug(p)}">
       <button class="pc-head" data-act="tog" data-id="p${p}" aria-expanded="${open}"><span class="avatar">${esc(p==='Team'?'T':p.split(' ').map(x=>x[0]).join('').slice(0,2))}</span><span class="pc-name">${p==='Team'?'Hele team':esc(p)}<small ${B('pt.sub',p)}></small></span><b ${B('pt.hours',p)}></b><span class="chev">${icon('chevron-down',20)}</span></button>
-      <div class="pc-body">${lp?`<div class="bu"><label>Begrote uren <input class="num" type="number" step="any" inputmode="decimal" ${da('fin.loon',lp.id,'bu')} value="${lp.bu==null?'':lp.bu}"></label><span class="muted" ${B('pt.res',p)}></span></div>`:''}${ts.length?`<table><thead><tr><th>Taak</th><th>Deadline</th><th>Voortgang</th><th>Bestede uren</th></tr></thead><tbody>
-      ${ts.map(t=>`<tr><td><span class="dot" style="background:${t.kleur||FCOL[t.fase]}"></span>${esc(t.naam)}<div class="muted" style="font-size:12px;margin-left:16px">${t.fase}${t.owners.length>1?' · met '+t.owners.filter(o=>o!==p).join(', '):''}</div></td><td class="nowrap">${fmtD(t.end)}</td><td><div class="bar"><i style="width:${tPct(t)}%"></i></div><small class="muted">${tPct(t)}%</small></td><td>${inpN('plan',t.id,'uren.'+p,(t.uren||{})[p],'placeholder="0"')}</td></tr>`).join('')}
+      <div class="pc-body">${p==='Team'?'<p class="hint">Uren die je hier bij “Hele team” invult worden niet doorgerekend naar Financiën. Registreer ze per persoon.</p>':''}${lp?`<div class="bu"><label>Begrote uren <input class="num" type="number" step="any" inputmode="decimal" ${da('fin.loon',lp.id,'bu')} value="${lp.bu==null?'':lp.bu}"></label><span class="muted" ${B('pt.res',p)}></span></div>`:''}${ts.length?`<table><thead><tr><th>Taak</th><th>Start</th><th>Deadline</th><th>Voortgang</th><th>Bestede uren</th></tr></thead><tbody>
+      ${ts.map(t=>`<tr><td><span class="dot" style="background:${t.kleur||FCOL[t.fase]}"></span>${esc(t.naam)}<div class="muted" style="font-size:12px;margin-left:16px">${t.fase}${t.owners.length>1?' · met '+t.owners.filter(o=>o!==p).join(', '):''}</div></td><td>${inpD('plan',t.id,'start',t.start)}</td><td>${inpD('plan',t.id,'end',t.end)}</td><td><div class="bar"><i style="width:${tPct(t)}%"></i></div><small class="muted">${tPct(t)}%</small></td><td>${inpN('plan',t.id,'uren.'+p,(t.uren||{})[p],'placeholder="0"')}${p==='Team'?'':`<small class="muted mon" ${B('pt.mon',t.id)}></small>`}</td></tr>`).join('')}
       </tbody></table>`:'<p class="muted" style="padding:12px 0">Nog geen taken. Voeg een taak toe in de planning.</p>'}
       <div class="dfoot"><button class="btn sm" data-act="addtask" data-id="${esc(p)}">${icon('plus',16)}Taak voor ${p==='Team'?'het team':esc(p)}</button></div></div></section>`;
   }).join('');
   const allOpen=people.every(p=>UI.open['p'+p]!==false);
-  return `<div class="panel-head"><div><h2>Takenoverzicht</h2><p>Per teamlid de taken uit de planning, met voortgang en bestede uren. Taken en voortgang pas je aan in de planning; uren registreer je hier.</p></div><button class="btn" data-act="togpeople">${icon(allOpen?'chevrons-down-up':'chevrons-up-down')}${allOpen?'Alles inklappen':'Alles uitklappen'}</button></div>
+  return `<div class="panel-head"><div><h2>Takenoverzicht</h2><p>Per teamlid de taken uit de planning, met voortgang en bestede uren. Start en deadline kun je hier ook aanpassen. De uren die je invult worden doorgerekend naar Financiën, in de maand van de deadline van de taak.</p></div><button class="btn" data-act="togpeople">${icon(allOpen?'chevrons-down-up':'chevrons-up-down')}${allOpen?'Alles inklappen':'Alles uitklappen'}</button></div>
   <div class="pgrid">${cards}</div>`;
 }
 
@@ -1168,7 +1128,7 @@ function viewPlan(){
   <section class="sd" style="margin-top:14px" id="mslistbox"><button class="sd-head" data-act="tog" data-id="mslistbox"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Mijlpalen en evaluatiemomenten</b> · ${MILESTONES.length} datums uit het projectplan</span></button><div class="sd-body" style="padding:0"><div class="mslist">${MILESTONES.map(m=>`<div class="msi"><i></i><b>${fmtD(m[0])}</b><span>${esc(m[1])}</span></div>`).join('')}</div></div></section>`;
 }
 
-const VIEWS={kpi:viewKpi,acties:viewActies,risks:viewRisks,notes:viewNotes,meet:viewMeet,fin:viewFin,taken:viewTaken,plan:viewPlan};
+const VIEWS={kpi:viewKpi,risks:viewRisks,notes:viewNotes,meet:viewMeet,fin:viewFin,taken:viewTaken,plan:viewPlan};
 function autosize(el){el.style.height='auto';if(el.offsetParent!==null||el.scrollHeight)el.style.height=Math.max(36,el.scrollHeight+2)+'px'}
 function render(keepScroll=true){
   const y=window.scrollY;
@@ -1192,10 +1152,15 @@ document.addEventListener('input',e=>{
     save();applyBindings();return;
   }
   if(!el.dataset.c)return;
+  if(el.type==='date'&&el.dataset.c==='plan'&&!el.value)return;
   const o=getObj(el.dataset.c,el.dataset.id);if(!o)return;
   let v=el.value;
   if(el.type==='number'){v=el.value===''?null:el.valueAsNumber;if(Number.isNaN(v))v=null}
   setPath(o,el.dataset.f,v);
+  if(el.dataset.c==='plan'&&(el.dataset.f==='start'||el.dataset.f==='end')&&o.start&&o.end&&o.end<o.start){
+    if(el.dataset.f==='start')o.end=o.start;else o.start=o.end;
+    $$('[data-c="plan"]').forEach(x=>{if(x.dataset.id===o.id&&(x.dataset.f==='start'||x.dataset.f==='end'))x.value=o[x.dataset.f]});
+  }
   if(el.tagName==='SELECT'&&el.classList.contains('pill'))el.dataset.v=slug(el.value);
   if(el.tagName==='TEXTAREA')autosize(el);
   // zelfde veld op meer plekken (bijv. voortgangscheck en meetmomenten-tabel)
@@ -1220,8 +1185,6 @@ const ACT={
   },
   togall(){const all=[1,2,3,4,5].every(n=>UI.open['sd'+n]);[1,2,3,4,5].forEach(n=>UI.open['sd'+n]=!all);saveUI();render()},
   gosd(a){const n=a.dataset.id;UI.open['sd'+n]=true;saveUI();const s=$('#sd'+n);s.classList.add('open');$$('textarea',s).forEach(autosize);syncTogAll();s.scrollIntoView({behavior:'smooth',block:'start'})},
-  addact(){S.acties.unshift({id:uid(),actie:'',sd:0,prio:'Midden',dl:'',wie:'Veerle',status:'Open',notitie:''});UI.f.acties={sort:'man'};save();saveUI();render();const t=$('#main tbody textarea');t&&t.focus()},
-  delact(a){if(confirm('Deze actie verwijderen?')){S.acties=S.acties.filter(x=>x.id!==a.dataset.id);save();render()}},
   addrisk(){const r={id:uid(),fase:'Algemeen',risico:'',gevolg:'',kans:'Midden',impact:'Midden',intern:'Intern',maatregel:'',voorzorg:'',eigenaar:'Veerle',status:'Open'};S.risks.push(r);UI.open['r'+r.id]=true;save();saveUI();render();const t=$('#r'+r.id+' textarea');t&&t.focus()},
   delrisk(a){if(confirm('Dit risico verwijderen?')){S.risks=S.risks.filter(x=>x.id!==a.dataset.id);save();render()}},
   nfilter(a){UI.f.notes=a.dataset.id;saveUI();render()},
