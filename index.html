@@ -59,7 +59,7 @@ svg.i{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke
 button:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 
 /* tiles */
-.tiles{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px;padding:20px 0 6px}
+.tiles{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px;padding:20px 0 6px}
 .sd-nul{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 0 12px;font-size:13.5px}
 .sd-nul label{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
 .sd-nul input{width:150px}
@@ -67,6 +67,9 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offse
 table.mt td.dt input{text-align:left;min-width:128px}
 .note[data-t=gepland]{border-left-color:var(--blue)}
 .note[data-t=uitgevoerd]{border-left-color:var(--ok)}
+.tbl tr.wlate input[data-f=deadline]{border-color:var(--bad);color:var(--bad);font-weight:700}
+.tbl tr.wdone td:nth-child(2) textarea{color:var(--muted);text-decoration:line-through}
+select.pill[data-v=herinnerd]{background-color:var(--warn-soft);color:var(--warn)}
 .pc td input[type=date]{width:132px;text-align:left;padding:4px 6px;font-size:13px}
 .pc td .mon{display:block;font-size:11.5px;margin-top:2px;white-space:nowrap}
 .bu{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0 4px;font-size:13.5px}
@@ -304,6 +307,7 @@ table.tbl tfoot td.stk{background:#f8faff}
 .overlay{position:absolute;left:330px;top:0;bottom:0;width:1232px;z-index:0;pointer-events:none;background-image:linear-gradient(to right,#e9edf6 1px,transparent 1px);background-size:56px 100%}
 .overlay .hol{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,rgba(90,100,121,.12) 0 6px,rgba(90,100,121,.03) 6px 12px)}
 .overlay .ms{position:absolute;top:0;bottom:0;border-left:1.5px dashed rgba(255,122,26,.65)}
+.overlay .ms.done{border-left-color:rgba(18,128,92,.6)}
 .overlay2{position:absolute;left:330px;top:0;bottom:0;width:1232px;z-index:3;pointer-events:none}
 .today{position:absolute;top:0;bottom:0;border-left:2px solid var(--bad)}
 .today::before{content:"vandaag";position:absolute;top:0;left:3px;font-size:11px;font-weight:800;color:#fff;background:var(--bad);padding:1px 6px;border-radius:0 0 6px 0}
@@ -316,7 +320,9 @@ table.tbl tfoot td.stk{background:#f8faff}
 .ms-row .lc{background:#f8faff;font-weight:700;min-height:34px}
 .ms-row .rc{min-height:34px;background:#f8faff}
 .ms-row .lc,.ms-row .rc{min-height:36px}
-.diamond{position:absolute;top:11px;width:14px;height:14px;background:var(--orange);transform:translateX(-7px) rotate(45deg);border-radius:3px;border:2px solid #fff;box-shadow:0 0 0 1px var(--orange)}
+.diamond{position:absolute;top:11px;width:14px;height:14px;background:var(--orange);transform:translateX(-7px) rotate(45deg);border-radius:3px;border:2px solid #fff;box-shadow:0 0 0 1px var(--orange);padding:0;cursor:pointer}
+.diamond.done{background:var(--ok);box-shadow:0 0 0 1px var(--ok)}
+.diamond:focus-visible{outline:2px solid var(--blue);outline-offset:3px}
 .t-row .lc{padding-left:18px}
 .cdot{width:16px;height:16px;border-radius:5px;background:var(--c);border:0;flex:none;padding:0;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--line)}
 .cdot:hover{box-shadow:0 0 0 2px #fff,0 0 0 3px var(--c)}
@@ -337,6 +343,9 @@ table.tbl tfoot td.stk{background:#f8faff}
 .tbar.drag{box-shadow:0 4px 14px rgba(16,32,80,.3);z-index:6}
 .hide{display:none!important}
 .mslist{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px;padding:12px 16px 16px}
+.msi{background:none;border:0;text-align:left;padding:3px 0;cursor:pointer;font:inherit;color:inherit}
+.msi:hover span{color:var(--blue);text-decoration:underline}
+.msi i.done{background:var(--ok)}
 .msi{display:flex;gap:10px;align-items:center;font-size:14px}
 .msi b{min-width:62px;color:var(--orange-dark)}
 .msi i{width:10px;height:10px;background:var(--orange);transform:rotate(45deg);border-radius:2px;flex:none}
@@ -479,6 +488,8 @@ const ICONS={
   'chevrons-up-down':'<path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>',
   'chevrons-down-up':'<path d="m7 20 5-5 5 5"/><path d="m7 4 5 5 5-5"/>',
   'clipboard-list':'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
+  hourglass:'<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
+  check:'<path d="M20 6 9 17l-5-5"/>',
   crosshair:'<circle cx="12" cy="12" r="10"/><line x1="22" x2="18" y1="12" y2="12"/><line x1="6" x2="2" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="2"/><line x1="12" x2="12" y1="22" y2="18"/>'
 };
 const icon=(n,s)=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${s?` style="width:${s}px;height:${s}px"`:''}>${ICONS[n]}</svg>`;
@@ -506,18 +517,7 @@ const FASES=[
 ];
 const FCOL=Object.fromEntries(FASES.map(f=>[f.id,f.c]));
 const SWATCH=['#0a3fd6','#00829b','#7a4dd8','#e8590c','#1a8a4f','#5a6479','#c62828','#d6338a'];
-const MILESTONES=[
-  ['2026-10-02','TR 1 · Goedgekeurd projectplan'],
-  ['2026-10-09','TR 2–4 · Meetsysteem gereed, werkende aanvraagroute (mijlpaal)'],
-  ['2026-10-12','Livegang: wekelijks meten en bijsturen start'],
-  ['2026-10-13','PDCA-evaluatie 1'],
-  ['2026-10-16','TR 5–6 · Getraind team, communicatieplan met portfolio'],
-  ['2026-11-01','5 aanvragen met de nieuwe werkwijze'],
-  ['2026-11-03','TR 9 · Tussenevaluatie + PDCA 2 (mijlpaal)'],
-  ['2026-12-04','TR 8 · Ingerichte showroom'],
-  ['2026-12-08','TR 10 · Eindevaluatie + PDCA 3'],
-  ['2026-12-18','TR 11 · Overdracht (mijlpaal) · 25 aanvragen met nieuwe werkwijze']
-];
+const milestones=()=>S.meet.filter(m=>m.datum&&m.status!=='Vervallen'&&toDay(m.datum)>=0&&toDay(m.datum)<TLDAYS).sort((a,b)=>a.datum.localeCompare(b.datum));
 const HOLIDAYS=[['2026-10-19','2026-10-25','Herfstvakantie (W8)'],['2026-12-21','2027-01-03','Kerstvakantie (W17–18)']];
 const DAYW=8, TLDAYS=154, GW=TLDAYS*DAYW;
 const MONTHS=['Sep','Okt','Nov','Dec','Jan'];
@@ -526,6 +526,16 @@ const STATLBL={ok:'Op koers',warn:'Aandacht',bad:'Bijsturen',meas:'Gemeten',none
 /* ============================================================
    Startgegevens
    ============================================================ */
+/* mijlpalen uit het projectplan als meetmoment, zodat de planning ze uit de tab Meetmomenten haalt */
+function newMilestoneMeets(){
+  const MK=(datum,titel,waarom,sd,x={})=>Object.assign({id:uid(),datum,titel,soort:'Mijlpaal',status:'Gepland',sd,kpi:'',waarom,toel:'',uitkomst:''},x);
+  return [
+    MK('2026-10-02','Goedgekeurd projectplan (TR 1)','Het projectplan is de basis voor doelen, planning en aanpak en moet eerst door opdrachtgever en team zijn goedgekeurd.',0,{status:'Uitgevoerd'}),
+    MK('2026-10-16','Getraind team en communicatieplan met portfolio (TR 5–6)','Het team moet met TopDesk kunnen werken en de campagne richting afnemers moet klaarstaan.',0),
+    MK('2026-11-01','5 aanvragen met de nieuwe werkwijze','Eerste echte test van de aanvraagroute: 5 nieuwe afnemers doorlopen het formulier en leveren verbeterpunten.',1),
+    MK('2026-12-04','Ingerichte showroom (TR 8)','Bezoekers moeten binnen een minuut zien wat de Green Office doet en wat ze kunnen aanvragen.',3)
+  ];
+}
 function defaults(){
   const K=(id,sd,titel,type,unit,eind,norm,signaal,meting,g,eindD)=>({id,sd,titel,type,unit,eind,norm,signaal,meting,g,w:MOM.map(()=>null),d:MOM.map(m=>m.d),eindmeting:null,eindD:eindD||'18 dec'});
   const n=null;
@@ -576,6 +586,8 @@ function defaults(){
     M('2026-12-18','Eindmeting overige KPI’s','KPI-meting','Laatste meting van alle KPI’s op de einddatum van het project.',0),
     M('','Meting zichtbaarheid tijdens de PR-stunt','Test','Op de dag van de PR-stunt meten hoeveel bezoekers de desk kennen en weten wat ze kunnen aanvragen (datum volgt).',3)
   ];
+  meet.push(...newMilestoneMeets());
+  const wait=[{id:uid(),wat:'TopDesk-formulier online en klaar voor livegang',van:'AskHAN (Murat Sabudak)',gevraagd:'2026-09-28',deadline:'2026-10-09',status:'Wachtend',sd:1,notitie:'Online meeting om te checken of alles in orde is voor de livegang.',ontvangen:''}];
   const L=(naam,rol,tarief,bu,toel='')=>({id:uid(),naam,rol,tarief,bu,u:MONTHS.map(()=>null),toel});
   const fin={
     kosten:[
@@ -630,12 +642,14 @@ function defaults(){
     T('Afronding','Nazorgmeting kanaalaandeel',['Veerle'],'2027-01-04','2027-01-08',0),
     T('Afronding','Afstudeerdossier afronden en inleveren',['Veerle'],'2026-12-14','2027-01-08',0)
   ];
-  return {v:1,kpis,risks,notes,meet,fin,plan};
+  return {v:1,mlAdded:true,kpis,risks,notes,meet,wait,fin,plan};
 }
 /* oudere back-ups en opgeslagen gegevens aanvullen met nieuwe onderdelen */
 function migrate(){
   S.kpis.forEach(k=>{if(!k.d)k.d=MOM.map(m=>m.d)});
-  if(!S.meet)S.meet=defaults().meet;
+  if(!S.meet){S.meet=defaults().meet;S.mlAdded=true}
+  if(!S.wait)S.wait=defaults().wait;
+  if(!S.mlAdded){S.meet.push(...newMilestoneMeets());S.mlAdded=true}
   S.plan.forEach(t=>{if(!t.uren)t.uren={}});
 }
 
@@ -860,6 +874,17 @@ BIND['pt.sub']=p=>{const ts=personTasks(p);const lp=S.fin.loon.find(x=>x.naam===
 BIND['pt.res']=p=>{const lp=S.fin.loon.find(x=>x.naam===p);if(!lp)return '';const b=lp.bu||0,h=personHours(p),r=b-h;return `Bestede uren ${nf(h,1)} · ${r>=0?'nog '+nf(r,1)+' u beschikbaar':'<span class="bad-t">'+nf(-r,1)+' u over de begroting</span>'}`};
 BIND['meet.title']=id=>{const m=S.meet.find(x=>x.id===id);return esc(m.titel||'Zonder titel')};
 BIND['tile.meet']=()=>{const u=S.meet.filter(m=>m.status==='Uitgevoerd').length,g=S.meet.filter(m=>m.status==='Gepland').length;return `${u} uitgevoerd · ${g} gepland`};
+const wLate=w=>w.status!=='Ontvangen'&&!!w.deadline&&w.deadline<todayStr();
+BIND['tile.wait']=()=>{const o=S.wait.filter(w=>w.status!=='Ontvangen');return `${o.length} openstaand · ${o.filter(wLate).length} te laat`};
+BIND['wait.row']=id=>{const w=S.wait.find(x=>x.id===id);return w?(w.status==='Ontvangen'?'wdone':wLate(w)?'wlate':''):''};
+BIND['wait.sum']=()=>{
+  const open=S.wait.filter(w=>w.status!=='Ontvangen'),late=open.filter(wLate),got=S.wait.length-open.length;
+  const next=open.filter(w=>w.deadline&&w.deadline>=todayStr()).sort((a,b)=>a.deadline.localeCompare(b.deadline))[0];
+  return `<div class="card sum"><div class="lbl">Openstaand</div><div class="val">${open.length}</div><div class="sub">nog te ontvangen</div></div>
+  <div class="card sum"><div class="lbl">Te laat</div><div class="val ${late.length?'bad':''}">${late.length}</div><div class="sub">verwachte datum verstreken</div></div>
+  <div class="card sum"><div class="lbl">Ontvangen</div><div class="val ok">${got}</div><div class="sub">afgerond</div></div>
+  <div class="card sum"><div class="lbl">Volgende verwachte datum</div><div class="val">${next?fmtD(next.deadline):'–'}</div><div class="sub">${next?esc((next.wat||'').slice(0,46)+((next.wat||'').length>46?'…':''))+' · '+esc(next.van||''):'geen datum gepland'}</div></div>`;
+};
 BIND['pt.row']=a=>{const [id,p]=a.split('|');const t=S.plan.find(x=>x.id===id);return nf(sum([t.uren&&t.uren[p]]),1)};
 
 /* ============================================================
@@ -880,6 +905,7 @@ const TABS=[
   {id:'risks',label:'Risico’s',icon:'triangle-alert',stat:'tile.risks'},
   {id:'notes',label:'Notities & afspraken',icon:'file-text',stat:'tile.notes'},
   {id:'meet',label:'Meetmomenten',icon:'clipboard-list',stat:'tile.meet'},
+  {id:'wait',label:'Waiting for',icon:'hourglass',stat:'tile.wait'},
   {id:'fin',label:'Financiën',icon:'euro',stat:'tile.fin'},
   {id:'taken',label:'Takenoverzicht',icon:'users',stat:'tile.taken'},
   {id:'plan',label:'Planning / fasering',icon:'calendar-range',stat:'tile.plan'}
@@ -984,11 +1010,12 @@ function viewNotes(){
 }
 
 /* ---------- Meetmomenten (logboek) ---------- */
-const MSOORT=['Nulmeting','KPI-meting','Interview','Evaluatie (PDCA)','Test','Overig'];
+const MSOORT=['Nulmeting','KPI-meting','Interview','Evaluatie (PDCA)','Test','Mijlpaal','Overig'];
 const MSTAT=['Gepland','Uitgevoerd','Verplaatst','Vervallen'];
 function viewMeet(){
   const f=UI.f.meet||'alle';
-  const items=[...S.meet].filter(m=>f==='alle'||m.status===f).sort((a,b)=>(a.datum||'9999').localeCompare(b.datum||'9999'));
+  const all=[...S.meet].filter(m=>f==='alle'||m.status===f).sort((a,b)=>(a.datum||'9999').localeCompare(b.datum||'9999'));
+  const miles=all.filter(m=>m.soort==='Mijlpaal'),items=all.filter(m=>m.soort!=='Mijlpaal');
   const chip=(v,l)=>`<button class="chip${f===v?' on':''}" data-act="mfilter" data-id="${v}">${l}</button>`;
   const kpiOpt=[['','Geen specifieke KPI'],...S.kpis.map(k=>[k.id,`${k.id} · ${k.titel}`])];
   const t=todayStr(),next=S.meet.filter(m=>m.status==='Gepland'&&m.datum>=t).sort((a,b)=>a.datum.localeCompare(b.datum))[0];
@@ -998,7 +1025,7 @@ function viewMeet(){
       <button class="note-head" data-act="tog" data-id="m${m.id}" aria-expanded="${open}"><span class="chev">${icon('chevron-down')}</span>${badge('meas',m.soort)}<b ${B('meet.title',m.id)}></b>${m.status==='Uitgevoerd'?badge('ok','Uitgevoerd'):badge('',m.status)}<span class="muted nowrap" style="min-width:56px;text-align:right">${m.datum?fmtD(m.datum):'datum volgt'}</span></button>
       <div class="note-body"><div class="ngrid">
         <div><label>Datum</label>${inpD('meet',m.id,'datum',m.datum)}</div>
-        <div><label>Soort moment</label>${selN('meet',m.id,'soort',MSOORT,m.soort)}</div>
+        <div><label>Soort moment</label>${selN('meet',m.id,'soort',MSOORT,m.soort).replace('data-c','data-re="1" data-c')}</div>
         <div><label>Status</label>${selP('meet',m.id,'status',MSTAT,m.status)}</div>
         <div><label>Subdoel</label>${selN('meet',m.id,'sd',SDOPT,m.sd)}</div>
         <div><label>KPI</label>${selN('meet',m.id,'kpi',kpiOpt,m.kpi)}</div>
@@ -1009,11 +1036,52 @@ function viewMeet(){
       </div><div class="dfoot"><span class="sp"></span><button class="btn sm ghost" data-act="delmeet" data-id="${m.id}">${icon('trash-2',16)}Verwijderen</button></div></div></article>`;
   }).join('');
   const nU=S.meet.filter(m=>m.status==='Uitgevoerd').length;
-  return `<div class="panel-head"><div><h2>Meetmomenten</h2><p>Je logboek van alle meetmomenten: wat het moment was, waarom het nodig was en wat eruit kwam. Open een moment voor de toelichting.</p></div><button class="btn cta" data-act="addmeet">${icon('plus')}Meetmoment vastleggen</button></div>
-  <div class="sumgrid"><div class="card sum"><div class="lbl">Meetmomenten totaal</div><div class="val">${S.meet.length}</div><div class="sub">${nU} uitgevoerd</div></div>
+  const mrows=miles.map(m=>{const open=!!UI.open['m'+m.id];return `<tbody class="rg${open?' open':''}" id="m${m.id}"><tr>
+      <td style="width:170px">${inpD('meet',m.id,'datum',m.datum)}</td>
+      <td style="min-width:260px">${inpT('meet',m.id,'titel',m.titel,'Naam van de mijlpaal')}</td>
+      <td>${selP('meet',m.id,'status',MSTAT,m.status)}</td>
+      <td class="nowrap"><button class="icon-btn rchev" data-act="tog" data-id="m${m.id}" title="Toelichting openen" aria-label="Toelichting openen">${icon('chevron-down')}</button>${del('delmeet',m.id,'Mijlpaal verwijderen')}</td>
+    </tr><tr class="rdetail"><td colspan="4"><div class="rdgrid">
+      <div><label>Subdoel</label>${selN('meet',m.id,'sd',SDOPT,m.sd)}</div>
+      <div><label>Waarom is deze mijlpaal belangrijk</label>${txa('meet',m.id,'waarom',m.waarom)}</div>
+      <div><label>Toelichting</label>${txa('meet',m.id,'toel',m.toel)}</div>
+      <div><label>Uitkomst en vervolg</label>${txa('meet',m.id,'uitkomst',m.uitkomst)}</div>
+    </div></td></tr></tbody>`}).join('');
+  return `<div class="panel-head"><div><h2>Meetmomenten</h2><p>Je logboek van alle meetmomenten en mijlpalen: wat het moment was, waarom het nodig was en wat eruit kwam.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn cta" data-act="addmile">${icon('plus')}Mijlpaal toevoegen</button><button class="btn cta" data-act="addmeet">${icon('plus')}Meetmoment vastleggen</button></div></div>
+  <div class="sumgrid"><div class="card sum"><div class="lbl">Momenten en mijlpalen totaal</div><div class="val">${S.meet.length}</div><div class="sub">${nU} uitgevoerd · ${S.meet.filter(m=>m.soort==='Mijlpaal').length} mijlpalen</div></div>
   <div class="card sum"><div class="lbl">Nog gepland</div><div class="val">${S.meet.filter(m=>m.status==='Gepland').length}</div><div class="sub">${next?'volgende: '+fmtD(next.datum):'geen datum gepland'}</div></div></div>
-  <div class="toolbar"><span class="grow"></span><div class="chips" role="group" aria-label="Filter">${chip('alle','Alle')}${chip('Gepland','Gepland')}${chip('Uitgevoerd','Uitgevoerd')}${chip('Verplaatst','Verplaatst')}${chip('Vervallen','Vervallen')}</div></div>
+  <div class="toolbar"><span class="muted">Filter op status</span><span class="grow"></span><div class="chips" role="group" aria-label="Filter">${chip('alle','Alle')}${chip('Gepland','Gepland')}${chip('Uitgevoerd','Uitgevoerd')}${chip('Verplaatst','Verplaatst')}${chip('Vervallen','Vervallen')}</div></div>
+  <h3 class="sec-title" style="margin-top:6px">Mijlpalen</h3>
+  <div class="toolbar" style="margin-top:0"><span class="muted" style="max-width:80ch">Mijlpalen met een datum staan als ruitje in de planning. Pas hier datum, naam of status aan, of voeg zelf een mijlpaal toe. Open de pijl voor de toelichting.</span></div>
+  ${miles.length?`<div class="tw"><table class="tbl"><thead><tr><th>Datum</th><th>Mijlpaal</th><th>Status</th><th></th></tr></thead>${mrows}</table></div>`:'<div class="empty-state">Geen mijlpalen in deze categorie.</div>'}
+  <h3 class="sec-title">Meetmomenten</h3>
   ${list||'<div class="empty-state">Geen meetmomenten in deze categorie.</div>'}`;
+}
+
+/* ---------- Waiting for ---------- */
+const WSTAT=['Wachtend','Herinnerd'];
+function viewWait(){
+  const f=UI.f.wait||'open',who=UI.f.waitwho||'';
+  let rows=S.wait.filter(w=>(f==='alle'||(f==='open'?w.status!=='Ontvangen':w.status==='Ontvangen'))&&(!who||w.van===who));
+  rows=[...rows].sort((a,b)=>{const ra=a.status==='Ontvangen',rb=b.status==='Ontvangen';if(ra!==rb)return ra?1:-1;if(ra)return (b.ontvangen||'').localeCompare(a.ontvangen||'');return (a.deadline||'9999').localeCompare(b.deadline||'9999')});
+  const names=[...new Set([...PEOPLE.filter(p=>p!=='Team'),'AskHAN (Murat Sabudak)','Rik van Kooten',...S.wait.map(w=>w.van).filter(Boolean)])];
+  const chip=(v,l)=>`<button class="chip${f===v?' on':''}" data-act="wfilter" data-id="${v}">${l}</button>`;
+  const body=rows.map(w=>{const done=w.status==='Ontvangen';return `<tr ${B('wait.row',w.id,'data-t="cls"')}>
+    <td>${done?`<button class="btn sm" data-act="wreopen" data-id="${w.id}">Heropenen</button>`:`<button class="btn sm pri" data-act="wdone" data-id="${w.id}">${icon('check',16)}Ontvangen</button>`}</td>
+    <td style="min-width:240px">${txa('wait',w.id,'wat',w.wat,'Waar wacht je op?')}</td>
+    <td style="min-width:180px"><input list="wnames" ${da('wait',w.id,'van')} value="${esc(w.van)}" placeholder="Van wie?"></td>
+    <td style="min-width:140px">${inpD('wait',w.id,'gevraagd',w.gevraagd)}</td>
+    <td style="min-width:140px">${inpD('wait',w.id,'deadline',w.deadline)}</td>
+    <td style="min-width:150px">${done?`<span class="badge ok">Ontvangen</span><div class="hint" style="margin:6px 0 0">op ${inpD('wait',w.id,'ontvangen',w.ontvangen)}</div>`:selP('wait',w.id,'status',WSTAT,w.status)}</td>
+    <td style="min-width:190px">${selN('wait',w.id,'sd',SDOPT,w.sd)}</td>
+    <td style="min-width:220px">${txa('wait',w.id,'notitie',w.notitie,'Notitie')}</td>
+    <td>${del('delwait',w.id)}</td></tr>`}).join('');
+  return `<div class="panel-head"><div><h2>Waiting for</h2><p>Alles waar je nog op wacht van anderen. Voeg toe wat je verwacht, van wie en tegen wanneer, en rond het af zodra je het hebt ontvangen.</p></div><button class="btn cta" data-act="addwait">${icon('plus')}Waiting for toevoegen</button></div>
+  <div class="sumgrid" ${B('wait.sum')}></div>
+  <div class="toolbar"><label>Van wie <select data-ui="f.waitwho"><option value="">Iedereen</option>${opt([...new Set(S.wait.map(w=>w.van).filter(Boolean))].sort(),who)}</select></label><span class="grow"></span><div class="chips" role="group" aria-label="Filter">${chip('open','Openstaand')}${chip('Ontvangen','Ontvangen')}${chip('alle','Alles')}</div></div>
+  <datalist id="wnames">${names.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+  <div class="tw"><table class="tbl"><thead><tr><th></th><th>Waar wacht ik op</th><th>Van wie</th><th>Gevraagd op</th><th>Verwacht uiterlijk</th><th>Status</th><th>Gekoppeld aan</th><th>Notitie</th><th></th></tr></thead>
+  <tbody>${body||'<tr><td colspan="9"><div class="empty-state">'+(f==='open'?'Je wacht nergens meer op.':'Niets gevonden met deze filters.')+'</div></td></tr>'}</tbody></table></div>`;
 }
 
 /* ---------- Financiën ---------- */
@@ -1093,10 +1161,11 @@ function viewPlan(){
     months+=`<span style="left:${d*DAYW}px;width:${(e-d)*DAYW}px">${(e-d)>=7?MONL[m]+(dt.getUTCFullYear()!==2026?' '+dt.getUTCFullYear():''):''}</span>`;d=e}
   for(let w=0;w<Math.ceil(TLDAYS/7);w++){const dt=new Date(BASE+w*7*MS);const hol=HOLIDAYS.some(h=>toDay(h[0])<=w*7+6&&toDay(h[1])>=w*7);
     weeks+=`<span class="${hol?'hol':''}" style="left:${w*56}px">${weekLabel(w)}<small>${dt.getUTCDate()}/${dt.getUTCMonth()+1}</small></span>`}
-  const ov=HOLIDAYS.map(h=>`<div class="hol" title="${h[2]}" style="left:${toDay(h[0])*DAYW}px;width:${(toDay(h[1])-toDay(h[0])+1)*DAYW}px"></div>`).join('')+MILESTONES.map(m=>`<div class="ms" style="left:${toDay(m[0])*DAYW+DAYW/2}px"></div>`).join('');
+  const ms=milestones();
+  const ov=HOLIDAYS.map(h=>`<div class="hol" title="${h[2]}" style="left:${toDay(h[0])*DAYW}px;width:${(toDay(h[1])-toDay(h[0])+1)*DAYW}px"></div>`).join('')+ms.map(m=>`<div class="ms${m.status==='Uitgevoerd'?' done':''}" style="left:${toDay(m.datum)*DAYW+DAYW/2}px"></div>`).join('');
   const td=toDay(todayStr());
   const ov2=td>=0&&td<TLDAYS?`<div class="today" style="left:${td*DAYW+DAYW/2}px"></div>`:'';
-  const mrow=`<div class="grow ms-row"><div class="lc">Mijlpalen en evaluaties</div><div class="rc">${MILESTONES.map(m=>`<span class="diamond" title="${fmtD(m[0])} · ${esc(m[1])}" style="left:${toDay(m[0])*DAYW+DAYW/2}px"></span>`).join('')}</div></div>`;
+  const mrow=`<div class="grow ms-row"><div class="lc">Meetmomenten en mijlpalen</div><div class="rc">${ms.map(m=>`<button class="diamond${m.status==='Uitgevoerd'?' done':''}" data-act="gomeet" data-id="${m.id}" title="${fmtD(m.datum)} · ${esc(m.titel||'Zonder titel')} (${m.status}), klik om te openen" aria-label="${esc(m.titel||'Meetmoment')}" style="left:${toDay(m.datum)*DAYW+DAYW/2}px"></button>`).join('')}</div></div>`;
   let rows='';
   FASES.forEach(fa=>{
     const all=S.plan.filter(t=>t.fase===fa.id);
@@ -1118,17 +1187,17 @@ function viewPlan(){
     <label>Toon taken van <select data-ui="f.plan"><option value="">Iedereen</option>${opt(PEOPLE,f)}</select></label>
     <button class="btn sm" data-act="gotoday">${icon('crosshair',16)}Naar vandaag</button>
     <button class="btn sm" data-act="phall">${icon(allPh?'chevrons-down-up':'chevrons-up-down',16)}${allPh?'Fases inklappen':'Fases uitklappen'}</button>
-    <span class="grow"></span><span class="muted" style="font-size:13px">Gearceerd = vakantie · oranje ruit = mijlpaal of evaluatie</span>
+    <span class="grow"></span><span class="muted" style="font-size:13px">Gearceerd = vakantie · ruit = meetmoment uit de tab Meetmomenten (groen = uitgevoerd)</span>
   </div>
   <div class="gscroll" id="gscroll"><div class="gantt" id="gantt">
     <div class="overlay">${ov}</div><div class="overlay2">${ov2}</div>
     <div class="grow gh"><div class="lc">Fase / taak</div><div class="rc"><div class="gh-month">${months}</div><div class="gh-week">${weeks}</div></div></div>
     ${mrow}${rows}
   </div></div>
-  <section class="sd" style="margin-top:14px" id="mslistbox"><button class="sd-head" data-act="tog" data-id="mslistbox"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Mijlpalen en evaluatiemomenten</b> · ${MILESTONES.length} datums uit het projectplan</span></button><div class="sd-body" style="padding:0"><div class="mslist">${MILESTONES.map(m=>`<div class="msi"><i></i><b>${fmtD(m[0])}</b><span>${esc(m[1])}</span></div>`).join('')}</div></div></section>`;
+  <section class="sd" style="margin-top:14px" id="mslistbox"><button class="sd-head" data-act="tog" data-id="mslistbox"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Meetmomenten en mijlpalen</b> · ${ms.length} met een datum, te beheren in de tab Meetmomenten</span></button><div class="sd-body" style="padding:0"><div class="mslist">${ms.map(m=>`<button class="msi" data-act="gomeet" data-id="${m.id}"><i class="${m.status==='Uitgevoerd'?'done':''}"></i><b>${fmtD(m.datum)}</b><span>${esc(m.titel||'Zonder titel')}</span></button>`).join('')}</div></div></section>`;
 }
 
-const VIEWS={kpi:viewKpi,risks:viewRisks,notes:viewNotes,meet:viewMeet,fin:viewFin,taken:viewTaken,plan:viewPlan};
+const VIEWS={kpi:viewKpi,risks:viewRisks,notes:viewNotes,meet:viewMeet,wait:viewWait,fin:viewFin,taken:viewTaken,plan:viewPlan};
 function autosize(el){el.style.height='auto';if(el.offsetParent!==null||el.scrollHeight)el.style.height=Math.max(36,el.scrollHeight+2)+'px'}
 function render(keepScroll=true){
   const y=window.scrollY;
@@ -1190,6 +1259,13 @@ const ACT={
   nfilter(a){UI.f.notes=a.dataset.id;saveUI();render()},
   addnote(a){const type=a.dataset.id;const n={id:uid(),type,datum:todayStr(),titel:'',tekst:'',tijd:'',wie:'',plaats:'',kpi:'',status:'Open',aanleiding:''};S.notes.push(n);UI.open['n'+n.id]=true;if(UI.f.notes&&UI.f.notes!=='alle'&&UI.f.notes!==type)UI.f.notes='alle';save();saveUI();render();const el=$('#n'+n.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delnote(a){if(confirm('Dit item verwijderen?')){S.notes=S.notes.filter(x=>x.id!==a.dataset.id);save();render()}},
+  addmile(){const m={id:uid(),datum:todayStr(),titel:'',soort:'Mijlpaal',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
+  wfilter(a){UI.f.wait=a.dataset.id;saveUI();render()},
+  addwait(){S.wait.push({id:uid(),wat:'',van:'',gevraagd:todayStr(),deadline:'',status:'Wachtend',sd:0,notitie:'',ontvangen:''});UI.f.wait='open';UI.f.waitwho='';save();saveUI();render();const t=$$('#main tbody textarea');t.length&&t[0].focus()},
+  wdone(a){const w=S.wait.find(x=>x.id===a.dataset.id);w.status='Ontvangen';w.ontvangen=todayStr();save();render();toast('Afgerond: ontvangen')},
+  wreopen(a){const w=S.wait.find(x=>x.id===a.dataset.id);w.status='Wachtend';w.ontvangen='';save();render()},
+  delwait(a){if(confirm('Deze waiting for verwijderen?')){S.wait=S.wait.filter(x=>x.id!==a.dataset.id);save();render()}},
+  gomeet(a){const id=a.dataset.id;UI.tab='meet';UI.f.meet='alle';UI.open['m'+id]=true;saveUI();render(false);const el=$('#m'+id);el&&el.scrollIntoView({block:'center'})},
   mfilter(a){UI.f.meet=a.dataset.id;saveUI();render()},
   addmeet(){const m={id:uid(),datum:todayStr(),titel:'',soort:'KPI-meting',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delmeet(a){if(confirm('Dit meetmoment verwijderen?')){S.meet=S.meet.filter(x=>x.id!==a.dataset.id);save();render()}},
