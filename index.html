@@ -73,6 +73,22 @@ select.pill[data-v=herinnerd]{background-color:var(--warn-soft);color:var(--warn
 .tlink{background:none;border:0;padding:0;font:inherit;text-align:left;cursor:pointer;color:inherit}
 .tlink:hover{color:var(--blue);text-decoration:underline}
 .icon-btn.edit:hover{background:var(--blue-soft);color:var(--blue)}
+:root{--pastel:#fff6cf;--pastel-line:#f0d56a}
+.cb{width:40px;text-align:center}
+input.chkb,.pc td input.chkb,.pk td input.chkb{width:20px;height:20px;padding:0;margin:0;accent-color:var(--blue);cursor:pointer}
+.pc tr.bezig td,.pk tr.bezig td{background:var(--pastel)}
+.pc tr.bezig td:first-child,.pk tr.bezig td:first-child{box-shadow:inset 3px 0 0 var(--pastel-line)}
+.pc td select{padding:4px 22px 4px 6px;font-size:13px;min-width:92px}
+.pkw{overflow-x:auto;margin-top:6px}
+table.pk{width:100%;border-collapse:collapse;font-size:13.5px}
+.pk th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:8px 6px}
+.pk td{padding:7px 6px;border-top:1px solid var(--line);vertical-align:middle}
+.pk tr.pkh td{background:#f8faff;font-size:14px;padding:9px 6px}
+.pk td input[type=number]{width:62px;text-align:right;padding:4px 6px}
+.pk td select{padding:4px 22px 4px 6px;font-size:13px;min-width:96px}
+.eerder{color:var(--bad);font-weight:700}
+.bked{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px 0;font-size:14px}
+.bked input{width:72px}
 .pc td input[type=date]{width:132px;text-align:left;padding:4px 6px;font-size:13px}
 .pc td .mon{display:block;font-size:11.5px;margin-top:2px;white-space:nowrap}
 .bu{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 0 4px;font-size:13.5px}
@@ -167,6 +183,8 @@ select.pill[data-v=hoog]{background-color:var(--bad-soft);color:var(--bad)}
 .sub.open>.sub-body{display:block}
 .mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .mgrid .wide{grid-column:1/-1}
+.mgrid .mh{font-size:12.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin-top:6px;padding-top:10px;border-top:1px solid var(--line)}
+.vtools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
 select.pill[data-v=in-voorbereiding]{background-color:var(--blue-soft);color:var(--blue)}
 select.pill[data-v=gehouden]{background-color:var(--ok-soft);color:var(--ok)}
 @media(max-width:1300px){.tiles{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;padding-bottom:12px}.tile{flex:0 0 178px;scroll-snap-align:start}}
@@ -521,6 +539,8 @@ const ICONS={
   check:'<path d="M20 6 9 17l-5-5"/>',
   pencil:'<path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/>',
   'calendar-check':'<path d="M8 2v4"/><path d="M16 2v4"/><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M3 10h18"/><path d="m9 16 2 2 4-4"/>',
+  copy:'<rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>',
+  'clipboard-paste':'<path d="M15 2H9a1 1 0 0 0-1 1v2c0 .6.4 1 1 1h6c.6 0 1-.4 1-1V3c0-.6-.4-1-1-1Z"/><path d="M8 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"/><path d="M16 4h2a2 2 0 0 1 2 2v2"/><path d="M21 14H11"/><path d="m15 10-4 4 4 4"/>',
   crosshair:'<circle cx="12" cy="12" r="10"/><line x1="22" x2="18" y1="12" y2="12"/><line x1="6" x2="2" y1="12" y2="12"/><line x1="12" x2="12" y1="6" y2="2"/><line x1="12" x2="12" y1="22" y2="18"/>'
 };
 const icon=(n,s)=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${s?` style="width:${s}px;height:${s}px"`:''}>${ICONS[n]}</svg>`;
@@ -568,7 +588,7 @@ function newMilestoneMeets(){
   ];
 }
 const MTG_AGENDA='1. Opening en stand van zaken\n2. KPI’s en dashboard: wat wijkt af?\n3. Acties en deadlines van vorige week\n4. Risico’s en blokkades\n5. Rondvraag en afspraken voor volgende week';
-function newMeeting(datum,soort,x={}){return Object.assign({id:uid(),datum,tijd:'',soort,wie:'',status:'In voorbereiding',doel:'',agenda:'',voorb:'',vragen:'',besproken:'',besluiten:'',acties:'',volgende:''},x)}
+function newMeeting(datum,soort,x={}){return Object.assign({id:uid(),datum,tijd:'',soort,wie:'',status:'In voorbereiding',doel:'',agenda:'',voorb:'',vragen:'',aanwezig:'',afwezig:'',taken:'',meded:'',tijdens:'',afspr:'',volgende:'',volgDatum:'',volgPunten:''},x)}
 function defaultMeetings(){
   const PDCA='Plan: wat was het doel?\nDo: wat is er gebeurd?\nCheck: wat zeggen de KPI’s en interviews?\nAct: welke verbeterpunten voeren we door?';
   return [
@@ -654,7 +674,7 @@ function defaults(){
       pes:{urenPct:25,overigPct:10,tekst:'Teamleden hebben te weinig tijd, adoptie blijft laag of TopDesk is te laat live: extra uren en extra campagnekosten nodig (zie risico’s).'}
     }
   };
-  const T=(fase,naam,owners,start,end,vg)=>({id:uid(),fase,naam,owners,start,end,vg,kleur:null,uren:{}});
+  const T=(fase,naam,owners,start,end,vg)=>({id:uid(),fase,naam,owners,start,end,vg,kleur:null,uren:{},bezig:{},blok:''});
   const plan=[
     T('Define','Aanleiding en probleem in kaart brengen',['Veerle'],'2026-09-07','2026-09-18',100),
     T('Define','Doelen, subdoelen en KPI’s opstellen',['Team'],'2026-09-14','2026-09-25',100),
@@ -685,7 +705,8 @@ function defaults(){
     T('Afronding','Nazorgmeting kanaalaandeel',['Veerle'],'2027-01-04','2027-01-08',0),
     T('Afronding','Afstudeerdossier afronden en inleveren',['Veerle'],'2026-12-14','2027-01-08',0)
   ];
-  return {v:1,mlAdded:true,kpis,risks,notes,meetings,meet,wait,fin,plan};
+  const blokken=[[7,8],[10,11],[12,13],[14,15],[16,16]].map(([van,tot])=>({id:uid(),van,tot}));
+  return {v:1,mlAdded:true,kpis,risks,notes,meetings,meet,wait,fin,plan,blokken};
 }
 /* oudere back-ups en opgeslagen gegevens aanvullen met nieuwe onderdelen */
 function migrate(){
@@ -693,8 +714,14 @@ function migrate(){
   if(!S.meet){S.meet=defaults().meet;S.mlAdded=true}
   if(!S.wait)S.wait=defaults().wait;
   if(!S.meetings)S.meetings=defaults().meetings;
+  S.meetings.forEach(m=>{if(m.aanwezig===undefined){   // oud verslagformat naar notulen-opbouw
+    const oud={besproken:m.besproken,besluiten:m.besluiten,acties:m.acties,aandacht:m.volgende};
+    Object.assign(m,{aanwezig:'',afwezig:'',taken:'',meded:'',tijdens:oud.besproken||'',afspr:[oud.besluiten,oud.acties].filter(Boolean).join('\n'),volgende:'',volgDatum:'',volgPunten:oud.aandacht||''});
+    delete m.besproken;delete m.besluiten;delete m.acties;
+  }});
   if(!S.mlAdded){S.meet.push(...newMilestoneMeets());S.mlAdded=true}
-  S.plan.forEach(t=>{if(!t.uren)t.uren={}});
+  S.plan.forEach(t=>{if(!t.uren)t.uren={};if(!t.bezig)t.bezig={};if(t.blok===undefined)t.blok=''});
+  if(!S.blokken)S.blokken=defaults().blokken;
 }
 
 /* ============================================================
@@ -914,7 +941,7 @@ BIND['fin.sc']=key=>{
 
 /* taken */
 BIND['pt.hours']=p=>nf(personHours(p),1)+' u';
-BIND['pt.sub']=p=>{const ts=personTasks(p);const lp=S.fin.loon.find(x=>x.naam===p);return `${ts.length} ${ts.length===1?'taak':'taken'} · gem. ${Math.round(avg(ts.map(tPct)))}% klaar`+(lp?` · begroot ${nf(lp.bu,0)} u`:'')};
+BIND['pt.sub']=p=>{const ts=personTasks(p);const lp=S.fin.loon.find(x=>x.naam===p);return `${ts.length} ${ts.length===1?'taak':'taken'} · gem. ${Math.round(avg(ts.map(tPct)))}% klaar`+(ts.filter(t=>isBezig(t,p)).length?` · ${ts.filter(t=>isBezig(t,p)).length} bezig`:'')+(lp?` · begroot ${nf(lp.bu,0)} u`:'')};
 BIND['pt.res']=p=>{const lp=S.fin.loon.find(x=>x.naam===p);if(!lp)return '';const b=lp.bu||0,h=personHours(p),r=b-h;return `Bestede uren ${nf(h,1)} · ${r>=0?'nog '+nf(r,1)+' u beschikbaar':'<span class="bad-t">'+nf(-r,1)+' u over de begroting</span>'}`};
 BIND['meet.title']=id=>{const m=S.meet.find(x=>x.id===id);return esc(m.titel||'Zonder titel')};
 BIND['tile.meet']=()=>{const u=S.meet.filter(m=>m.status==='Uitgevoerd').length,g=S.meet.filter(m=>m.status==='Gepland').length;return `${u} uitgevoerd · ${g} gepland`};
@@ -929,13 +956,26 @@ BIND['wait.sum']=()=>{
   <div class="card sum"><div class="lbl">Ontvangen</div><div class="val ok">${got}</div><div class="sub">afgerond</div></div>
   <div class="card sum"><div class="lbl">Volgende verwachte datum</div><div class="val">${next?fmtD(next.deadline):'–'}</div><div class="sub">${next?esc((next.wat||'').slice(0,46)+((next.wat||'').length>46?'…':''))+' · '+esc(next.van||''):'geen datum gepland'}</div></div>`;
 };
+const blokLabel=b=>b.van===b.tot?`W${b.van}`:`W${b.van}–W${b.tot}`;
+const blokEnd=b=>fromDay(b.tot*7-1);                       // zondag van de laatste week van het blok
+const blokRange=b=>`${fmtD(fromDay((b.van-1)*7))} – ${fmtD(blokEnd(b))}`;
+const isBezig=(t,p)=>!!(t.bezig&&t.bezig[p]);
+BIND['tk.row']=a=>{const [id,p]=a.split('|');const t=S.plan.find(x=>x.id===id);return t&&isBezig(t,p)?'bezig':''};
+BIND['t.done']=id=>{const t=S.plan.find(x=>x.id===id);return t&&tPct(t)>=100?'<span class="badge ok plain">af</span>':''};
+BIND['bk.sum']=id=>{
+  const b=S.blokken.find(x=>x.id===id);if(!b)return '';
+  const end=blokEnd(b),ts=S.plan.filter(t=>t.blok===id);
+  const af=ts.filter(t=>tPct(t)>=100).length,eerder=ts.filter(t=>t.end<end&&tPct(t)<100).length;
+  const pers=new Set(ts.flatMap(t=>t.owners)).size;
+  return `${ts.length} ${ts.length===1?'taak':'taken'} · ${pers} ${pers===1?'persoon':'personen'} · ${af} af${eerder?` · <span class="eerder">${eerder} met eerdere of verstreken deadline</span>`:''}`;
+};
 const phStat=id=>{const ts=S.plan.filter(t=>t.fase===id);return {n:ts.length,p:ts.length?Math.round(avg(ts.map(tPct))):0}};
 BIND['ph.pct']=id=>phStat(id).p+'%';
 BIND['ph.w']=id=>phStat(id).p;
 BIND['ph.sub']=id=>{const x=phStat(id);return `${x.n} taken · ${x.p}%`};
 BIND['t.w']=id=>{const t=S.plan.find(x=>x.id===id);return t?tPct(t):0};
 BIND['t.pt']=id=>{const t=S.plan.find(x=>x.id===id);return t?tPct(t)+'%':''};
-BIND['mtg.n']=a=>{const [id,k]=a.split('|'),m=S.meetings.find(x=>x.id===id);if(!m)return '';const keys=k==='v'?['doel','agenda','voorb','vragen']:['besproken','besluiten','acties','volgende'];return keys.filter(x=>(m[x]||'').trim()).length+'/4 ingevuld'};
+BIND['mtg.n']=a=>{const [id,k]=a.split('|'),m=S.meetings.find(x=>x.id===id);if(!m)return '';const keys=k==='v'?['doel','agenda','voorb','vragen']:VKEYS;return keys.filter(x=>(m[x]||'').replace(/[*\-•\s]/g,'')).length+(k==='v'?'/4':'/7')+' ingevuld'};
 BIND['tile.meetings']=()=>{const g=S.meetings.filter(m=>m.status==='Gehouden').length;return `${S.meetings.length} meetings · ${g} gehouden`};
 BIND['mtg.sum']=()=>{
   const t=todayStr(),cw=weekOf(t);
@@ -1077,21 +1117,59 @@ function viewNotes(){
 }
 
 /* ---------- Meetings (voorbereiding en verslag per week) ---------- */
+const VKEYS=['aanwezig','taken','meded','tijdens','afspr','volgende','volgPunten'];
 const MTSOORT=['Teammeeting','Opdrachtgever','Afstudeercoach','AskHAN','PDCA-evaluatie','Overig'];
 const weekOf=iso=>Math.floor(toDay(iso)/7)+1;           // W1 = week van 31 augustus
 const weekStart=n=>fromDay((n-1)*7);
+const longDate=iso=>{if(!iso)return '';const d=new Date(iso+'T00:00:00Z');return d.getUTCDate()+' '+MONL[d.getUTCMonth()]+' '+d.getUTCFullYear()};
+function notulenText(m){
+  const b=v=>{const ls=(v||'').split(/\r?\n/).map(x=>x.trim()).filter(x=>x.replace(/^[*\-•]\s*/,''));return (ls.length?ls:['']).map(x=>'* '+x.replace(/^[*\-•]\s*/,'')).join('\n')};
+  return `Notulen Impact Desk – ${longDate(m.datum)}\nAanwezig: ${m.aanwezig||''}\nAfwezig: ${m.afwezig||''}\nCHECK IN\n1. Voortgang taken\n${b(m.taken)}\n\n2. Mededelingen\n${b(m.meded)}\n\nCHECK OUT:\n3. Tijdens meeting voortgang\n${b(m.tijdens)}\n\n4. Afspraken en besluiten\n${b(m.afspr)}\n\n5. Volgende meeting\n${b(m.volgende)}\n\nDatum: ${m.volgDatum||''}\nBespreekpunten:\n${b(m.volgPunten)}\n`;
+}
+function parseNotulen(t){
+  const o={aanwezig:'',afwezig:'',taken:'',meded:'',tijdens:'',afspr:'',volgende:'',volgDatum:'',volgPunten:''};
+  const sec={'voortgang taken':'taken','mededelingen':'meded','tijdens meeting voortgang':'tijdens','afspraken en besluiten':'afspr','volgende meeting':'volgende'};
+  const bullet=l=>{const x=l.replace(/^\s*[*\-•–·]\s*/,'').trim();return x?'* '+x:''};
+  const buf={};let cur=null,m;
+  t.split(/\r?\n/).forEach(raw=>{
+    const l=raw.trim();if(!l||/^notulen/i.test(l)||/^check\s*(in|out)\s*:?$/i.test(l))return;
+    if(m=l.match(/^aanwezig\s*:\s*(.*)$/i)){o.aanwezig=m[1].trim();cur=null;return}
+    if(m=l.match(/^afwezig\s*:\s*(.*)$/i)){o.afwezig=m[1].trim();cur=null;return}
+    if(m=l.match(/^[1-5]\s*[.)]\s*(voortgang taken|mededelingen|tijdens meeting voortgang|afspraken en besluiten|volgende meeting)\s*:?$/i)){cur=sec[m[1].toLowerCase()];return}
+    if(m=l.match(/^datum\s*:\s*(.*)$/i)){o.volgDatum=m[1].trim();cur=null;return}
+    if(m=l.match(/^bespreekpunten\s*:\s*(.*)$/i)){cur='volgPunten';if(m[1].trim())(buf[cur]=buf[cur]||[]).push(bullet(m[1]));return}
+    if(cur)(buf[cur]=buf[cur]||[]).push(bullet(l));
+  });
+  Object.keys(buf).forEach(k=>o[k]=buf[k].filter(Boolean).join('\n'));
+  return o;
+}
+async function copyText(t){
+  try{await navigator.clipboard.writeText(t);return true}catch(e){
+    const ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();
+    let ok=false;try{ok=document.execCommand('copy')}catch(e2){}ta.remove();return ok;
+  }
+}
+function openPaste(id){
+  const dlg=$('#dlg');
+  dlg.innerHTML=`<form id="pf" autocomplete="off"><h3>Notulen plakken</h3><p class="hint" style="margin:-6px 0 12px">Plak hier je notulen. De tekst wordt verdeeld over aanwezig, afwezig, check in, check out en de volgende meeting. Dit vervangt wat er nu in het verslag staat.</p><textarea id="pt" rows="14" style="min-height:260px" placeholder="Notulen Impact Desk – 12 oktober 2026&#10;Aanwezig: …&#10;CHECK IN&#10;1. Voortgang taken&#10;* …"></textarea><div class="dfoot"><span class="sp"></span><button type="button" class="btn" id="pcancel">Annuleren</button><button class="btn pri" type="submit">Verdeel over de velden</button></div></form>`;
+  $('#pcancel',dlg).onclick=()=>dlg.close();
+  $('#pf',dlg).onsubmit=e=>{e.preventDefault();const m=S.meetings.find(x=>x.id===id);const t=$('#pt',dlg).value;if(!t.trim()){dlg.close();return}
+    Object.assign(m,parseNotulen(t));UI.open['gr'+id]=true;save();dlg.close();render();toast('Notulen verdeeld over de velden')};
+  dlg.showModal();$('#pt',dlg).focus();
+}
 function viewMeetings(){
   const flt=UI.f.mtgf||'vanaf',curW=Math.max(1,weekOf(todayStr()));
   const maxW=Math.max(19,...S.meetings.map(m=>m.datum?weekOf(m.datum):0));
   const byW={};
   S.meetings.forEach(m=>{const w=m.datum?clamp(weekOf(m.datum),1,maxW):curW;(byW[w]=byW[w]||[]).push(m)});
   const field=(m,f,label,ph,wide)=>`<div${wide?' class="wide"':''}><label class="fl">${label}</label>${txa('meetings',m.id,f,m[f],ph)}</div>`;
-  const filled=(m,keys)=>keys.filter(k=>(m[k]||'').trim()).length;
+  const bfield=(m,f,label)=>`<div class="wide"><label class="fl">${label}</label>${txa('meetings',m.id,f,m[f],'* ').replace('<textarea','<textarea class="bul"')}</div>`;
+  const filled=(m,keys)=>keys.filter(k=>(m[k]||'').replace(/[*\-•\s]/g,'')).length;
   const mtg=m=>{
     if(UI.open['gv'+m.id]===undefined)UI.open['gv'+m.id]=m.status!=='Gehouden';
     if(UI.open['gr'+m.id]===undefined)UI.open['gr'+m.id]=m.status==='Gehouden';
     const ov=!!UI.open['gv'+m.id],orr=!!UI.open['gr'+m.id];
-    const nv=filled(m,['doel','agenda','voorb','vragen']),nr=filled(m,['besproken','besluiten','acties','volgende']);
+    const nv=filled(m,['doel','agenda','voorb','vragen']),nr=filled(m,VKEYS);
     return `<article class="mtg" id="g${m.id}">
       <div class="mtg-head">
         <div><label class="fl">Soort</label>${selN('meetings',m.id,'soort',MTSOORT,m.soort)}</div>
@@ -1108,12 +1186,20 @@ function viewMeetings(){
           ${field(m,'voorb','Voorbereiden en meenemen','Wat moet er vooraf klaarstaan of mee?')}
           ${field(m,'vragen','Vragen en punten om in te brengen','Wat wil je van het team of de opdrachtgever weten?')}
         </div></div></div>
-      <div class="sub${orr?' open':''}"><button class="sub-head" data-act="tog" data-id="gr${m.id}" aria-expanded="${orr}"><span class="chev">${icon('chevron-down')}</span>Verslag (kort)<span class="muted sub-n" ${B('mtg.n',m.id+'|r')}>${nr}/4 ingevuld</span></button>
+      <div class="sub${orr?' open':''}"><button class="sub-head" data-act="tog" data-id="gr${m.id}" aria-expanded="${orr}"><span class="chev">${icon('chevron-down')}</span>Verslag (notulen)<span class="muted sub-n" ${B('mtg.n',m.id+'|r')}>${nr}/7 ingevuld</span></button>
         <div class="sub-body"><div class="mgrid">
-          ${field(m,'besproken','Besproken','Waar ging het over?',true)}
-          ${field(m,'besluiten','Besluiten','Wat is afgesproken of besloten?')}
-          ${field(m,'acties','Acties: wie, wat, wanneer','Bijvoorbeeld: Sara, handleiding afronden, vr 16 okt')}
-          ${field(m,'volgende','Aandachtspunt voor de volgende meeting','Wat neem je mee naar de volgende keer?',true)}
+          <div class="wide vtools"><button class="btn sm" data-act="mtgcopy" data-id="${m.id}">${icon('copy',16)}Kopieer als notulen</button><button class="btn sm" data-act="mtgpaste" data-id="${m.id}">${icon('clipboard-paste',16)}Notulen plakken</button><span class="muted">Opbouw volgt je notulen. Met “Kopieer als notulen” plak je alles in één keer in je notulen-document.</span></div>
+          <div><label class="fl">Aanwezig</label>${inpT('meetings',m.id,'aanwezig',m.aanwezig,'Namen, gescheiden door komma')}</div>
+          <div><label class="fl">Afwezig</label>${inpT('meetings',m.id,'afwezig',m.afwezig,'Namen, gescheiden door komma')}</div>
+          <div class="wide mh">Check in</div>
+          ${bfield(m,'taken','1. Voortgang taken')}
+          ${bfield(m,'meded','2. Mededelingen')}
+          <div class="wide mh">Check out</div>
+          ${bfield(m,'tijdens','3. Tijdens meeting voortgang')}
+          ${bfield(m,'afspr','4. Afspraken en besluiten')}
+          ${bfield(m,'volgende','5. Volgende meeting')}
+          <div><label class="fl">Datum volgende meeting</label>${inpT('meetings',m.id,'volgDatum',m.volgDatum,'Bijvoorbeeld ma 19 okt')}</div>
+          ${bfield(m,'volgPunten','Bespreekpunten volgende meeting')}
         </div></div></div>
     </article>`;
   };
@@ -1258,21 +1344,68 @@ function viewFin(){
 }
 
 /* ---------- Takenoverzicht ---------- */
-function viewTaken(){
+const tkChips=vw=>`<div class="chips" role="group" aria-label="Weergave"><button class="chip${vw==='persoon'?' on':''}" data-act="tkview" data-id="persoon">Per persoon</button><button class="chip${vw==='pakket'?' on':''}" data-act="tkview" data-id="pakket">Takenpakketten per blok</button></div>`;
+function viewPakketten(){
   const people=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan','Team'];
+  const blokken=[...S.blokken].sort((a,b)=>a.van-b.van);
+  const blokOpts=[['','Geen pakket'],...blokken.map(b=>[b.id,blokLabel(b)])];
+  const curW=Math.max(1,weekOf(todayStr()));
+  const line=(t,p,end)=>{
+    const eerder=end&&t.end<end&&tPct(t)<100;
+    return `<tr ${B('tk.row',t.id+'|'+p,'data-t="cls"')}>
+      <td class="cb"><input type="checkbox" class="chkb" ${da('plan',t.id,'bezig.'+p)} ${isBezig(t,p)?'checked':''} aria-label="Hier ben ik nu mee bezig" title="Vinkje: hier is ${esc(p)} nu mee bezig"></td>
+      <td><span class="dot" style="background:${t.kleur||FCOL[t.fase]}"></span><button class="tlink" data-act="edittask" data-id="${t.id}" title="Taak bewerken">${esc(t.naam)}</button>${t.owners.length>1?`<div class="muted" style="font-size:12px;margin-left:16px">met ${esc(t.owners.filter(o=>o!==p).join(', '))}</div>`:''}</td>
+      <td class="nowrap">${eerder?(t.end<todayStr()?`<span class="eerder" title="De deadline is verstreken en de taak is nog niet af">verlopen: ${fmtD(t.end)}</span>`:`<span class="eerder" title="Deadline ligt eerder dan het einde van het blok">eerder: ${fmtD(t.end)}</span>`):fmtD(t.end)}</td>
+      <td><div class="vgin"><input type="number" min="0" max="100" ${da('plan',t.id,'vg')} value="${tPct(t)}" aria-label="Voortgang in procenten"><span>%</span></div> <span ${B('t.done',t.id)}></span></td>
+      <td>${selN('plan',t.id,'blok',blokOpts,t.blok||'').replace('data-c','data-re="1" data-c')}</td></tr>`;
+  };
+  const table=(ts,end)=>{
+    const groups=people.map(p=>{
+      const mine=ts.filter(t=>t.owners.includes(p)).sort((a,b)=>a.end.localeCompare(b.end));
+      if(!mine.length)return '';
+      return `<tbody><tr class="pkh"><td colspan="5"><b>${p==='Team'?'Hele team':esc(p)}</b> · ${mine.length} ${mine.length===1?'taak':'taken'}${mine.filter(t=>isBezig(t,p)).length?' · '+mine.filter(t=>isBezig(t,p)).length+' bezig':''}</td></tr>${mine.map(t=>line(t,p,end)).join('')}</tbody>`;
+    }).join('');
+    return groups?`<div class="pkw"><table class="pk"><thead><tr><th>Bezig</th><th>Taak</th><th>Deadline</th><th>Voortgang</th><th>Pakket</th></tr></thead>${groups}</table></div>`:'<p class="muted" style="padding:12px 0">Nog geen taken in dit pakket. Kies bij een taak (per persoon of onder “Nog niet in een pakket”) dit blok als pakket.</p>';
+  };
+  const target=blokken.find(b=>b.tot>=curW)||blokken[blokken.length-1];
+  const blocks=blokken.map(b=>{
+    const k='bk'+b.id;if(UI.open[k]===undefined)UI.open[k]=(target&&target.id===b.id);
+    const open=!!UI.open[k],now=curW>=b.van&&curW<=b.tot;
+    return `<section class="sd${open?' open':''}" id="${k}">
+      <button class="sd-head" data-act="tog" data-id="${k}" aria-expanded="${open}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>${blokLabel(b)}</b> · ${blokRange(b)}${now?' '+badge('meas','Nu'):''}</span><span class="muted" ${B('bk.sum',b.id)}></span></button>
+      <div class="sd-body"><p class="hint" style="margin:12px 0 0">Alles in dit pakket moet af zijn op <b>${longDate(blokEnd(b))}</b>, tenzij er een eerdere deadline bij staat.</p>${table(S.plan.filter(t=>t.blok===b.id),blokEnd(b))}</div></section>`;
+  }).join('');
+  const un=S.plan.filter(t=>!t.blok||!S.blokken.some(b=>b.id===t.blok));
+  if(UI.open.bkNone===undefined)UI.open.bkNone=false;
+  const noneOpen=!!UI.open.bkNone;
+  const edit=blokken.map(b=>`<div class="bked"><span>Van week</span><input class="num" type="number" min="1" max="30" ${da('blokken',b.id,'van')} value="${b.van}" data-re="1"><span>t/m week</span><input class="num" type="number" min="1" max="30" ${da('blokken',b.id,'tot')} value="${b.tot}" data-re="1"><span class="muted">${blokRange(b)}</span>${del('delblok',b.id,'Blok verwijderen')}</div>`).join('');
+  if(UI.open.bkEdit===undefined)UI.open.bkEdit=false;
+  return `<div class="panel-head"><div><h2>Takenoverzicht</h2><p>Geef iedereen per blok van twee weken een takenpakket. Zo zie je voor jezelf per persoon waar ze in die weken mee bezig zijn en wat af moet zijn.</p></div></div>
+  <div class="toolbar">${tkChips('pakket')}<span class="grow"></span><button class="btn sm" data-act="autoblok" title="Zet openstaande taken zonder pakket in het blok waarin hun deadline valt (afgeronde taken blijven buiten de pakketten)">Verdeel taken zonder pakket op deadline</button></div>
+  ${blocks}
+  <section class="sd${noneOpen?' open':''}" id="bkNone"><button class="sd-head" data-act="tog" data-id="bkNone" aria-expanded="${noneOpen}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Nog niet in een pakket</b> · ${un.length} ${un.length===1?'taak':'taken'}</span></button>
+    <div class="sd-body">${table(un,'')}</div></section>
+  <section class="sd${UI.open.bkEdit?' open':''}" id="bkEdit"><button class="sd-head" data-act="tog" data-id="bkEdit" aria-expanded="${!!UI.open.bkEdit}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Blokken aanpassen</b> · weken per pakket</span></button>
+    <div class="sd-body"><p class="hint" style="margin:12px 0 8px">Een blok is een reeks weken (W1 = week van 31 augustus). Pas de weken aan of voeg een blok toe.</p>${edit}<div class="dfoot" style="margin-top:10px"><button class="btn sm cta" data-act="addblok">${icon('plus',16)}Blok toevoegen</button></div></div></section>`;
+}
+function viewTaken(){
+  if((UI.f.tkview||'persoon')==='pakket')return viewPakketten();
+  const people=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan','Team'];
+  const blokOpts=[['','Geen pakket'],...[...S.blokken].sort((a,b)=>a.van-b.van).map(b=>[b.id,blokLabel(b)])];
   const cards=people.map(p=>{
     const ts=personTasks(p).sort((a,b)=>a.start.localeCompare(b.start));
     const lp=S.fin.loon.find(x=>x.naam===p);
     const open=UI.open['p'+p]!==false;
     return `<section class="pc${open?' open':''}" id="p${slug(p)}">
       <button class="pc-head" data-act="tog" data-id="p${p}" aria-expanded="${open}"><span class="avatar">${esc(p==='Team'?'T':p.split(' ').map(x=>x[0]).join('').slice(0,2))}</span><span class="pc-name">${p==='Team'?'Hele team':esc(p)}<small ${B('pt.sub',p)}></small></span><b ${B('pt.hours',p)}></b><span class="chev">${icon('chevron-down',20)}</span></button>
-      <div class="pc-body">${p==='Team'?'<p class="hint">Uren die je hier bij “Hele team” invult worden niet doorgerekend naar Financiën. Registreer ze per persoon.</p>':''}${lp?`<div class="bu"><label>Begrote uren <input class="num" type="number" step="any" inputmode="decimal" ${da('fin.loon',lp.id,'bu')} value="${lp.bu==null?'':lp.bu}"></label><span class="muted" ${B('pt.res',p)}></span></div>`:''}${ts.length?`<table><thead><tr><th>Taak</th><th>Start</th><th>Deadline</th><th>Voortgang</th><th>Bestede uren</th><th></th></tr></thead><tbody>
-      ${ts.map(t=>`<tr><td><span class="dot" style="background:${t.kleur||FCOL[t.fase]}"></span><button class="tlink" data-act="edittask" data-id="${t.id}" title="Taak bewerken">${esc(t.naam)}</button><div class="muted" style="font-size:12px;margin-left:16px">${t.fase}${t.owners.length>1?' · met '+t.owners.filter(o=>o!==p).join(', '):''}</div></td><td>${inpD('plan',t.id,'start',t.start)}</td><td>${inpD('plan',t.id,'end',t.end)}</td><td><div class="vgin"><input type="number" min="0" max="100" ${da('plan',t.id,'vg')} value="${tPct(t)}" aria-label="Voortgang in procenten"><span>%</span></div><div class="bar" style="margin-top:5px"><i ${B('t.w',t.id,'data-t="w"')} style="width:${tPct(t)}%"></i></div></td><td>${inpN('plan',t.id,'uren.'+p,(t.uren||{})[p],'placeholder="0"')}${p==='Team'?'':`<small class="muted mon" ${B('pt.mon',t.id)}></small>`}</td><td class="nowrap"><button class="icon-btn edit" data-act="edittask" data-id="${t.id}" title="Taak bewerken (naam, fase, eigenaren, datums, kleur)" aria-label="Taak bewerken">${icon('pencil')}</button><button class="icon-btn" data-act="deltask" data-id="${t.id}" data-p="${esc(p)}" title="Taak weghalen" aria-label="Taak weghalen">${icon('trash-2')}</button></td></tr>`).join('')}
+      <div class="pc-body">${p==='Team'?'<p class="hint">Uren die je hier bij “Hele team” invult worden niet doorgerekend naar Financiën. Registreer ze per persoon.</p>':''}${lp?`<div class="bu"><label>Begrote uren <input class="num" type="number" step="any" inputmode="decimal" ${da('fin.loon',lp.id,'bu')} value="${lp.bu==null?'':lp.bu}"></label><span class="muted" ${B('pt.res',p)}></span></div>`:''}${ts.length?`<table><thead><tr><th>Bezig</th><th>Taak</th><th>Pakket</th><th>Start</th><th>Deadline</th><th>Voortgang</th><th>Bestede uren</th><th></th></tr></thead><tbody>
+      ${ts.map(t=>`<tr ${B('tk.row',t.id+'|'+p,'data-t="cls"')}><td class="cb"><input type="checkbox" class="chkb" ${da('plan',t.id,'bezig.'+p)} ${isBezig(t,p)?'checked':''} aria-label="Hier ben ik nu mee bezig" title="Vinkje: hier is ${esc(p)} nu mee bezig"></td><td><span class="dot" style="background:${t.kleur||FCOL[t.fase]}"></span><button class="tlink" data-act="edittask" data-id="${t.id}" title="Taak bewerken">${esc(t.naam)}</button><div class="muted" style="font-size:12px;margin-left:16px">${t.fase}${t.owners.length>1?' · met '+t.owners.filter(o=>o!==p).join(', '):''}</div></td><td>${selN('plan',t.id,'blok',blokOpts,t.blok||'')}</td><td>${inpD('plan',t.id,'start',t.start)}</td><td>${inpD('plan',t.id,'end',t.end)}</td><td><div class="vgin"><input type="number" min="0" max="100" ${da('plan',t.id,'vg')} value="${tPct(t)}" aria-label="Voortgang in procenten"><span>%</span></div><div class="bar" style="margin-top:5px"><i ${B('t.w',t.id,'data-t="w"')} style="width:${tPct(t)}%"></i></div></td><td>${inpN('plan',t.id,'uren.'+p,(t.uren||{})[p],'placeholder="0"')}${p==='Team'?'':`<small class="muted mon" ${B('pt.mon',t.id)}></small>`}</td><td class="nowrap"><button class="icon-btn edit" data-act="edittask" data-id="${t.id}" title="Taak bewerken (naam, fase, eigenaren, datums, kleur)" aria-label="Taak bewerken">${icon('pencil')}</button><button class="icon-btn" data-act="deltask" data-id="${t.id}" data-p="${esc(p)}" title="Taak weghalen" aria-label="Taak weghalen">${icon('trash-2')}</button></td></tr>`).join('')}
       </tbody></table>`:'<p class="muted" style="padding:12px 0">Nog geen taken. Voeg een taak toe in de planning.</p>'}
       <div class="dfoot"><button class="btn sm" data-act="addtask" data-id="${esc(p)}">${icon('plus',16)}Taak voor ${p==='Team'?'het team':esc(p)}</button></div></div></section>`;
   }).join('');
   const allOpen=people.every(p=>UI.open['p'+p]!==false);
   return `<div class="panel-head"><div><h2>Takenoverzicht</h2><p>Per teamlid de taken uit de planning, met voortgang en bestede uren. Klik op een taak of het potloodje om naam, fase, eigenaren, datums en kleur te bewerken. Start, deadline en voortgang kun je ook direct in de tabel aanpassen, net als in de planning. Het prullenbakje haalt de taak weg. De uren die je invult worden doorgerekend naar Financiën, in de maand van de deadline van de taak.</p></div><button class="btn" data-act="togpeople">${icon(allOpen?'chevrons-down-up':'chevrons-up-down')}${allOpen?'Alles inklappen':'Alles uitklappen'}</button></div>
+  <div class="toolbar">${tkChips('persoon')}<span class="muted">Vink een taak aan als iemand daar nu mee bezig is; de taak licht dan op.</span></div>
   <div class="pgrid">${cards}</div>`;
 }
 
@@ -1353,6 +1486,7 @@ document.addEventListener('input',e=>{
   const o=getObj(el.dataset.c,el.dataset.id);if(!o)return;
   let v=el.value;
   if(el.type==='number'){v=el.value===''?null:el.valueAsNumber;if(Number.isNaN(v))v=null}
+  else if(el.type==='checkbox')v=el.checked;
   setPath(o,el.dataset.f,v);
   if(el.dataset.c==='plan'&&(el.dataset.f==='start'||el.dataset.f==='end')&&o.start&&o.end&&o.end<o.start){
     if(el.dataset.f==='start')o.end=o.start;else o.start=o.end;
@@ -1361,10 +1495,20 @@ document.addEventListener('input',e=>{
   if(el.tagName==='SELECT'&&el.classList.contains('pill'))el.dataset.v=slug(el.value);
   if(el.tagName==='TEXTAREA')autosize(el);
   // zelfde veld op meer plekken (bijv. voortgangscheck en meetmomenten-tabel)
-  $$(`[data-c="${el.dataset.c}"][data-f="${el.dataset.f}"]`).forEach(x=>{if(x!==el&&String(x.dataset.id)===String(el.dataset.id))x.value=v==null?'':v});
+  $$(`[data-c="${el.dataset.c}"][data-f="${el.dataset.f}"]`).forEach(x=>{if(x!==el&&String(x.dataset.id)===String(el.dataset.id)){if(x.type==='checkbox')x.checked=!!v;else x.value=v==null?'':v}});
   save();
   if(el.dataset.re||el.dataset.post==='plan'){render();return}
   applyBindings();renderTiles2();
+});
+/* notulen-velden: automatisch opsommingstekens */
+document.addEventListener('focusin',e=>{const t=e.target;if(t.classList&&t.classList.contains('bul')&&!t.value.trim()){t.value='* ';t.dispatchEvent(new Event('input',{bubbles:true}));t.setSelectionRange(2,2)}});
+document.addEventListener('keydown',e=>{
+  const t=e.target;if(e.key!=='Enter'||e.shiftKey||e.isComposing||!(t.classList&&t.classList.contains('bul')))return;
+  const v=t.value,pos=t.selectionStart,ls=v.lastIndexOf('\n',pos-1)+1,line=v.slice(ls,pos);
+  e.preventDefault();
+  if(/^\*\s*$/.test(line)){t.value=v.slice(0,ls)+v.slice(pos);t.setSelectionRange(ls,ls)}   // lege bullet: lijst afsluiten
+  else{t.value=v.slice(0,pos)+'\n* '+v.slice(t.selectionEnd);t.setSelectionRange(pos+3,pos+3)}
+  t.dispatchEvent(new Event('input',{bubbles:true}));
 });
 document.addEventListener('focusout',e=>{if(e.target.dataset&&e.target.dataset.c)setTimeout(()=>{applyBindings();renderTiles2()},0)});
 function renderTiles2(){$$('#tiles [data-b]').forEach(el=>{const v=BIND[el.dataset.b]();if(el._v!==v){el._v=v;el.innerHTML=v}})}
@@ -1400,17 +1544,28 @@ const ACT={
     if(w<cw-1)UI.f.mtgf='alle';
     save();saveUI();render();const el=$('#g'+m.id);el&&(el.scrollIntoView({block:'center'}),$('textarea[data-f=doel]',el).focus());
   },
+  async mtgcopy(a){const m=S.meetings.find(x=>x.id===a.dataset.id);toast((await copyText(notulenText(m)))?'Notulen gekopieerd: plak ze in je document':'Kopiëren lukt hier niet; selecteer de tekst en kopieer handmatig')},
+  mtgpaste(a){openPaste(a.dataset.id)},
   delmtg(a){if(confirm('Deze meeting verwijderen, inclusief voorbereiding en verslag?')){S.meetings=S.meetings.filter(x=>x.id!==a.dataset.id);save();render()}},
   wfilter(a){UI.f.wait=a.dataset.id;saveUI();render()},
   addwait(){S.wait.push({id:uid(),wat:'',van:'',gevraagd:todayStr(),deadline:'',status:'Wachtend',sd:0,notitie:'',ontvangen:''});UI.f.wait='open';UI.f.waitwho='';save();saveUI();render();const t=$$('#main tbody textarea');t.length&&t[0].focus()},
   wdone(a){const w=S.wait.find(x=>x.id===a.dataset.id);w.status='Ontvangen';w.ontvangen=todayStr();save();render();toast('Afgerond: ontvangen')},
   wreopen(a){const w=S.wait.find(x=>x.id===a.dataset.id);w.status='Wachtend';w.ontvangen='';save();render()},
   delwait(a){if(confirm('Deze waiting for verwijderen?')){S.wait=S.wait.filter(x=>x.id!==a.dataset.id);save();render()}},
+  tkview(a){UI.f.tkview=a.dataset.id;saveUI();render()},
+  addblok(){const last=[...S.blokken].sort((a,b)=>b.tot-a.tot)[0];const van=last?last.tot+1:Math.max(1,weekOf(todayStr()));S.blokken.push({id:uid(),van,tot:van+1});save();render()},
+  delblok(a){if(confirm('Dit blok verwijderen? De taken blijven bestaan, maar komen onder “Nog niet in een pakket”.')){S.blokken=S.blokken.filter(x=>x.id!==a.dataset.id);S.plan.forEach(t=>{if(t.blok===a.dataset.id)t.blok=''});save();render()}},
+  autoblok(){
+    const bl=[...S.blokken].sort((a,b)=>a.van-b.van);if(!bl.length)return;
+    let n=0;
+    S.plan.forEach(t=>{if((t.blok&&bl.some(b=>b.id===t.blok))||tPct(t)>=100)return;const w=weekOf(t.end);let b=null;bl.forEach(x=>{if(x.van<=w)b=x});if(!b)b=bl[0];t.blok=b.id;n++});
+    save();render();toast(n?`${n} taken in een pakket gezet`:'Alle taken zitten al in een pakket');
+  },
   deltask(a){
     const t=S.plan.find(x=>x.id===a.dataset.id),p=a.dataset.p;if(!t)return;
     if(t.owners.length>1){
       const rest=t.owners.filter(o=>o!==p).join(', ');
-      if(confirm(`“${t.naam}” is ook van ${rest}. Alleen ${p} van deze taak halen? De taak blijft in de planning staan voor ${rest}.`)){t.owners=t.owners.filter(o=>o!==p);if(t.uren)delete t.uren[p];save();render()}
+      if(confirm(`“${t.naam}” is ook van ${rest}. Alleen ${p} van deze taak halen? De taak blijft in de planning staan voor ${rest}.`)){t.owners=t.owners.filter(o=>o!==p);if(t.uren)delete t.uren[p];if(t.bezig)delete t.bezig[p];save();render()}
     }else if(confirm(`“${t.naam}” verwijderen? De taak verdwijnt ook uit de planning.`)){S.plan=S.plan.filter(x=>x.id!==t.id);save();render()}
   },
   gomeet(a){const id=a.dataset.id;UI.tab='meet';UI.f.meet='alle';UI.open['m'+id]=true;saveUI();render(false);const el=$('#m'+id);el&&el.scrollIntoView({block:'center'})},
@@ -1461,6 +1616,7 @@ function openTask(id,preset){
   dlg.innerHTML=`<form id="tf" autocomplete="off"><h3>${id?'Taak bewerken':'Taak toevoegen'}</h3><div class="dgrid">
     <div class="full"><label class="fl" for="tn">Naam van de taak</label><input id="tn" required value="${esc(t.naam)}" placeholder="Wat moet er gebeuren?"></div>
     <div class="full"><label class="fl" for="tfase">Fase (DMAIC)</label><select id="tfase">${opt(FASES.map(f=>f.id),t.fase)}</select></div>
+    <div class="full"><label class="fl" for="tblok">Takenpakket (blok van twee weken)</label><select id="tblok">${opt([['','Geen pakket'],...[...S.blokken].sort((a,b)=>a.van-b.van).map(b=>[b.id,blokLabel(b)+' · '+blokRange(b)])],t.blok||'')}</select></div>
     <div class="full"><span class="fl">Verantwoordelijke(n)</span><div class="owners">${PEOPLE.map(p=>`<label><input type="checkbox" value="${esc(p)}"${t.owners.includes(p)?' checked':''}>${esc(p)}</label>`).join('')}</div></div>
     <div><label class="fl" for="ts">Start</label><input id="ts" type="date" required value="${t.start}"></div>
     <div><label class="fl" for="te">Deadline</label><input id="te" type="date" required value="${t.end}"></div>
@@ -1476,8 +1632,8 @@ function openTask(id,preset){
     e.preventDefault();
     const s=$('#ts',dlg).value,en=$('#te',dlg).value;
     if(en<s){alert('De deadline kan niet vóór de startdatum liggen.');return}
-    const nt=id?t:{id:uid(),uren:{}};
-    Object.assign(nt,{naam:$('#tn',dlg).value.trim(),fase:$('#tfase',dlg).value,owners:$$('.owners input:checked',dlg).map(x=>x.value),start:s,end:en,vg:clamp(+$('#tv',dlg).value||0,0,100),kleur:(f.elements.kl.value||null)});
+    const nt=id?t:{id:uid(),uren:{},bezig:{}};
+    Object.assign(nt,{naam:$('#tn',dlg).value.trim(),fase:$('#tfase',dlg).value,blok:$('#tblok',dlg).value,owners:$$('.owners input:checked',dlg).map(x=>x.value),start:s,end:en,vg:clamp(+$('#tv',dlg).value||0,0,100),kleur:(f.elements.kl.value||null)});
     if(!id)S.plan.push(nt);
     save();dlg.close();render();
     if(UI.tab==='plan'){const b=$(`.tbar[data-id="${nt.id}"]`);b&&b.scrollIntoView({block:'center',inline:'center',behavior:'smooth'})}
