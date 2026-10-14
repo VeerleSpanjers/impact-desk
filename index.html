@@ -184,6 +184,7 @@ select.pill[data-v=hoog]{background-color:var(--bad-soft);color:var(--bad)}
 .mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .mgrid .wide{grid-column:1/-1}
 select.pill[data-v=aanwezig]{background-color:var(--ok-soft);color:var(--ok)}
+select.pill[data-v=ziek]{background-color:#f1e8ff;color:#6b3fc2}
 select.pill[data-v=afwezig]{background-color:var(--warn-soft);color:var(--warn)}
 select.pill[data-v=school]{background-color:var(--blue-soft);color:var(--blue)}
 select.pill[data-v=niet-afgemeld]{background-color:var(--bad-soft);color:var(--bad)}
@@ -201,6 +202,8 @@ table.aanw th,table.aanw td{vertical-align:middle}
 .mtg-head .dl{display:flex;align-items:center}
 table.aanw td .acell{display:flex;flex-direction:column;gap:5px;min-width:150px}
 table.aanw td .acell select{width:100%}
+table.aanw td .acell .onl{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+table.aanw td .acell input.chkb{width:18px;height:18px}
 table.aanw td .acell input{padding:4px 8px;font-size:13px}
 .sm-l{font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)}
 .linkbtn{background:none;border:0;padding:0;margin-top:2px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--blue);cursor:pointer;text-align:left}
@@ -1154,13 +1157,13 @@ function viewNotes(){
 /* ---------- Meetings (voorbereiding en verslag per week) ---------- */
 const VKEYS=['aanwezig','taken','meded','tijdens','afspr','volgende','volgPunten'];
 const AANW_PEOPLE=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan'];
-const AANW_STAT=[['','–'],'Aanwezig','Afwezig','School','Niet afgemeld','Vrij/vakantie'];
-const aanwCell=(mid,p)=>{const a=(S.aanw[mid]=S.aanw[mid]||{});return (a[p]=a[p]||{s:'',r:''})};
+const AANW_STAT=[['','–'],'Aanwezig','Afwezig','Ziek','School','Niet afgemeld','Vrij/vakantie'];
+const aanwCell=(mid,p)=>{const a=(S.aanw[mid]=S.aanw[mid]||{});return (a[p]=a[p]||{s:'',r:'',o:false})};
 function aanwNames(m){
   const a=S.aanw[m.id]||{};
   const ja=AANW_PEOPLE.filter(p=>a[p]&&a[p].s==='Aanwezig');
   const nee=AANW_PEOPLE.filter(p=>a[p]&&a[p].s&&a[p].s!=='Aanwezig').map(p=>`${p} (${a[p].s==='Afwezig'&&a[p].r?a[p].r:a[p].s.toLowerCase()})`);
-  return {aanwezig:ja.join(', '),afwezig:nee.join(', ')};
+  return {aanwezig:ja.map(p=>a[p].o?`${p} (online)`:p).join(', '),afwezig:nee.join(', ')};
 }
 const MTSOORT=['Teammeeting','Opdrachtgever','Afstudeercoach','AskHAN','PDCA-evaluatie','Overig'];
 const weekOf=iso=>Math.floor(toDay(iso)/7)+1;           // W1 = week van 31 augustus
@@ -1251,15 +1254,16 @@ function viewMeetings(){
   const allTm=[...S.meetings].filter(m=>m.aanw&&m.datum).sort((a,b)=>(a.datum+(a.tijd||'')).localeCompare(b.datum+(b.tijd||'')));
   const tm=allTm.filter(m=>af==='alle'||weekOf(m.datum)>=curW-1);
   const sel=(m,p)=>{const c=aanwCell(m.id,p);
-    return `<div class="acell">${selP('aanw.'+m.id,null,p+'.s',AANW_STAT,c.s).replace('data-c','data-re="1" data-c')}${c.s==='Afwezig'?`<input ${da('aanw.'+m.id,null,p+'.r')} value="${esc(c.r)}" placeholder="Reden" aria-label="Reden van afwezigheid ${esc(p)}">`:''}</div>`};
+    const opts=AANW_STAT.map(x=>x==='Aanwezig'?['Aanwezig',c.o?'Aanwezig (online)':'Aanwezig']:x);
+    return `<div class="acell">${selP('aanw.'+m.id,null,p+'.s',opts,c.s).replace('data-c','data-re="1" data-c')}${c.s==='Aanwezig'?`<label class="onl"><input type="checkbox" class="chkb" ${da('aanw.'+m.id,null,p+'.o')} data-re="1" ${c.o?'checked':''}>Online</label>`:''}${c.s==='Afwezig'?`<input ${da('aanw.'+m.id,null,p+'.r')} value="${esc(c.r)}" placeholder="Reden" aria-label="Reden van afwezigheid ${esc(p)}">`:''}</div>`};
   const cnt=(p,st)=>allTm.filter(m=>aanwCell(m.id,p).s===st).length;
   const head=m=>`<th class="aanwh"><div class="aanwh-top">${selN('meetings',m.id,'soort',MTSOORT,m.soort).replace('data-c','data-re="1" data-c')}<button class="icon-btn" data-act="aanwoff" data-id="${m.id}" title="Uit het overzicht halen (de meeting blijft bestaan)" aria-label="Uit het overzicht halen">×</button></div><div class="aanwh-dt">${inpD('meetings',m.id,'datum',m.datum).replace('data-c','data-re="1" data-c')}<input type="time" ${da('meetings',m.id,'tijd')} value="${esc(m.tijd)}" aria-label="Tijd"></div><button class="linkbtn" data-act="aanwall" data-id="${m.id}">Iedereen aanwezig</button></th>`;
   const aanwBody=`<div class="toolbar" style="margin:12px 0 8px"><label>Toon <select data-ui="f.aanwf">${opt([['vanaf','Vorige week en komende weken'],['alle','Alle meetings']],af)}</select></label><span class="grow"></span><button class="btn sm cta" data-act="aanwadd">${icon('plus',16)}Meeting toevoegen aan overzicht</button></div>`+
   (!tm.length?'<p class="muted" style="padding:6px 0 0">Geen meetings in dit overzicht met dit filter. Voeg er een toe, of kies “Alle meetings”.</p>'
-  :`<p class="hint" style="margin:0 0 8px">Per kolom bepaal je zelf het soort meeting, de datum en de tijd. Bij “Afwezig” kun je een reden invullen. Het percentage is aanwezig ÷ alle ingevulde meetings, zonder de meetings waarbij iemand vrij of op vakantie was. Elke week staat er een wekelijkse teammeeting in; andere meetings voeg je toe met de knop hierboven of met het vinkje “Aanwezigheid” bij de meeting.</p>
-  <div class="tw"><table class="tbl aanw"><thead><tr><th class="stk">Teamlid</th>${tm.map(head).join('')}<th class="r">Aanwezig</th><th class="r">Afwezig</th><th class="r">School</th><th class="r">Niet afgemeld</th><th class="r">Vrij/vak.</th><th class="r">Aanwezig %</th></tr></thead>
-  <tbody>${AANW_PEOPLE.map(p=>{const ja=cnt(p,'Aanwezig'),nee=cnt(p,'Afwezig'),sc=cnt(p,'School'),na=cnt(p,'Niet afgemeld'),vr=cnt(p,'Vrij/vakantie');const reg=ja+nee+sc+na;const pct=reg?Math.round(ja/reg*100):null;
-    return `<tr><td class="stk"><b>${esc(p)}</b></td>${tm.map(m=>`<td>${sel(m,p)}</td>`).join('')}<td class="r">${ja}</td><td class="r">${nee}</td><td class="r">${sc}</td><td class="r ${na?'bad-t':''}">${na}</td><td class="r">${vr}</td><td class="r"><b>${pct==null?'–':pct+'%'}</b></td></tr>`}).join('')}</tbody></table></div>`);
+  :`<p class="hint" style="margin:0 0 8px">Per kolom bepaal je zelf het soort meeting, de datum en de tijd. Bij “Afwezig” kun je een reden invullen. Bij “Aanwezig” vink je “Online” aan als iemand online meedeed; fysiek aanwezig is gewoon “Aanwezig”. Het percentage is aanwezig (fysiek en online) ÷ alle ingevulde meetings, zonder de meetings waarbij iemand vrij of op vakantie was. Elke week staat er een wekelijkse teammeeting in; andere meetings voeg je toe met de knop hierboven of met het vinkje “Aanwezigheid” bij de meeting.</p>
+  <div class="tw"><table class="tbl aanw"><thead><tr><th class="stk">Teamlid</th>${tm.map(head).join('')}<th class="r">Aanwezig</th><th class="r">Afwezig</th><th class="r">Ziek</th><th class="r">School</th><th class="r">Niet afgemeld</th><th class="r">Vrij/vak.</th><th class="r">Aanwezig %</th></tr></thead>
+  <tbody>${AANW_PEOPLE.map(p=>{const ja=cnt(p,'Aanwezig'),on=allTm.filter(m=>{const c=aanwCell(m.id,p);return c.s==='Aanwezig'&&c.o}).length,nee=cnt(p,'Afwezig'),zk=cnt(p,'Ziek'),sc=cnt(p,'School'),na=cnt(p,'Niet afgemeld'),vr=cnt(p,'Vrij/vakantie');const reg=ja+nee+zk+sc+na;const pct=reg?Math.round(ja/reg*100):null;
+    return `<tr><td class="stk"><b>${esc(p)}</b></td>${tm.map(m=>`<td>${sel(m,p)}</td>`).join('')}<td class="r">${ja}${on?` <small class="muted">(${on} online)</small>`:''}</td><td class="r">${nee}</td><td class="r">${zk}</td><td class="r">${sc}</td><td class="r ${na?'bad-t':''}">${na}</td><td class="r">${vr}</td><td class="r"><b>${pct==null?'–':pct+'%'}</b></td></tr>`}).join('')}</tbody></table></div>`);
   const aanwBlock=`<section class="sd${aanwOpen?' open':''}" id="aanw"><button class="sd-head" data-act="tog" data-id="aanw" aria-expanded="${aanwOpen}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Aanwezigheid teamleden</b> · ${allTm.length} ${allTm.length===1?'meeting':'meetings'}</span></button><div class="sd-body">${aanwBody}</div></section>`;
   let weeks='';
   for(let w=1;w<=maxW;w++){
