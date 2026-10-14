@@ -183,6 +183,28 @@ select.pill[data-v=hoog]{background-color:var(--bad-soft);color:var(--bad)}
 .sub.open>.sub-body{display:block}
 .mgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .mgrid .wide{grid-column:1/-1}
+select.pill[data-v=aanwezig]{background-color:var(--ok-soft);color:var(--ok)}
+select.pill[data-v=afwezig]{background-color:var(--warn-soft);color:var(--warn)}
+select.pill[data-v=school]{background-color:var(--blue-soft);color:var(--blue)}
+select.pill[data-v=niet-afgemeld]{background-color:var(--bad-soft);color:var(--bad)}
+select.pill[data-v=vrij-vakantie]{background-color:#eef1f6;color:#3a455c}
+table.aanw th,table.aanw td{vertical-align:middle}
+.aanwh{min-width:190px;text-transform:none;letter-spacing:0;font-size:13px}
+.aanwh-top{display:flex;gap:4px;align-items:center;margin-bottom:5px}
+.aanwh-top select{padding:4px 22px 4px 8px;font-size:13px;font-weight:700;color:var(--ink)}
+.aanwh-top .icon-btn{font-size:18px;line-height:1;padding:2px 8px}
+.aanwh-dt{display:flex;gap:4px}
+.aanwh-dt input{padding:4px 6px;font-size:13px;color:var(--ink)}
+.aanwh-dt input[type=date]{min-width:128px}
+.aanwh-dt input[type=time]{width:92px}
+.chk-in{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-right:6px;cursor:pointer;white-space:nowrap}
+.mtg-head .dl{display:flex;align-items:center}
+table.aanw td .acell{display:flex;flex-direction:column;gap:5px;min-width:150px}
+table.aanw td .acell select{width:100%}
+table.aanw td .acell input{padding:4px 8px;font-size:13px}
+.sm-l{font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)}
+.linkbtn{background:none;border:0;padding:0;margin-top:2px;font-size:12px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--blue);cursor:pointer;text-align:left}
+.linkbtn:hover{text-decoration:underline}
 .mgrid .mh{font-size:12.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--blue);margin-top:6px;padding-top:10px;border-top:1px solid var(--line)}
 .vtools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px}
 select.pill[data-v=in-voorbereiding]{background-color:var(--blue-soft);color:var(--blue)}
@@ -588,7 +610,16 @@ function newMilestoneMeets(){
   ];
 }
 const MTG_AGENDA='1. Opening en stand van zaken\n2. KPI’s en dashboard: wat wijkt af?\n3. Acties en deadlines van vorige week\n4. Risico’s en blokkades\n5. Rondvraag en afspraken voor volgende week';
-function newMeeting(datum,soort,x={}){return Object.assign({id:uid(),datum,tijd:'',soort,wie:'',status:'In voorbereiding',doel:'',agenda:'',voorb:'',vragen:'',aanwezig:'',afwezig:'',taken:'',meded:'',tijdens:'',afspr:'',volgende:'',volgDatum:'',volgPunten:''},x)}
+function newMeeting(datum,soort,x={}){return Object.assign({id:uid(),datum,tijd:'',soort,aanw:['Teammeeting','PDCA-evaluatie'].includes(soort),wie:'',status:'In voorbereiding',doel:'',agenda:'',voorb:'',vragen:'',aanwezig:'',afwezig:'',taken:'',meded:'',tijdens:'',afspr:'',volgende:'',volgDatum:'',volgPunten:''},x)}
+/* een wekelijkse teammeeting voor W7 t/m W16 als er in die week nog geen is */
+function weeklyTeamMeetings(existing){
+  const out=[];
+  for(let w=7;w<=16;w++){
+    if(existing.some(m=>m.soort==='Teammeeting'&&m.datum&&weekOf(m.datum)===w))continue;
+    out.push(newMeeting(weekStart(w),'Teammeeting',{wie:'Hele team',agenda:MTG_AGENDA}));
+  }
+  return out;
+}
 function defaultMeetings(){
   const PDCA='Plan: wat was het doel?\nDo: wat is er gebeurd?\nCheck: wat zeggen de KPI’s en interviews?\nAct: welke verbeterpunten voeren we door?';
   return [
@@ -650,6 +681,7 @@ function defaults(){
   ];
   meet.push(...newMilestoneMeets());
   const meetings=defaultMeetings();
+  meetings.push(...weeklyTeamMeetings(meetings));
   const wait=[{id:uid(),wat:'TopDesk-formulier online en klaar voor livegang',van:'AskHAN (Murat Sabudak)',gevraagd:'2026-09-28',deadline:'2026-10-09',status:'Wachtend',sd:1,notitie:'Online meeting om te checken of alles in orde is voor de livegang.',ontvangen:''}];
   const L=(naam,rol,tarief,bu,toel='')=>({id:uid(),naam,rol,tarief,bu,u:MONTHS.map(()=>null),toel});
   const fin={
@@ -706,7 +738,7 @@ function defaults(){
     T('Afronding','Afstudeerdossier afronden en inleveren',['Veerle'],'2026-12-14','2027-01-08',0)
   ];
   const blokken=[[7,8],[10,11],[12,13],[14,15],[16,16]].map(([van,tot])=>({id:uid(),van,tot}));
-  return {v:1,mlAdded:true,kpis,risks,notes,meetings,meet,wait,fin,plan,blokken};
+  return {v:1,mlAdded:true,weeklyAdded:true,kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{}};
 }
 /* oudere back-ups en opgeslagen gegevens aanvullen met nieuwe onderdelen */
 function migrate(){
@@ -722,6 +754,9 @@ function migrate(){
   if(!S.mlAdded){S.meet.push(...newMilestoneMeets());S.mlAdded=true}
   S.plan.forEach(t=>{if(!t.uren)t.uren={};if(!t.bezig)t.bezig={};if(t.blok===undefined)t.blok=''});
   if(!S.blokken)S.blokken=defaults().blokken;
+  if(!S.aanw)S.aanw={};
+  S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
+  if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
 }
 
 /* ============================================================
@@ -1118,13 +1153,22 @@ function viewNotes(){
 
 /* ---------- Meetings (voorbereiding en verslag per week) ---------- */
 const VKEYS=['aanwezig','taken','meded','tijdens','afspr','volgende','volgPunten'];
+const AANW_PEOPLE=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan'];
+const AANW_STAT=[['','–'],'Aanwezig','Afwezig','School','Niet afgemeld','Vrij/vakantie'];
+const aanwCell=(mid,p)=>{const a=(S.aanw[mid]=S.aanw[mid]||{});return (a[p]=a[p]||{s:'',r:''})};
+function aanwNames(m){
+  const a=S.aanw[m.id]||{};
+  const ja=AANW_PEOPLE.filter(p=>a[p]&&a[p].s==='Aanwezig');
+  const nee=AANW_PEOPLE.filter(p=>a[p]&&a[p].s&&a[p].s!=='Aanwezig').map(p=>`${p} (${a[p].s==='Afwezig'&&a[p].r?a[p].r:a[p].s.toLowerCase()})`);
+  return {aanwezig:ja.join(', '),afwezig:nee.join(', ')};
+}
 const MTSOORT=['Teammeeting','Opdrachtgever','Afstudeercoach','AskHAN','PDCA-evaluatie','Overig'];
 const weekOf=iso=>Math.floor(toDay(iso)/7)+1;           // W1 = week van 31 augustus
 const weekStart=n=>fromDay((n-1)*7);
 const longDate=iso=>{if(!iso)return '';const d=new Date(iso+'T00:00:00Z');return d.getUTCDate()+' '+MONL[d.getUTCMonth()]+' '+d.getUTCFullYear()};
 function notulenText(m){
   const b=v=>{const ls=(v||'').split(/\r?\n/).map(x=>x.trim()).filter(x=>x.replace(/^[*\-•]\s*/,''));return (ls.length?ls:['']).map(x=>'* '+x.replace(/^[*\-•]\s*/,'')).join('\n')};
-  return `Notulen Impact Desk – ${longDate(m.datum)}\nAanwezig: ${m.aanwezig||''}\nAfwezig: ${m.afwezig||''}\nCHECK IN\n1. Voortgang taken\n${b(m.taken)}\n\n2. Mededelingen\n${b(m.meded)}\n\nCHECK OUT:\n3. Tijdens meeting voortgang\n${b(m.tijdens)}\n\n4. Afspraken en besluiten\n${b(m.afspr)}\n\n5. Volgende meeting\n${b(m.volgende)}\n\nDatum: ${m.volgDatum||''}\nBespreekpunten:\n${b(m.volgPunten)}\n`;
+  return `Notulen Impact Desk – ${longDate(m.datum)}\nAanwezig: ${m.aanwezig||aanwNames(m).aanwezig}\nAfwezig: ${m.afwezig||aanwNames(m).afwezig}\nCHECK IN\n1. Voortgang taken\n${b(m.taken)}\n\n2. Mededelingen\n${b(m.meded)}\n\nCHECK OUT:\n3. Tijdens meeting voortgang\n${b(m.tijdens)}\n\n4. Afspraken en besluiten\n${b(m.afspr)}\n\n5. Volgende meeting\n${b(m.volgende)}\n\nDatum: ${m.volgDatum||''}\nBespreekpunten:\n${b(m.volgPunten)}\n`;
 }
 function parseNotulen(t){
   const o={aanwezig:'',afwezig:'',taken:'',meded:'',tijdens:'',afspr:'',volgende:'',volgDatum:'',volgPunten:''};
@@ -1177,7 +1221,7 @@ function viewMeetings(){
         <div><label class="fl">Tijd</label><input type="time" ${da('meetings',m.id,'tijd')} value="${esc(m.tijd)}"></div>
         <div class="wd"><label class="fl">Met wie</label>${inpT('meetings',m.id,'wie',m.wie,'Wie doen er mee?')}</div>
         <div><label class="fl">Status</label>${selP('meetings',m.id,'status',['In voorbereiding','Gehouden'],m.status)}</div>
-        <div class="dl">${del('delmtg',m.id,'Meeting verwijderen')}</div>
+        <div class="dl"><label class="chk-in" title="Neem deze meeting op in het aanwezigheidsoverzicht"><input type="checkbox" class="chkb" ${da('meetings',m.id,'aanw')} data-re="1" ${m.aanw?'checked':''}>Aanwezigheid</label>${del('delmtg',m.id,'Meeting verwijderen')}</div>
       </div>
       <div class="sub${ov?' open':''}"><button class="sub-head" data-act="tog" data-id="gv${m.id}" aria-expanded="${ov}"><span class="chev">${icon('chevron-down')}</span>Voorbereiding<span class="muted sub-n" ${B('mtg.n',m.id+'|v')}>${nv}/4 ingevuld</span></button>
         <div class="sub-body"><div class="mgrid">
@@ -1188,7 +1232,7 @@ function viewMeetings(){
         </div></div></div>
       <div class="sub${orr?' open':''}"><button class="sub-head" data-act="tog" data-id="gr${m.id}" aria-expanded="${orr}"><span class="chev">${icon('chevron-down')}</span>Verslag (notulen)<span class="muted sub-n" ${B('mtg.n',m.id+'|r')}>${nr}/7 ingevuld</span></button>
         <div class="sub-body"><div class="mgrid">
-          <div class="wide vtools"><button class="btn sm" data-act="mtgcopy" data-id="${m.id}">${icon('copy',16)}Kopieer als notulen</button><button class="btn sm" data-act="mtgpaste" data-id="${m.id}">${icon('clipboard-paste',16)}Notulen plakken</button><span class="muted">Opbouw volgt je notulen. Met “Kopieer als notulen” plak je alles in één keer in je notulen-document.</span></div>
+          <div class="wide vtools"><button class="btn sm" data-act="mtgcopy" data-id="${m.id}">${icon('copy',16)}Kopieer als notulen</button><button class="btn sm" data-act="mtgpaste" data-id="${m.id}">${icon('clipboard-paste',16)}Notulen plakken</button><button class="btn sm" data-act="mtgfill" data-id="${m.id}" title="Zet aanwezig en afwezig uit het aanwezigheidsoverzicht in het verslag">${icon('users',16)}Aanwezigheid overnemen</button><span class="muted">Opbouw volgt je notulen. Met “Kopieer als notulen” plak je alles in één keer in je notulen-document.</span></div>
           <div><label class="fl">Aanwezig</label>${inpT('meetings',m.id,'aanwezig',m.aanwezig,'Namen, gescheiden door komma')}</div>
           <div><label class="fl">Afwezig</label>${inpT('meetings',m.id,'afwezig',m.afwezig,'Namen, gescheiden door komma')}</div>
           <div class="wide mh">Check in</div>
@@ -1203,6 +1247,20 @@ function viewMeetings(){
         </div></div></div>
     </article>`;
   };
+  const aanwOpen=!!UI.open.aanw,af=UI.f.aanwf||'vanaf';
+  const allTm=[...S.meetings].filter(m=>m.aanw&&m.datum).sort((a,b)=>(a.datum+(a.tijd||'')).localeCompare(b.datum+(b.tijd||'')));
+  const tm=allTm.filter(m=>af==='alle'||weekOf(m.datum)>=curW-1);
+  const sel=(m,p)=>{const c=aanwCell(m.id,p);
+    return `<div class="acell">${selP('aanw.'+m.id,null,p+'.s',AANW_STAT,c.s).replace('data-c','data-re="1" data-c')}${c.s==='Afwezig'?`<input ${da('aanw.'+m.id,null,p+'.r')} value="${esc(c.r)}" placeholder="Reden" aria-label="Reden van afwezigheid ${esc(p)}">`:''}</div>`};
+  const cnt=(p,st)=>allTm.filter(m=>aanwCell(m.id,p).s===st).length;
+  const head=m=>`<th class="aanwh"><div class="aanwh-top">${selN('meetings',m.id,'soort',MTSOORT,m.soort).replace('data-c','data-re="1" data-c')}<button class="icon-btn" data-act="aanwoff" data-id="${m.id}" title="Uit het overzicht halen (de meeting blijft bestaan)" aria-label="Uit het overzicht halen">×</button></div><div class="aanwh-dt">${inpD('meetings',m.id,'datum',m.datum).replace('data-c','data-re="1" data-c')}<input type="time" ${da('meetings',m.id,'tijd')} value="${esc(m.tijd)}" aria-label="Tijd"></div><button class="linkbtn" data-act="aanwall" data-id="${m.id}">Iedereen aanwezig</button></th>`;
+  const aanwBody=`<div class="toolbar" style="margin:12px 0 8px"><label>Toon <select data-ui="f.aanwf">${opt([['vanaf','Vorige week en komende weken'],['alle','Alle meetings']],af)}</select></label><span class="grow"></span><button class="btn sm cta" data-act="aanwadd">${icon('plus',16)}Meeting toevoegen aan overzicht</button></div>`+
+  (!tm.length?'<p class="muted" style="padding:6px 0 0">Geen meetings in dit overzicht met dit filter. Voeg er een toe, of kies “Alle meetings”.</p>'
+  :`<p class="hint" style="margin:0 0 8px">Per kolom bepaal je zelf het soort meeting, de datum en de tijd. Bij “Afwezig” kun je een reden invullen. Het percentage is aanwezig ÷ alle ingevulde meetings, zonder de meetings waarbij iemand vrij of op vakantie was. Elke week staat er een wekelijkse teammeeting in; andere meetings voeg je toe met de knop hierboven of met het vinkje “Aanwezigheid” bij de meeting.</p>
+  <div class="tw"><table class="tbl aanw"><thead><tr><th class="stk">Teamlid</th>${tm.map(head).join('')}<th class="r">Aanwezig</th><th class="r">Afwezig</th><th class="r">School</th><th class="r">Niet afgemeld</th><th class="r">Vrij/vak.</th><th class="r">Aanwezig %</th></tr></thead>
+  <tbody>${AANW_PEOPLE.map(p=>{const ja=cnt(p,'Aanwezig'),nee=cnt(p,'Afwezig'),sc=cnt(p,'School'),na=cnt(p,'Niet afgemeld'),vr=cnt(p,'Vrij/vakantie');const reg=ja+nee+sc+na;const pct=reg?Math.round(ja/reg*100):null;
+    return `<tr><td class="stk"><b>${esc(p)}</b></td>${tm.map(m=>`<td>${sel(m,p)}</td>`).join('')}<td class="r">${ja}</td><td class="r">${nee}</td><td class="r">${sc}</td><td class="r ${na?'bad-t':''}">${na}</td><td class="r">${vr}</td><td class="r"><b>${pct==null?'–':pct+'%'}</b></td></tr>`}).join('')}</tbody></table></div>`);
+  const aanwBlock=`<section class="sd${aanwOpen?' open':''}" id="aanw"><button class="sd-head" data-act="tog" data-id="aanw" aria-expanded="${aanwOpen}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Aanwezigheid teamleden</b> · ${allTm.length} ${allTm.length===1?'meeting':'meetings'}</span></button><div class="sd-body">${aanwBody}</div></section>`;
   let weeks='';
   for(let w=1;w<=maxW;w++){
     const ms=(byW[w]||[]).sort((a,b)=>((a.datum||'')+(a.tijd||'')).localeCompare((b.datum||'')+(b.tijd||'')));
@@ -1217,8 +1275,9 @@ function viewMeetings(){
       <div class="sd-body">${ms.map(mtg).join('')||'<p class="muted" style="padding:14px 0 0">Nog geen meeting in deze week.</p>'}
         <div class="dfoot" style="margin-top:12px"><button class="btn sm cta" data-act="addmtg" data-id="${w}">${icon('plus',16)}Meeting toevoegen in W${w}</button></div></div></section>`;
   }
-  return `<div class="panel-head"><div><h2>Meetings</h2><p>Per week de opbouw van je meetings: eerst de voorbereiding, daarna een kort verslag. Klap een week en een onderdeel open om het in te vullen.</p></div><button class="btn cta" data-act="addmtg" data-id="">${icon('plus')}Meeting toevoegen</button></div>
+  return `<div class="panel-head"><div><h2>Meetings</h2><p>Per week de opbouw van je meetings: eerst de voorbereiding, daarna een kort verslag. Klap een week en een onderdeel open om het in te vullen.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="aanwgo">${icon('users',18)}Aanwezigheid overzicht</button><button class="btn cta" data-act="addmtg" data-id="">${icon('plus')}Meeting toevoegen</button></div></div>
   <div class="sumgrid" ${B('mtg.sum')}></div>
+  ${aanwBlock}
   <div class="toolbar"><label>Toon <select data-ui="f.mtgf">${opt([['vanaf','Vorige week en komende weken'],['met','Alleen weken met meetings'],['alle','Alle weken']],flt)}</select></label></div>
   ${weeks||'<div class="empty-state">Geen weken om te tonen met dit filter.</div>'}`;
 }
@@ -1535,6 +1594,15 @@ const ACT={
   addnote(a){const type=a.dataset.id;const n={id:uid(),type,datum:todayStr(),titel:'',tekst:'',tijd:'',wie:'',plaats:'',kpi:'',status:'Open',aanleiding:''};S.notes.push(n);UI.open['n'+n.id]=true;if(UI.f.notes&&UI.f.notes!=='alle'&&UI.f.notes!==type)UI.f.notes='alle';UI.f.nstate='actueel';save();saveUI();render();const el=$('#n'+n.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delnote(a){if(confirm('Dit item verwijderen?')){S.notes=S.notes.filter(x=>x.id!==a.dataset.id);save();render()}},
   addmile(){const m={id:uid(),datum:todayStr(),titel:'',soort:'Mijlpaal',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
+  aanwgo(){UI.open.aanw=true;saveUI();const el=$('#aanw');if(el){el.classList.add('open');el.scrollIntoView({behavior:'smooth',block:'start'})}},
+  aanwadd(){
+    const m=newMeeting(todayStr(),'Teammeeting',{wie:'Hele team',agenda:MTG_AGENDA,aanw:true});
+    S.meetings.push(m);UI.open.aanw=true;UI.f.aanwf='alle';save();saveUI();render();
+    const el=$('#aanw');el&&el.scrollIntoView({block:'start'});toast('Meeting toegevoegd: pas soort, datum en tijd bovenaan de kolom aan');
+  },
+  aanwoff(a){const m=S.meetings.find(x=>x.id===a.dataset.id);if(m){m.aanw=false;save();render();toast('Uit het overzicht gehaald; de meeting blijft bestaan')}},
+  aanwall(a){const id=a.dataset.id;AANW_PEOPLE.forEach(p=>{const c=aanwCell(id,p);if(!c.s)c.s='Aanwezig'});save();render()},
+  mtgfill(a){const m=S.meetings.find(x=>x.id===a.dataset.id),n=aanwNames(m);if(!n.aanwezig&&!n.afwezig){toast('Vul eerst de aanwezigheid in bij het overzicht');return}m.aanwezig=n.aanwezig;m.afwezig=n.afwezig;save();render();toast('Aanwezig en afwezig ingevuld vanuit het overzicht')},
   addmtg(a){
     const wk=+a.dataset.id,cw=Math.max(1,weekOf(todayStr()));
     const datum=(!wk||wk===cw)?todayStr():weekStart(wk);
@@ -1546,7 +1614,7 @@ const ACT={
   },
   async mtgcopy(a){const m=S.meetings.find(x=>x.id===a.dataset.id);toast((await copyText(notulenText(m)))?'Notulen gekopieerd: plak ze in je document':'Kopiëren lukt hier niet; selecteer de tekst en kopieer handmatig')},
   mtgpaste(a){openPaste(a.dataset.id)},
-  delmtg(a){if(confirm('Deze meeting verwijderen, inclusief voorbereiding en verslag?')){S.meetings=S.meetings.filter(x=>x.id!==a.dataset.id);save();render()}},
+  delmtg(a){if(confirm('Deze meeting verwijderen, inclusief voorbereiding en verslag?')){S.meetings=S.meetings.filter(x=>x.id!==a.dataset.id);if(S.aanw)delete S.aanw[a.dataset.id];save();render()}},
   wfilter(a){UI.f.wait=a.dataset.id;saveUI();render()},
   addwait(){S.wait.push({id:uid(),wat:'',van:'',gevraagd:todayStr(),deadline:'',status:'Wachtend',sd:0,notitie:'',ontvangen:''});UI.f.wait='open';UI.f.waitwho='';save();saveUI();render();const t=$$('#main tbody textarea');t.length&&t[0].focus()},
   wdone(a){const w=S.wait.find(x=>x.id===a.dataset.id);w.status='Ontvangen';w.ontvangen=todayStr();save();render();toast('Afgerond: ontvangen')},
