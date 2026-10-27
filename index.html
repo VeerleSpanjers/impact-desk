@@ -587,7 +587,16 @@ const icon=(n,s)=>`<svg class="i" viewBox="0 0 24 24" aria-hidden="true"${s?` st
 /* ============================================================
    Vaste gegevens uit het projectplan
    ============================================================ */
-const PEOPLE=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan','Fabian','Team'];
+const PEOPLE=[];      // wordt gevuld vanuit S.team (teamleden) + Fabian + Team
+const TEAM0=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan','Xavier'];
+const teamList=()=>[...S.team,'Team'];
+function syncPeople(){
+  PEOPLE.length=0;PEOPLE.push(...S.team,'Fabian','Team');
+  AANW_PEOPLE.length=0;AANW_PEOPLE.push(...S.team);
+}
+function ensureLoon(naam){
+  if(!S.fin.loon.some(x=>x.naam===naam))S.fin.loon.push({id:uid(),naam,rol:'Teamlid',tarief:null,bu:0,u:MONTHS.map(()=>null),toel:'Tarief en begrote uren nog invullen.'});
+}
 const SD={
   1:{naam:'Bruikbaarheid afnemer',comp:'Bruikbaarheid',doel:'Uiterlijk 18 december 2026 doorloopt minimaal 95% van de geschatte 25 afnemers die deelnemen aan de test het nieuwe aanvraagproces zelfstandig en correct, zonder aanvullende uitleg. Vóór 1 november hebben 5 nieuwe afnemers het formulier doorlopen en zijn er 5 verbeterpunten.'},
   2:{naam:'Bruikbaarheid intern',comp:'Bruikbaarheid',doel:'Uiterlijk 18 december 2026 verwerkt het interne team minimaal 90% van de binnengekomen aanvragen op tijd zonder aanvullende afstemming en beoordeelt het team de bruikbaarheid minimaal met 8 uit 10 op basis van 3 gewogen toetscriteria.'},
@@ -738,7 +747,8 @@ function defaults(){
       L('Senna','Teamlid MT',44.31,58),
       L('Daan','Meewerkstagiair',2.19,25,'Ontwerp, strategie en uitvoering van de showroom.'),
       L('Veerle','Projectleider',null,0,'Tarief en uren nog invullen (niet opgenomen in de begroting).'),
-      L('Anouk','Teamlid MT',50.07,76,'Staat wel in de begroting van het projectplan; verwijder de rij als dat niet gewenst is.')
+      L('Anouk','Teamlid MT',50.07,76,'Staat wel in de begroting van het projectplan; verwijder de rij als dat niet gewenst is.'),
+      L('Xavier','Teamlid',null,0,'Nieuw teamlid: tarief en begrote uren nog invullen.')
     ],
     scen:{
       basis:{urenPct:0,overigPct:0,tekst:'Aanvragen komen compleet binnen en volgen vaste stappen: het team besteedt minder tijd per aanvraag (scenario A, alleen efficiëntie).'},
@@ -778,7 +788,7 @@ function defaults(){
     T('Afronding','Afstudeerdossier afronden en inleveren',['Veerle'],'2026-12-14','2027-01-08',0)
   ];
   const blokken=[[3,4],[5,6],[7,8],[10,11],[12,13],[14,15],[16,16]].map(([van,tot])=>({id:uid(),van,tot}));
-  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:2,barsV:1,blokV:2,kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{}};
+  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:2,barsV:1,blokV:2,team:TEAM0.slice(),kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{}};
 }
 /* oudere back-ups en opgeslagen gegevens aanvullen met nieuwe onderdelen */
 function migrate(){
@@ -799,6 +809,8 @@ function migrate(){
     S.blokV=2;
   }
   if(!S.aanw)S.aanw={};
+  if(!S.team)S.team=TEAM0.slice();   // Xavier erbij als teamlid
+  S.team.forEach(ensureLoon);
   S.meetings.forEach(m=>{
     if(m.agenda!==undefined||m.vragen!==undefined){m.voorb=mergeVoorb(m);delete m.agenda;delete m.vragen}
     if(m.volgende!==undefined){
@@ -848,6 +860,7 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
+  syncPeople();
 }
 
 /* ============================================================
@@ -1311,7 +1324,7 @@ function viewNotes(){
 
 /* ---------- Meetings (voorbereiding en verslag per week) ---------- */
 const VKEYS=['taken','meded','tijdens','afspr','volgPunten'];
-const AANW_PEOPLE=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan'];
+const AANW_PEOPLE=[];
 const AANW_STAT=[['','–'],'Aanwezig','Online aanwezig','Afwezig','Ziek','School','Niet afgemeld','Vrij/vakantie'];
 const aanwCell=(mid,p)=>{const a=(S.aanw[mid]=S.aanw[mid]||{});return (a[p]=a[p]||{s:'',r:''})};
 function aanwNames(m){
@@ -1559,7 +1572,7 @@ function viewFin(){
 /* ---------- Takenoverzicht ---------- */
 const tkChips=vw=>`<div class="chips" role="group" aria-label="Weergave"><button class="chip${vw==='persoon'?' on':''}" data-act="tkview" data-id="persoon">Per persoon</button><button class="chip${vw==='pakket'?' on':''}" data-act="tkview" data-id="pakket">Takenpakketten per blok</button></div>`;
 function viewPakketten(){
-  const people=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan','Team'];
+  const people=teamList();
   const blokken=[...S.blokken].sort((a,b)=>a.van-b.van);
   const blokOpts=[['','Geen pakket'],...blokken.map(b=>[b.id,blokLabel(b)])];
   const curW=Math.max(1,weekOf(todayStr()));
@@ -1594,7 +1607,7 @@ function viewPakketten(){
   const edit=blokken.map(b=>`<div class="bked"><span>Van week</span><input class="num" type="number" min="1" max="30" ${da('blokken',b.id,'van')} value="${b.van}" data-re="1"><span>t/m week</span><input class="num" type="number" min="1" max="30" ${da('blokken',b.id,'tot')} value="${b.tot}" data-re="1"><span class="muted">${blokRange(b)}</span>${del('delblok',b.id,'Blok verwijderen')}</div>`).join('');
   if(UI.open.bkEdit===undefined)UI.open.bkEdit=false;
   return `<div class="panel-head"><div><h2>Takenoverzicht</h2><p>Geef iedereen per blok van twee weken een takenpakket. Zo zie je voor jezelf per persoon waar ze in die weken mee bezig zijn en wat af moet zijn.</p></div></div>
-  <div class="toolbar">${tkChips('pakket')}<span class="grow"></span><button class="btn sm" data-act="autoblok" title="Zet openstaande taken zonder pakket in het blok waarin hun deadline valt (afgeronde taken blijven buiten de pakketten)">Verdeel taken zonder pakket op deadline</button></div>
+  <div class="toolbar">${tkChips('pakket')}<button class="btn sm" data-act="addmember">${icon('plus',16)}Teamlid toevoegen</button><span class="grow"></span><button class="btn sm" data-act="autoblok" title="Zet openstaande taken zonder pakket in het blok waarin hun deadline valt (afgeronde taken blijven buiten de pakketten)">Verdeel taken zonder pakket op deadline</button></div>
   ${blocks}
   <section class="sd${noneOpen?' open':''}" id="bkNone"><button class="sd-head" data-act="tog" data-id="bkNone" aria-expanded="${noneOpen}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Nog niet in een pakket</b> · ${un.length} ${un.length===1?'taak':'taken'}</span></button>
     <div class="sd-body">${table(un,'')}</div></section>
@@ -1603,7 +1616,7 @@ function viewPakketten(){
 }
 function viewTaken(){
   if((UI.f.tkview||'persoon')==='pakket')return viewPakketten();
-  const people=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan','Team'];
+  const people=teamList();
   const blokOpts=[['','Geen pakket'],...[...S.blokken].sort((a,b)=>a.van-b.van).map(b=>[b.id,blokLabel(b)])];
   const cards=people.map(p=>{
     const ts=personTasks(p).sort((a,b)=>a.start.localeCompare(b.start));
@@ -1618,7 +1631,7 @@ function viewTaken(){
   }).join('');
   const allOpen=people.every(p=>UI.open['p'+p]!==false);
   return `<div class="panel-head"><div><h2>Takenoverzicht</h2><p>Per teamlid de taken uit de planning, met voortgang en bestede uren. Klik op een taak of het potloodje om naam, fase, eigenaren, datums en kleur te bewerken. Start, deadline en voortgang kun je ook direct in de tabel aanpassen, net als in de planning. Het prullenbakje haalt de taak weg. De uren die je invult worden doorgerekend naar Financiën, in de maand van de deadline van de taak.</p></div><button class="btn" data-act="togpeople">${icon(allOpen?'chevrons-down-up':'chevrons-up-down')}${allOpen?'Alles inklappen':'Alles uitklappen'}</button></div>
-  <div class="toolbar">${tkChips('persoon')}<span class="muted">Vink een taak aan als iemand daar nu mee bezig is; de taak licht dan op.</span></div>
+  <div class="toolbar">${tkChips('persoon')}<button class="btn sm" data-act="addmember">${icon('plus',16)}Teamlid toevoegen</button><span class="muted">Vink een taak aan als iemand daar nu mee bezig is; de taak licht dan op.</span></div>
   <div class="pgrid">${cards}</div>`;
 }
 
@@ -1776,6 +1789,18 @@ const ACT={
   wdone(a){const w=S.wait.find(x=>x.id===a.dataset.id);w.status='Ontvangen';w.ontvangen=todayStr();save();render();toast('Afgerond: ontvangen')},
   wreopen(a){const w=S.wait.find(x=>x.id===a.dataset.id);w.status='Wachtend';w.ontvangen='';save();render()},
   delwait(a){if(confirm('Deze waiting for verwijderen?')){S.wait=S.wait.filter(x=>x.id!==a.dataset.id);save();render()}},
+  addmember(){
+    const dlg=$('#dlg');
+    dlg.innerHTML=`<form id="mf" autocomplete="off"><h3>Teamlid toevoegen</h3><p class="hint" style="margin:-6px 0 12px">Het teamlid krijgt een eigen blok in het Takenoverzicht, komt in de keuzelijsten voor taken en in het aanwezigheidsoverzicht, en krijgt een regel bij de loonkosten.</p><label class="fl" for="mn">Naam</label><input id="mn" required placeholder="Bijvoorbeeld Xavier"><div class="dfoot"><span class="sp"></span><button type="button" class="btn" id="mcancel">Annuleren</button><button class="btn pri" type="submit">Toevoegen</button></div></form>`;
+    $('#mcancel',dlg).onclick=()=>dlg.close();
+    $('#mf',dlg).onsubmit=e=>{
+      e.preventDefault();const n=$('#mn',dlg).value.trim();if(!n)return;
+      if([...S.team,'Fabian','Team'].some(x=>x.toLowerCase()===n.toLowerCase())){alert('Er is al een teamlid met deze naam.');return}
+      S.team.push(n);ensureLoon(n);syncPeople();UI.open['p'+n]=true;UI.f.tkview='persoon';save();saveUI();dlg.close();render();
+      const c=$('#p'+slug(n));c&&c.scrollIntoView({block:'center'});toast(n+' toegevoegd aan het team');
+    };
+    dlg.showModal();$('#mn',dlg).focus();
+  },
   tkview(a){UI.f.tkview=a.dataset.id;saveUI();render()},
   addblok(){const last=[...S.blokken].sort((a,b)=>b.tot-a.tot)[0];const van=last?last.tot+1:Math.max(1,weekOf(todayStr()));S.blokken.push({id:uid(),van,tot:van+1});save();render()},
   delblok(a){if(confirm('Dit blok verwijderen? De taken blijven bestaan, maar komen onder “Nog niet in een pakket”.')){S.blokken=S.blokken.filter(x=>x.id!==a.dataset.id);S.plan.forEach(t=>{if(t.blok===a.dataset.id)t.blok=''});save();render()}},
@@ -1813,7 +1838,7 @@ const ACT={
   delcost(a){if(confirm('Deze kostenpost verwijderen?')){S.fin.kosten=S.fin.kosten.filter(x=>x.id!==a.dataset.id);save();render()}},
   addloon(){S.fin.loon.push({id:uid(),naam:'',rol:'Teamlid',tarief:null,bu:0,u:MONTHS.map(()=>null),toel:''});save();render();const i=$$('#main input[data-f=naam]');i.length&&i[i.length-1].focus()},
   delloon(a){if(confirm('Deze persoon uit het loonoverzicht verwijderen?')){S.fin.loon=S.fin.loon.filter(x=>x.id!==a.dataset.id);save();render()}},
-  togpeople(){const people=['Veerle','Sara','Sam J','Sam V','Senna','Anouk','Daan','Team'];const all=people.every(p=>UI.open['p'+p]!==false);people.forEach(p=>UI.open['p'+p]=!all);saveUI();render()},
+  togpeople(){const people=teamList();const all=people.every(p=>UI.open['p'+p]!==false);people.forEach(p=>UI.open['p'+p]=!all);saveUI();render()},
   phtog(a){const k='ph'+a.dataset.id;UI.closed[k]=!UI.closed[k];saveUI();render()},
   phall(){const all=FASES.every(f=>!UI.closed['ph'+f.id]);FASES.forEach(f=>UI.closed['ph'+f.id]=all);saveUI();render()},
   gophase(a){UI.closed['ph'+a.dataset.id]=false;saveUI();render();const r=$('#ph-'+a.dataset.id);r&&r.scrollIntoView({behavior:'smooth',block:'center'})},
