@@ -60,6 +60,17 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offse
 
 /* tiles */
 .tiles{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:8px;padding:20px 0 6px}
+.due-note{margin:0 0 14px;padding:10px 14px;border-radius:10px;background:var(--orange-soft);border-left:4px solid var(--orange);font-size:14px}
+.sdcard.due{background:var(--orange-soft);border-color:var(--orange);box-shadow:0 0 0 1px var(--orange)}
+.sdcard.due .sdc-top span:first-child::after{content:" · meten";color:var(--warn);font-weight:800;white-space:nowrap}
+.sd-head.due{background:var(--orange-soft)}
+.sd-head.due:hover{background:#ffe6d0}
+.sd-head.due .sd-title::after{content:"te meten deze week";margin-left:10px;padding:2px 9px;border-radius:999px;background:var(--orange);color:var(--ink);font-size:12px;font-weight:800;vertical-align:middle}
+.kpi{position:relative}
+.kpi.due{background:var(--orange-soft);box-shadow:-18px 0 0 var(--orange-soft),18px 0 0 var(--orange-soft)}
+.kpi.due::before{content:"";position:absolute;left:-18px;top:0;bottom:0;width:4px;background:var(--orange)}
+table.mt tr.due td{background:#ffe3c9}
+table.mt tr.due td:first-child{font-weight:800;color:var(--warn)}
 .sd-nul{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 0 12px;font-size:13.5px}
 .sd-nul label{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
 .sd-nul input{width:150px}
@@ -1000,6 +1011,24 @@ BIND['sd.pct']=n=>pctTxt(sdPct(+n));
 BIND['sd.w']=n=>Math.round(sdPct(+n)*100);
 BIND['sd.sub']=n=>{const ks=sdKpis(+n);const m=ks.filter(k=>kStat(k)!=='none').length;const ok=ks.filter(k=>kStat(k)==='ok').length;return `${ok} van ${ks.length} KPI’s op koers · ${m} gemeten`};
 BIND['sd.badges']=n=>{const c={ok:0,warn:0,bad:0};sdKpis(+n).forEach(k=>{const s=kStat(k);if(c[s]!=null)c[s]++});return ['ok','warn','bad'].filter(s=>c[s]).map(s=>`<span class="badge ${s}">${c[s]} ${STATLBL[s].toLowerCase()}</span>`).join(' ')};
+/* Meetmomenten van deze week: gekleurd zolang de waarde nog niet is ingevuld */
+const wkNow=()=>{const cw=Math.max(1,weekOf(todayStr()));return {cw,ws:weekStart(cw),we:fromDay(cw*7-1)}};
+const dueIdx=k=>{
+  const {ws,we}=wkNow();
+  if(k.bars){const d=k.d[1];return d&&d>=ws&&d<=we&&!k.bars.some(b=>b.w!=null)?[1]:[]}
+  return k.d.map((d,i)=>i).filter(i=>{const d=k.d[i];if(!d||d<ws||d>we)return false;if(i===0&&k.nulNvt)return false;return k.w[i]==null});
+};
+const kpiDue=k=>dueIdx(k).length>0;
+BIND['kpi.due']=id=>kpiDue(KPI(id))?'due':'';
+BIND['kpi.rowdue']=a=>{const [id,i]=a.split('|');return dueIdx(KPI(id)).includes(+i)?'due':''};
+BIND['sd.due']=n=>sdKpis(+n).some(kpiDue)?'due':'';
+BIND['due.note']=()=>{
+  const {cw,ws,we}=wkNow(),ks=S.kpis.filter(kpiDue),sds=[...new Set(ks.map(k=>k.sd))];
+  const holi=(ws<='2026-10-25'&&we>='2026-10-17')?' <b class="bad-t">Herfstvakantie: niet meten.</b>':'';
+  return ks.length
+    ?`<b>W${cw} · ${fmtD(ws)} – ${fmtD(we)}:</b> ${ks.length} ${ks.length===1?'KPI':'KPI’s'} te meten, in subdoel ${sds.join(', ')}. Wat oplicht moet deze week gemeten worden; de kleur verdwijnt zodra je de waarde invult.${holi}`
+    :`<b>W${cw} · ${fmtD(ws)} – ${fmtD(we)}:</b> deze week hoef je niets te meten.${holi}`;
+};
 BIND['kpi.sum']=()=>{
   const c={ok:0,warn:0,bad:0,meas:0,none:0};S.kpis.forEach(k=>c[kStat(k)]++);
   const p=allPct();
@@ -1204,11 +1233,11 @@ function renderTiles(){
 /* ---------- KPI ---------- */
 function viewKpi(){
   const allOpen=[1,2,3,4,5].every(n=>UI.open['sd'+n]);
-  const cards=[1,2,3,4,5].map(n=>`<button class="sdcard" data-act="gosd" data-id="${n}"><span class="sdc-top"><span>Subdoel ${n}</span><span class="sdc-comp">${SD[n].comp}</span></span><span class="sdc-name">${SD[n].naam}</span><span class="sdc-pct" ${B('sd.pct',n)}></span><span class="bar"><i ${B('sd.w',n,'data-t="w"')}></i></span><span class="sdc-sub" ${B('sd.sub',n)}></span></button>`).join('');
+  const cards=[1,2,3,4,5].map(n=>`<button class="sdcard" ${B('sd.due',n,'data-t="cls" data-base="sdcard"')} data-act="gosd" data-id="${n}"><span class="sdc-top"><span>Subdoel ${n}</span><span class="sdc-comp">${SD[n].comp}</span></span><span class="sdc-name">${SD[n].naam}</span><span class="sdc-pct" ${B('sd.pct',n)}></span><span class="bar"><i ${B('sd.w',n,'data-t="w"')}></i></span><span class="sdc-sub" ${B('sd.sub',n)}></span></button>`).join('');
   const secs=[1,2,3,4,5].map(n=>{
     const open=!!UI.open['sd'+n];
     return `<section class="sd${open?' open':''}" id="sd${n}">
-    <button class="sd-head" data-act="tog" data-id="sd${n}" aria-expanded="${open}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Subdoel ${n}</b> · ${SD[n].naam}</span><span ${B('sd.badges',n)}></span><span class="sd-mini"><span class="bar sm"><i ${B('sd.w',n,'data-t="w"')}></i></span><span ${B('sd.pct',n)}></span></span></button>
+    <button class="sd-head" ${B('sd.due',n,'data-t="cls" data-base="sd-head"')} data-act="tog" data-id="sd${n}" aria-expanded="${open}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Subdoel ${n}</b> · ${SD[n].naam}</span><span ${B('sd.badges',n)}></span><span class="sd-mini"><span class="bar sm"><i ${B('sd.w',n,'data-t="w"')}></i></span><span ${B('sd.pct',n)}></span></span></button>
     <div class="sd-body">
       <p class="sd-doel">${SD[n].doel}</p>
       <div class="sd-nul"><label>Nulmeting van dit subdoel <input type="date" data-sdnul="${n}" value="${esc((sdKpis(n)[0]||{d:['']}).d[0])}"></label><span class="muted">Zet de nulmeting-datum van alle KPI’s in dit subdoel in één keer. Per KPI kun je alle meetdata ook apart wijzigen in de tabel Meetmoment.</span></div>
@@ -1216,6 +1245,7 @@ function viewKpi(){
       ${sdKpis(n).map(k=>kpiHtml(k)).join('')}
     </div></section>`}).join('');
   return `<div class="panel-head"><div><h2>Subdoelen en KPI’s</h2><p>Per subdoel de KPI’s met norm, bijsturingssignaal en meetmomenten. Vul de werkelijke waarden in; status, voortgang en grafiek rekenen mee.</p></div></div>
+  <p class="due-note" ${B('due.note')}></p>
   <div class="sumgrid" ${B('kpi.sum')}></div>
   <h3 class="sec-title">Voortgang per subdoel in één oogopslag</h3>
   <div class="sdcards">${cards}</div>
@@ -1224,7 +1254,7 @@ function viewKpi(){
 }
 function kpiBarsHtml(k){
   const rows=k.bars.map((b,i)=>`<tr><td>${inpT('kpis',k.id,'bars.'+i+'.l',b.l,'Categorie')}</td><td>${inpN('kpis',k.id,'bars.'+i+'.g',b.g,'placeholder="–"')}</td><td>${inpN('kpis',k.id,'bars.'+i+'.w',b.w,'placeholder="–"')}</td><td class="pc" ${B('kpi.barpct',k.id+'|'+i)}></td><td>${k.bars.length>1?`<button class="icon-btn" data-act="delbar" data-id="${k.id}" data-i="${i}" title="Categorie verwijderen" aria-label="Categorie verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('');
-  return `<article class="kpi">
+  return `<article class="kpi" ${B('kpi.due',k.id,'data-t="cls" data-base="kpi"')}>
     <div class="kt">
       <div class="kc kc-title"><span class="kid">${k.id}</span><div style="flex:1"><span class="kl">Titel KPI</span>${txa('kpis',k.id,'titel',k.titel)}</div></div>
       <div class="kc"><span class="kl">Type</span>${selP('kpis',k.id,'type',['Strategisch','Proces'],k.type)}</div>
@@ -1244,7 +1274,7 @@ function kpiBarsHtml(k){
 function kpiHtml(k){
   if(k.bars)return kpiBarsHtml(k);
   const u=k.unit==='%'?'%':'',cur=curIdx(k);
-  return `<article class="kpi">
+  return `<article class="kpi" ${B('kpi.due',k.id,'data-t="cls" data-base="kpi"')}>
     <div class="kt">
       <div class="kc kc-title"><span class="kid">${k.id}</span><div style="flex:1"><span class="kl">Titel KPI</span>${txa('kpis',k.id,'titel',k.titel)}</div></div>
       <div class="kc"><span class="kl">Type</span>${selP('kpis',k.id,'type',['Strategisch','Proces'],k.type)}</div>
@@ -1257,7 +1287,7 @@ function kpiHtml(k){
     <div class="kviz">
       <div class="chartbox"><div class="legend"><span><i class="g"></i>Gewenst</span><span><i></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span></div><div ${B('kpi.chart',k.id)}></div></div>
       <div><table class="mt"><thead><tr><th>Meetmoment (datum)</th>${k.basis?'<th>Gewenst (aantal)</th><th class="pc">%</th><th>Werkelijk (aantal)</th><th class="pc">%</th>':'<th>Gewenst</th><th>Werkelijk</th>'}<th></th><th></th></tr></thead><tbody>
-        ${k.d.map((d,i)=>`<tr${i===cur?' class="cur"':''}><td class="dt">${i===0?'<small>Nulmeting</small>':''}${inpD('kpis',k.id,'d.'+i,d).replace('data-c','data-re="1" data-c')}${inHerfst(d)?'<small class="bad-t">Herfstvakantie: niet meten</small>':''}${i>0&&!d?'<small class="muted">Datum volgt</small>':''}</td><td><input class="num" type="number" step="any" inputmode="decimal" ${da('kpis',k.id,'g.'+i)} value="${k.g[i]==null?'':k.g[i]}" placeholder="–" ${B('kpi.gph',k.id+'|'+i,'data-t="ph"')}></td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|g.'+i)}></td>`:''}<td>${inpN('kpis',k.id,'w.'+i,k.w[i],'placeholder="–"')}</td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|w.'+i)}></td>`:''}<td ${B('kpi.mstat',k.id+'|'+i)}></td><td>${i>0?`<button class="icon-btn" data-act="delmom" data-id="${k.id}" data-i="${i}" title="Meetmoment verwijderen" aria-label="Meetmoment verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('')}
+        ${k.d.map((d,i)=>`<tr ${B('kpi.rowdue',k.id+'|'+i,`data-t="cls" data-base="${i===cur?'cur':''}"`)}><td class="dt">${i===0?'<small>Nulmeting</small>':''}${inpD('kpis',k.id,'d.'+i,d).replace('data-c','data-re="1" data-c')}${inHerfst(d)?'<small class="bad-t">Herfstvakantie: niet meten</small>':''}${i>0&&!d?'<small class="muted">Datum volgt</small>':''}</td><td><input class="num" type="number" step="any" inputmode="decimal" ${da('kpis',k.id,'g.'+i)} value="${k.g[i]==null?'':k.g[i]}" placeholder="–" ${B('kpi.gph',k.id+'|'+i,'data-t="ph"')}></td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|g.'+i)}></td>`:''}<td>${inpN('kpis',k.id,'w.'+i,k.w[i],'placeholder="–"')}</td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|w.'+i)}></td>`:''}<td ${B('kpi.mstat',k.id+'|'+i)}></td><td>${i>0?`<button class="icon-btn" data-act="delmom" data-id="${k.id}" data-i="${i}" title="Meetmoment verwijderen" aria-label="Meetmoment verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('')}
       </tbody></table>
       <div style="margin-top:8px"><button class="btn sm" data-act="addmom" data-id="${k.id}">${icon('plus',16)}Meetmoment toevoegen</button></div>
       <p class="hint" style="margin-top:6px">Hier staan alleen de momenten waarop deze KPI wordt gemeten; niet elke KPI is wekelijks. Op 17 t/m 25 oktober (herfstvakantie) wordt niet gemeten. Grijze waarden bij Gewenst zijn automatisch: de lijn loopt gelijkmatig omhoog van de startwaarde (nulmeting) naar de volgende norm.</p>
