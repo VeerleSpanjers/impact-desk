@@ -169,7 +169,7 @@ select.pill[data-v=hoog]{background-color:var(--bad-soft);color:var(--bad)}
 .val.ok{color:var(--ok)}.val.bad{color:var(--bad)}.val.warn{color:var(--warn)}
 
 /* ===== KPI tab ===== */
-.sdcards{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:12px}
+.sdcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px}
 .sdcard{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;text-align:left;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:6px}
 .sdcard:hover{border-color:var(--blue-mid)}
 .sdc-top{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.05em}
@@ -609,13 +609,14 @@ function ensureLoon(naam){
   if(!S.fin.loon.some(x=>x.naam===naam))S.fin.loon.push({id:uid(),naam,rol:'Teamlid',tarief:null,bu:0,u:MONTHS.map(()=>null),toel:'Tarief en begrote uren nog invullen.'});
 }
 const SD={
-  1:{naam:'Bruikbaarheid afnemer',comp:'Bruikbaarheid',doel:'Uiterlijk 18 december 2026 doorloopt minimaal 95% van de geschatte 25 afnemers die deelnemen aan de test het nieuwe aanvraagproces zelfstandig en correct, zonder aanvullende uitleg. Vóór 1 november hebben 5 nieuwe afnemers het formulier doorlopen en zijn er 5 verbeterpunten.'},
-  2:{naam:'Bruikbaarheid intern',comp:'Bruikbaarheid',doel:'Uiterlijk 18 december 2026 verwerkt het interne team minimaal 90% van de binnengekomen aanvragen op tijd zonder aanvullende afstemming en beoordeelt het team de bruikbaarheid minimaal met 8 uit 10 op basis van 3 gewogen toetscriteria.'},
+  1:{naam:'Bruikbaarheid afnemer',comp:'Bruikbaarheid',doel:'Uiterlijk 18 december 2026 doorloopt minimaal 95% van de geschatte 25 afnemers die deelnemen aan de test het nieuwe aanvraagproces zelfstandig en correct, zonder aanvullende uitleg, en beoordelen de afnemers het proces gemiddeld met minimaal een 8 (cijfer uit 10) op basis van 3 gewogen toetscriteria (ondergrens 6 per criterium).'},
+  2:{naam:'Bruikbaarheid intern',comp:'Bruikbaarheid',doel:'Uiterlijk 18 december 2026 verwerkt het interne team minimaal 90% van de binnengekomen aanvragen op tijd (binnen 3 dagen) en beoordeelt het team de bruikbaarheid minimaal met 8 uit 10 op basis van 3 gewogen toetscriteria.'},
   3:{naam:'Zichtbaarheid',comp:'Zichtbaarheid',doel:'Uiterlijk 18 december 2026 weet minimaal 90% van de 150 bestaande afnemers waar en op welke manier een aanvraag via het nieuwe proces kan worden ingediend.'},
-  4:{naam:'Tevredenheid',comp:'Tevredenheid',doel:'Uiterlijk 18 december 2026 beoordelen ±30 afnemers en het interne MT-team (7 mensen) het nieuwe aanvraagproces gemiddeld met minimaal een 8 (cijfer uit 10) op basis van 6 gewogen toetscriteria.'},
-  5:{naam:'Adoptie',comp:'Adoptie',doel:'Uiterlijk 18 december 2026 wordt minimaal 90% van de geschatte 30 aanvragen volledig zelfstandig ingevoerd en verwerkt via de nieuwe werkwijze.'}
+  4:{naam:'Adoptie',comp:'Adoptie',doel:'Uiterlijk 18 december 2026 wordt minimaal 90% van de geschatte 30 aanvragen volledig zelfstandig ingevoerd en verwerkt via de nieuwe werkwijze.'}
 };
-const SDOPT=[[0,'Algemeen'],...[1,2,3,4,5].map(n=>[n,`${n} · ${SD[n].naam}`])];
+const SDOPT=[];
+const activeSd=()=>Object.keys(SD).map(Number).filter(n=>S.kpis.some(k=>k.sd===n));   // een subdoel zonder KPI's wordt niet getoond
+function syncSd(){SDOPT.length=0;SDOPT.push([0,'Algemeen'],...activeSd().map(n=>[n,`${n} · ${SD[n].naam}`]))}
 const MOM=[{l:'Nulm.',d:'2026-10-09'},{l:'12/10',d:'2026-10-12'},{l:'26/10',d:'2026-10-26'},{l:'2/11',d:'2026-11-02'},{l:'9/11',d:'2026-11-09'},{l:'16/11',d:'2026-11-16'},{l:'23/11',d:'2026-11-23'},{l:'30/11',d:'2026-11-30'},{l:'7/12',d:'2026-12-07'},{l:'14/12',d:'2026-12-14'},{l:'18/12',d:'2026-12-18'}];
 const FASES=[
   {id:'Define',  letter:'D',per:'7 sep – 2 okt', c:'#0a3fd6',txt:'Aanleiding, doelen, projectplan'},
@@ -688,21 +689,16 @@ function defaults(){
   const INT=[['2026-11-02',7],['2026-11-30',8]];
   const K=(id,sd,titel,type,unit,eind,norm,signaal,meting,mm,eindD)=>({id,sd,titel,type,unit,eind,norm,signaal,meting,
     d:[NULD,...mm.map(x=>x[0])],g:[null,...mm.map(x=>x[1])],w:[null,...mm.map(()=>null)],
-    nulNvt:!['2.1','2.2'].includes(id),eindmeting:null,eindD:eindD||'18 dec'});
+    nulNvt:!['2.1'].includes(id),eindmeting:null,eindD:eindD||'18 dec'});
   const n=null;
   const kpis=[
     K('1.1',1,'Correct ingevulde formulier (%)','Strategisch','%',95,'≥ 95% van de ±25 testafnemers vult het formulier zelfstandig en correct in.','Minder dan 95% correct: uitzoeken welk onderdeel steeds misgaat en een voorbeeld of toelichting toevoegen vóór de volgende afnemer test.','Per aanvraag controleren met een checklist of het formulier compleet en correct is, zonder navragen.',wk([null,null,80,80,85,85,90,90,95,95])),
-    K('1.2',1,'Nieuwe afnemers (aantal, opgeteld)','Proces','aantal',30,'30 nieuwe afnemers dit semester, waarvan ≥ 5 vóór 1 november.','Half oktober minder dan 3: zelf afnemers benaderen (docenten die vaak afnemen). Eind november minder dan 15: groep te klein voor een betrouwbaar percentage, zelf docenten en opleidingen benaderen.','Bijhouden binnen de aanvraagomgeving.',wk([null,3,5,8,12,15,19,23,27,30])),
-    K('1.3',1,'Verbeterpunten (aantal)','Proces','aantal',5,'≥ 5 verbeterpunten vóór 1 november, daarna blijven volgen.','Een verbeterpunt dat bij meerdere afnemers terugkomt: direct doorvoeren in formulier of proces, niet wachten tot de eindmeting.','Lijst van alle gevonden knelpunten, met per punt de status open of verwerkt.',[['2026-10-26',3],['2026-11-02',5],['2026-12-18',null]]),
-    K('2.1',2,'Afstemming (% aanvragen zonder aanvullende afstemming)','Proces','%',90,'≥ 90% van de aanvragen wordt zonder aanvullende afstemming verwerkt.','Minder dan 90% zonder afstemming: met het team bepalen welke onduidelijkheid in het formulier het vaakst tot navragen leidt en die aanpassen.','Bijhouden hoe vaak een medewerker een aanvraag moet navragen voordat die verwerkt kan worden.',wk([null,65,70,75,75,80,85,85,90,90])),
-    K('2.2',2,'Verwerkingstijd (% aanvragen op tijd verwerkt)','Strategisch','%',90,'≥ 90% van de aanvragen is binnen 3 dagen verwerkt.','Melding toevoegen op het moment dat een verwerking langer dan 3 dagen duurt.','Tijd bijhouden tussen binnenkomst en afhandeling van een aanvraag (logboek of aanvraagomgeving).',wk([null,70,75,80,80,85,85,90,90,90])),
-    K('2.3',2,'Bruikbaarheid (criteria, cijfer)','Proces','cijfer',8,'Gewogen gemiddelde ≥ 8,0 (ondergrens 6 per criterium).','Alle 3 de criteria onder de 6: bijsturen (maximaal 2×).','Interview met 3 gewogen criteria: inhoud 50%, zichtbaarheid 30%, technisch 20%.',INT,'30 nov'),
+    K('2.1',2,'Verwerkingstijd (% aanvragen op tijd verwerkt)','Strategisch','%',90,'≥ 90% van de aanvragen is binnen 3 dagen verwerkt.','Melding toevoegen op het moment dat een verwerking langer dan 3 dagen duurt.','Tijd bijhouden tussen binnenkomst en afhandeling van een aanvraag (logboek of aanvraagomgeving).',wk([null,70,75,80,80,85,85,90,90,90])),
+    K('2.2',2,'Bruikbaarheid (criteria, cijfer)','Proces','cijfer',8,'Gewogen gemiddelde ≥ 8,0 (ondergrens 6 per criterium).','Alle 3 de criteria onder de 6: bijsturen (maximaal 2×).','Interview met 3 gewogen criteria: inhoud 50%, zichtbaarheid 30%, technisch 20%.',INT,'30 nov'),
     K('3.1',3,'Respons (aantal van de 150 bestaande afnemers)','Strategisch','afnemers',150,'Doel: alle 150 bestaande afnemers weten waar en hoe ze een aanvraag doen (projectplan: minimaal 90%, dus 135). Het doel is hier aan te passen.','Minder dan 60% heeft gereageerd: nog een reminder sturen.','Per mail (met call to action) de respons tellen; fysiek gewoon vragen en de contactlijst afstrepen.',[['2026-11-02',33],['2026-11-09',59],['2026-11-16',83],['2026-11-23',100],['2026-11-30',117],['2026-12-07',133],['2026-12-14',142],['2026-12-18',150]]),
     K('3.2',3,'Zichtbaarheid Impact Desk (PR-stunt)','Strategisch','bezoekers',null,'Wordt gemeten op de dag van de PR-stunt (datum volgt).','Blijkt tijdens de stunt dat veel bezoekers de desk niet kennen: de actie op een ander moment of andere locatie herhalen.','PR-stunt om mensen naar de desk te trekken en direct meten of ze weten wat ze ons kunnen vragen (hoeveel mensen, hoeveel nieuwe).',[['',null]]),
-    K('4.1',4,'Externe beoordeling proces (gemiddelde cijfer)','Strategisch','cijfer',8,'Gemiddeld ≥ 8 (uit 10), ondergrens 6 per criterium.','Alle 3 de criteria onder de 6: terugkoppelen welke knelpunten afnemers noemen en samen met het team prioriteren.','Gesprek (interviewvorm) met afnemers over vertrouwen, uitkomst en bereidheid tot hergebruik.',INT,'30 nov'),
-    K('4.2',4,'Interne beoordeling proces (gemiddelde cijfer)','Strategisch','cijfer',8,'Gemiddeld ≥ 8 (uit 10), ondergrens 6 per criterium.','Alle 3 de criteria onder de 6: tussenmeting vóór de eindmeting op 18 december bijsturen op het laagst scorende criterium.','Intern gesprek (interviewvorm), 2×: halverwege en aan het einde.',INT,'30 nov'),
-    K('5.1',5,'Systeemgebruik aanvragen (%)','Strategisch','%',90,'≥ 90% van de ±30 aanvragen wordt zelfstandig ingevoerd en verwerkt via de nieuwe werkwijze.','Minder dan 60%: navragen waarom een aanvraag buiten het systeem om is gegaan en de drempel wegnemen.','Elke aanvraag langs en de bron checken.',wk([null,50,60,65,70,75,80,85,90,90])),
-    K('5.2',5,'Verwerkingspercentage (aanvragen die leiden tot project)','Proces','%',null,'Geen vaste norm: volgen.','Laag percentage: met het team bespreken waarom aanvragen niet tot een project leiden en of norm of proces moet worden aangepast.','Aantal aanvragen dat leidt tot een project.',[['2026-11-02',null],['2026-12-07',null],['2026-12-18',null]])
+    K('1.2',1,'Externe beoordeling proces (gemiddelde cijfer)','Strategisch','cijfer',8,'Gemiddeld ≥ 8 (uit 10), ondergrens 6 per criterium.','Alle 3 de criteria onder de 6: terugkoppelen welke knelpunten afnemers noemen en samen met het team prioriteren.','Gesprek (interviewvorm) met afnemers over vertrouwen, uitkomst en bereidheid tot hergebruik.',INT,'30 nov'),
+    K('4.1',4,'Systeemgebruik aanvragen (%)','Strategisch','%',90,'≥ 90% van de ±30 aanvragen wordt zelfstandig ingevoerd en verwerkt via de nieuwe werkwijze.','Minder dan 60%: navragen waarom een aanvraag buiten het systeem om is gegaan en de drempel wegnemen.','Elke aanvraag langs en de bron checken.',wk([null,50,60,65,70,75,80,85,90,90])),
   ];
   kpis.find(k=>k.id==='3.1').basis=150;
   kpis.find(k=>k.id==='3.2').bars=BARS32();
@@ -732,9 +728,9 @@ function defaults(){
     M('2026-10-09','Nulmeting afstemming en verwerkingstijd','Nulmeting','Vóór de livegang vastleggen hoe het huidige aanvraagproces presteert, zodat later zichtbaar is wat er is verbeterd.',2),
     M('2026-10-12','Livegang: start wekelijkse KPI-meting','KPI-meting','Vanaf de livegang wordt elke maandag gemeten, bijgestuurd en het dashboard bijgewerkt.',0),
     M('2026-10-13','PDCA-evaluatie 1','Evaluatie (PDCA)','Eerste evaluatie na de livegang: wat werkt, wat niet, welke verbeterpunten direct doorvoeren.',0),
-    M('2026-11-02','Tussenmeting interviews (intern en extern) + 5 aanvragen','Interview','Halverwege toetsen of bruikbaarheid en tevredenheid op koers liggen (≥ 7,0) zodat er nog tijd is om bij te sturen.',4),
+    M('2026-11-02','Tussenmeting interviews (intern en extern) + 5 aanvragen','Interview','Halverwege toetsen of bruikbaarheid en tevredenheid op koers liggen (≥ 7,0) zodat er nog tijd is om bij te sturen.',1),
     M('2026-11-03','PDCA-evaluatie 2 + tussenevaluatie','Evaluatie (PDCA)','Tussenevaluatie met het team: 5 aanvragen doorlopen, verbeterpunten verwerkt, tussenmeting interviews.',0),
-    M('2026-11-30','Eindmeting bruikbaarheid en tevredenheid (interviews)','Interview','Eindmeting (≥ 8,0) ruim vóór 18 december, zodat er tijd is voor verwerking en rapportage.',4),
+    M('2026-11-30','Eindmeting bruikbaarheid en tevredenheid (interviews)','Interview','Eindmeting (≥ 8,0) ruim vóór 18 december, zodat er tijd is voor verwerking en rapportage.',1),
     M('2026-12-08','PDCA-evaluatie 3 + eindevaluatie','Evaluatie (PDCA)','Eindevaluatie van de KPI’s en interviews met het team.',0),
     M('2026-12-18','Eindmeting overige KPI’s','KPI-meting','Laatste meting van alle KPI’s op de einddatum van het project.',0),
     M('','Meting zichtbaarheid tijdens de PR-stunt','Test','Op de dag van de PR-stunt meten hoeveel bezoekers de desk kennen en weten wat ze kunnen aanvragen (datum volgt).',3)
@@ -799,7 +795,7 @@ function defaults(){
     T('Afronding','Afstudeerdossier afronden en inleveren',['Veerle'],'2026-12-14','2027-01-08',0)
   ];
   const blokken=[[3,4],[5,6],[7,8],[10,11],[12,13],[14,15],[16,16]].map(([van,tot])=>({id:uid(),van,tot}));
-  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:2,barsV:1,blokV:2,team:TEAM0.slice(),kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{}};
+  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:2,barsV:1,kpiPruned:1,kpiMoved:1,kpiRenum:1,blokV:2,team:TEAM0.slice(),kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{}};
 }
 /* oudere back-ups en opgeslagen gegevens aanvullen met nieuwe onderdelen */
 function migrate(){
@@ -829,6 +825,31 @@ function migrate(){
       delete m.volgende;
     }
   });
+  if(!S.kpiPruned){   // KPI's 1.2, 1.3, 2.1, 4.2 en 5.2 zijn geschrapt; ingevulde gegevens blijven in een verborgen archief
+    const weg=['1.2','1.3','2.1','4.2','5.2'];
+    S.kpiArchief=(S.kpiArchief||[]).concat(S.kpis.filter(k=>weg.includes(k.id)));
+    S.kpis=S.kpis.filter(k=>!weg.includes(k.id));
+    S.kpiPruned=1;
+  }
+  if(!S.kpiMoved){   // KPI 4.1 (externe beoordeling) hoort nu bij subdoel 1 als 1.2; subdoel 4 vervalt
+    const k=S.kpis.find(x=>x.id==='4.1');
+    if(k){k.id='1.2';k.sd=1}
+    (S.meet||[]).forEach(m=>{if(m.kpi==='4.1')m.kpi='1.2';if(+m.sd===4)m.sd=1});
+    (S.notes||[]).forEach(n=>{if(n.kpi==='4.1')n.kpi='1.2'});
+    (S.wait||[]).forEach(w=>{if(+w.sd===4)w.sd=1});
+    S.tdskip={};
+    S.kpiMoved=1;
+  }
+  if(!S.kpiRenum){   // doorlopende nummering: 2.2→2.1, 2.3→2.2, 5.1→4.1 en subdoel 5→4
+    const map={'2.2':'2.1','2.3':'2.2','5.1':'4.1'};
+    S.kpis.forEach(k=>{if(map[k.id])k.id=map[k.id];if(k.sd===5)k.sd=4});
+    const fix=o=>{if(o&&map[o.kpi])o.kpi=map[o.kpi]};
+    (S.meet||[]).forEach(m=>{fix(m);if(+m.sd===5)m.sd=4});
+    (S.notes||[]).forEach(fix);
+    (S.wait||[]).forEach(w=>{if(+w.sd===5)w.sd=4});
+    S.tdskip={};
+    S.kpiRenum=1;
+  }
   if(!S.basisV){   // KPI 3.1: invullen in aantallen afnemers (basis 150), % wordt erbij berekend
     const k=S.kpis.find(x=>x.id==='3.1');
     if(k&&!k.basis){
@@ -871,7 +892,8 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
-  syncPeople();
+  S.kpis.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
+  syncPeople();syncSd();
 }
 
 /* ============================================================
@@ -1032,7 +1054,7 @@ BIND['due.note']=()=>{
 BIND['kpi.sum']=()=>{
   const c={ok:0,warn:0,bad:0,meas:0,none:0};S.kpis.forEach(k=>c[kStat(k)]++);
   const p=allPct();
-  return `<div class="card sum big"><div class="lbl">Totale voortgang richting de normen</div><div class="val">${pctTxt(p)}</div><div class="bar"><i style="width:${Math.round(p*100)}%"></i></div><div class="sub">Gemiddelde van de laatste meting ten opzichte van de eindnorm, ${S.kpis.length} KPI’s in 5 subdoelen</div></div>`+
+  return `<div class="card sum big"><div class="lbl">Totale voortgang richting de normen</div><div class="val">${pctTxt(p)}</div><div class="bar"><i style="width:${Math.round(p*100)}%"></i></div><div class="sub">Gemiddelde van de laatste meting ten opzichte van de eindnorm, ${S.kpis.length} KPI’s in ${activeSd().length} subdoelen</div></div>`+
   [['ok','Op koers'],['warn','Aandacht'],['bad','Bijsturen'],['none','Nog niet gemeten']].map(([s,l])=>`<div class="card sum"><div class="lbl">${l}</div><div class="val ${s==='none'?'':s}">${c[s]+(s==='none'?c.meas*0:0)}</div><div class="sub">KPI’s</div></div>`).join('');
 };
 const KPI=id=>S.kpis.find(k=>k.id===id);
@@ -1232,9 +1254,9 @@ function renderTiles(){
 
 /* ---------- KPI ---------- */
 function viewKpi(){
-  const allOpen=[1,2,3,4,5].every(n=>UI.open['sd'+n]);
-  const cards=[1,2,3,4,5].map(n=>`<button class="sdcard" ${B('sd.due',n,'data-t="cls" data-base="sdcard"')} data-act="gosd" data-id="${n}"><span class="sdc-top"><span>Subdoel ${n}</span><span class="sdc-comp">${SD[n].comp}</span></span><span class="sdc-name">${SD[n].naam}</span><span class="sdc-pct" ${B('sd.pct',n)}></span><span class="bar"><i ${B('sd.w',n,'data-t="w"')}></i></span><span class="sdc-sub" ${B('sd.sub',n)}></span></button>`).join('');
-  const secs=[1,2,3,4,5].map(n=>{
+  const allOpen=activeSd().every(n=>UI.open['sd'+n]);
+  const cards=activeSd().map(n=>`<button class="sdcard" ${B('sd.due',n,'data-t="cls" data-base="sdcard"')} data-act="gosd" data-id="${n}"><span class="sdc-top"><span>Subdoel ${n}</span><span class="sdc-comp">${SD[n].comp}</span></span><span class="sdc-name">${SD[n].naam}</span><span class="sdc-pct" ${B('sd.pct',n)}></span><span class="bar"><i ${B('sd.w',n,'data-t="w"')}></i></span><span class="sdc-sub" ${B('sd.sub',n)}></span></button>`).join('');
+  const secs=activeSd().map(n=>{
     const open=!!UI.open['sd'+n];
     return `<section class="sd${open?' open':''}" id="sd${n}">
     <button class="sd-head" ${B('sd.due',n,'data-t="cls" data-base="sd-head"')} data-act="tog" data-id="sd${n}" aria-expanded="${open}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Subdoel ${n}</b> · ${SD[n].naam}</span><span ${B('sd.badges',n)}></span><span class="sd-mini"><span class="bar sm"><i ${B('sd.w',n,'data-t="w"')}></i></span><span ${B('sd.pct',n)}></span></span></button>
@@ -1782,7 +1804,7 @@ const ACT={
     $$('textarea',box).forEach(autosize);
     if(UI.tab==='kpi'&&k.startsWith('sd'))syncTogAll();
   },
-  togall(){const all=[1,2,3,4,5].every(n=>UI.open['sd'+n]);[1,2,3,4,5].forEach(n=>UI.open['sd'+n]=!all);saveUI();render()},
+  togall(){const all=activeSd().every(n=>UI.open['sd'+n]);activeSd().forEach(n=>UI.open['sd'+n]=!all);saveUI();render()},
   gosd(a){const n=a.dataset.id;UI.open['sd'+n]=true;saveUI();const s=$('#sd'+n);s.classList.add('open');$$('textarea',s).forEach(autosize);syncTogAll();s.scrollIntoView({behavior:'smooth',block:'start'})},
   addrisk(){const r={id:uid(),fase:'Algemeen',risico:'',gevolg:'',kans:'Midden',impact:'Midden',intern:'Intern',maatregel:'',voorzorg:'',eigenaar:'Veerle',status:'Open'};S.risks.push(r);UI.open['r'+r.id]=true;save();saveUI();render();const t=$('#r'+r.id+' textarea');t&&t.focus()},
   delrisk(a){if(confirm('Dit risico verwijderen?')){S.risks=S.risks.filter(x=>x.id!==a.dataset.id);save();render()}},
@@ -1880,7 +1902,7 @@ const ACT={
   import(){$('#importFile').click()},
   reset(){if(confirm('Alle ingevulde gegevens vervangen door de startgegevens uit het projectplan? Dit kan niet ongedaan worden gemaakt (maak eerst een back-up).')){S=defaults();save();render();toast('Startgegevens hersteld')}}
 };
-function syncTogAll(){const b=$('#togall');if(!b)return;const all=[1,2,3,4,5].every(n=>UI.open['sd'+n]);b.innerHTML=icon(all?'chevrons-down-up':'chevrons-up-down')+(all?'Alles inklappen':'Alles uitklappen')}
+function syncTogAll(){const b=$('#togall');if(!b)return;const all=activeSd().every(n=>UI.open['sd'+n]);b.innerHTML=icon(all?'chevrons-down-up':'chevrons-up-down')+(all?'Alles inklappen':'Alles uitklappen')}
 document.addEventListener('click',e=>{
   const a=e.target.closest('[data-act]');
   if(!a){if(!e.target.closest('#pop'))closePop();return}
