@@ -264,6 +264,19 @@ table.mt td input[data-f$=".l"]{min-width:180px;text-align:left}
 .kviz{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(330px,1fr);gap:20px;margin-top:14px;align-items:start}
 .kviz>*{min-width:0}
 .chartbox{background:#fafbfe;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.chart .lo{fill:none;stroke:#8d97ad;stroke-width:2;stroke-dasharray:2 5;stroke-linecap:round}
+.chart .lotxt{font-size:11px;fill:#6b7690}
+.was{display:block;font-size:11.5px;color:var(--warn);font-weight:700;text-align:right;padding-top:2px}
+.nbadge{margin-top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.nbadge small{color:var(--muted);font-size:12px}
+.nlog{margin-top:12px;border-top:1px dashed var(--line);padding-top:8px}
+.nlog>summary{cursor:pointer;font-weight:700;font-size:13.5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.nlog table{width:100%;border-collapse:collapse;font-size:13.5px;margin-top:8px}
+.nlog th{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);text-align:left;padding:4px 6px}
+.nlog td{padding:5px 6px;border-top:1px solid var(--line);vertical-align:top}
+.nlog td.nl-v{white-space:pre-wrap;max-width:260px}
+.nlog td.nl-v s{color:var(--muted)}
+.nlog td input{width:100%;min-width:180px;text-align:left}
 .legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-bottom:2px;flex-wrap:wrap}
 .legend i{display:inline-block;width:22px;height:0;border-top:3px solid var(--orange);vertical-align:middle;margin-right:6px;border-radius:2px}
 .legend i.sw{display:inline-block;width:14px;height:12px;border:0;border-radius:3px;vertical-align:middle;margin-right:6px}
@@ -611,7 +624,7 @@ function ensureLoon(naam){
 const SD={
   1:{naam:'Bruikbaarheid afnemer',comp:'Bruikbaarheid',doel:'Uiterlijk 18 december 2026 doorloopt minimaal 95% van de geschatte 25 afnemers die deelnemen aan de test het nieuwe aanvraagproces zelfstandig en correct, zonder aanvullende uitleg, en beoordelen de afnemers het proces gemiddeld met minimaal een 8 (cijfer uit 10) op basis van 3 gewogen toetscriteria (ondergrens 6 per criterium).'},
   2:{naam:'Bruikbaarheid intern',comp:'Bruikbaarheid',doel:'Uiterlijk 18 december 2026 verwerkt het interne team minimaal 90% van de binnengekomen aanvragen op tijd (binnen 3 dagen) en beoordeelt het team de bruikbaarheid minimaal met 8 uit 10 op basis van 3 gewogen toetscriteria.'},
-  3:{naam:'Zichtbaarheid',comp:'Zichtbaarheid',doel:'Uiterlijk 18 december 2026 weet minimaal 90% van de 150 bestaande afnemers waar en op welke manier een aanvraag via het nieuwe proces kan worden ingediend.'},
+  3:{naam:'Zichtbaarheid',comp:'Zichtbaarheid',doel:'Uiterlijk 18 december 2026 weet minimaal 90% (27) van de 30 warme contacten onder de bestaande afnemers waar en op welke manier een aanvraag via het nieuwe proces kan worden ingediend.'},
   4:{naam:'Adoptie',comp:'Adoptie',doel:'Uiterlijk 18 december 2026 wordt minimaal 90% van de geschatte 30 aanvragen volledig zelfstandig ingevoerd en verwerkt via de nieuwe werkwijze.'}
 };
 const SDOPT=[];
@@ -695,12 +708,12 @@ function defaults(){
     K('1.1',1,'Correct ingevulde formulier (%)','Strategisch','%',95,'≥ 95% van de ±25 testafnemers vult het formulier zelfstandig en correct in.','Minder dan 95% correct: uitzoeken welk onderdeel steeds misgaat en een voorbeeld of toelichting toevoegen vóór de volgende afnemer test.','Per aanvraag controleren met een checklist of het formulier compleet en correct is, zonder navragen.',wk([null,null,80,80,85,85,90,90,95,95])),
     K('2.1',2,'Verwerkingstijd (% aanvragen op tijd verwerkt)','Strategisch','%',90,'≥ 90% van de aanvragen is binnen 3 dagen verwerkt.','Melding toevoegen op het moment dat een verwerking langer dan 3 dagen duurt.','Tijd bijhouden tussen binnenkomst en afhandeling van een aanvraag (logboek of aanvraagomgeving).',wk([null,70,75,80,80,85,85,90,90,90])),
     K('2.2',2,'Bruikbaarheid (criteria, cijfer)','Proces','cijfer',8,'Gewogen gemiddelde ≥ 8,0 (ondergrens 6 per criterium).','Alle 3 de criteria onder de 6: bijsturen (maximaal 2×).','Interview met 3 gewogen criteria: inhoud 50%, zichtbaarheid 30%, technisch 20%.',INT,'30 nov'),
-    K('3.1',3,'Respons (aantal van de 150 bestaande afnemers)','Strategisch','afnemers',150,'Doel: alle 150 bestaande afnemers weten waar en hoe ze een aanvraag doen (projectplan: minimaal 90%, dus 135). Het doel is hier aan te passen.','Minder dan 60% heeft gereageerd: nog een reminder sturen.','Per mail (met call to action) de respons tellen; fysiek gewoon vragen en de contactlijst afstrepen.',[['2026-11-02',33],['2026-11-09',59],['2026-11-16',83],['2026-11-23',100],['2026-11-30',117],['2026-12-07',133],['2026-12-14',142],['2026-12-18',150]]),
+    K('3.1',3,'Respons (aantal van de 30 warme contacten)','Strategisch','afnemers',27,'Doel: minimaal 90% van de 30 warme contacten (27) weet waar en hoe ze een aanvraag doen. Het doel is hier aan te passen.','Minder dan 60% (18 van de 30) heeft gereageerd: nog een reminder sturen.','Per mail (met call to action) de respons tellen; fysiek gewoon vragen en de contactlijst afstrepen.',[['2026-11-02',6],['2026-11-09',11],['2026-11-16',15],['2026-11-23',18],['2026-11-30',21],['2026-12-07',24],['2026-12-14',26],['2026-12-18',27]]),
     K('3.2',3,'Zichtbaarheid Impact Desk (PR-stunt)','Strategisch','bezoekers',null,'Wordt gemeten op de dag van de PR-stunt (datum volgt).','Blijkt tijdens de stunt dat veel bezoekers de desk niet kennen: de actie op een ander moment of andere locatie herhalen.','PR-stunt om mensen naar de desk te trekken en direct meten of ze weten wat ze ons kunnen vragen (hoeveel mensen, hoeveel nieuwe).',[['',null]]),
     K('1.2',1,'Externe beoordeling proces (gemiddelde cijfer)','Strategisch','cijfer',8,'Gemiddeld ≥ 8 (uit 10), ondergrens 6 per criterium.','Alle 3 de criteria onder de 6: terugkoppelen welke knelpunten afnemers noemen en samen met het team prioriteren.','Gesprek (interviewvorm) met afnemers over vertrouwen, uitkomst en bereidheid tot hergebruik.',INT,'30 nov'),
     K('4.1',4,'Systeemgebruik aanvragen (%)','Strategisch','%',90,'≥ 90% van de ±30 aanvragen wordt zelfstandig ingevoerd en verwerkt via de nieuwe werkwijze.','Minder dan 60%: navragen waarom een aanvraag buiten het systeem om is gegaan en de drempel wegnemen.','Elke aanvraag langs en de bron checken.',wk([null,50,60,65,70,75,80,85,90,90])),
   ];
-  kpis.find(k=>k.id==='3.1').basis=150;
+  kpis.find(k=>k.id==='3.1').basis=30;
   kpis.find(k=>k.id==='3.2').bars=BARS32();
   const R=(fase,risico,gevolg,kans,impact,intern,maatregel,voorzorg,eigenaar)=>({id:uid(),fase,risico,gevolg,kans,impact,intern,maatregel,voorzorg,eigenaar,status:'Open'});
   const risks=[
@@ -795,7 +808,7 @@ function defaults(){
     T('Afronding','Afstudeerdossier afronden en inleveren',['Veerle'],'2026-12-14','2027-01-08',0)
   ];
   const blokken=[[3,4],[5,6],[7,8],[10,11],[12,13],[14,15],[16,16]].map(([van,tot])=>({id:uid(),van,tot}));
-  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:2,barsV:1,kpiPruned:1,kpiMoved:1,kpiRenum:1,blokV:2,team:TEAM0.slice(),kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{}};
+  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:3,barsV:1,kpiPruned:1,kpiMoved:1,kpiRenum:1,blokV:2,team:TEAM0.slice(),kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{}};
 }
 /* oudere back-ups en opgeslagen gegevens aanvullen met nieuwe onderdelen */
 function migrate(){
@@ -859,7 +872,7 @@ function migrate(){
     }
     S.basisV=1;
   }
-  if(S.basisV!==2){   // doel 3.1 op 150 (aanpasbaar), gewenste lijn meeschalen
+  if(S.basisV<2){   // doel 3.1 op 150 (aanpasbaar), gewenste lijn meeschalen
     const k=S.kpis.find(x=>x.id==='3.1');
     if(k&&k.basis){
       if(k.eind===135)k.eind=150;
@@ -868,6 +881,17 @@ function migrate(){
       k.norm='Doel: alle 150 bestaande afnemers weten waar en hoe ze een aanvraag doen (projectplan: minimaal 90%, dus 135). Het doel is hier aan te passen.';
     }
     S.basisV=2;
+  }
+  if(S.basisV!==3){   // 3.1: 90% van 30 warme contacten (basis 30, doel 27), logisch stijgende gewenste lijn
+    const k=S.kpis.find(x=>x.id==='3.1');
+    if(k){
+      const gv={'2026-11-02':6,'2026-11-09':11,'2026-11-16':15,'2026-11-23':18,'2026-11-30':21,'2026-12-07':24,'2026-12-14':26,'2026-12-18':27};
+      k.basis=30;k.eind=27;k.titel='Respons (aantal van de 30 warme contacten)';
+      k.norm='Doel: minimaal 90% van de 30 warme contacten (27) weet waar en hoe ze een aanvraag doen. Het doel is hier aan te passen.';
+      k.signaal='Minder dan 60% (18 van de 30) heeft gereageerd: nog een reminder sturen.';
+      k.g=(k.d||[]).map((d,i)=>i===0?null:(gv[d]!==undefined?gv[d]:(k.g?k.g[i]:null)));
+    }
+    S.basisV=3;
   }
   if(!S.barsV){   // KPI 3.2: staafdiagram per categorie
     const k=S.kpis.find(x=>x.id==='3.2');
@@ -892,6 +916,7 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
+  ensureNorm();
   S.kpis.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
   syncPeople();syncSd();
 }
@@ -901,6 +926,45 @@ function migrate(){
    ============================================================ */
 const STORE='impactdesk.v1', UISTORE='impactdesk.ui.v1';
 let S, UI;
+/* Norm bijsturen: oorspronkelijke norm blijft bewaard (k.o / k.og), wijzigingen komen in een logboek (k.nlog) */
+function ensureNorm(){
+  S.kpis.forEach(k=>{
+    if(!k.nlog)k.nlog=[];
+    if(!k.o){k.o={eind:k.eind==null?null:k.eind,norm:k.norm||''};k.og=(k.g||[]).slice();k.sn={eind:k.o.eind,norm:k.o.norm};k.sg=(k.g||[]).slice()}
+  });
+}
+const nUnit=k=>k.unit==='%'?'%':'';
+const nFmt=(k,v)=>v==null||v===''?'–':nf(v,v%1?1:0)+nUnit(k);
+function nLogAdd(k,wat,van,naar,txt){
+  const t=todayStr();
+  const e=k.nlog.find(x=>x.d===t&&x.wat===wat);
+  if(e){e.naar=naar;if(String(e.van)===String(e.naar))k.nlog.splice(k.nlog.indexOf(e),1)}
+  else k.nlog.push({id:uid(),d:t,wat,van,naar,txt:!!txt,reden:''});
+}
+function normTrack(k){
+  if(!k||k.bars||!k.sn)return;
+  let ch=false;
+  const be=k.eind==null?null:k.eind;
+  if(be!==k.sn.eind){nLogAdd(k,'Eindnorm',nFmt(k,k.sn.eind),nFmt(k,be));k.sn.eind=be;ch=true}
+  if((k.norm||'')!==k.sn.norm){nLogAdd(k,'Normtekst',k.sn.norm,k.norm||'',true);k.sn.norm=k.norm||'';ch=true}
+  k.g.forEach((v,i)=>{
+    const a=v==null?null:v,b=k.sg[i]==null?null:k.sg[i];
+    if(a!==b){nLogAdd(k,'Gewenst '+lbl(k,i),nFmt(k,b),nFmt(k,a));k.sg[i]=a;ch=true}
+  });
+  if(ch){save();nlogUI(k);applyBindings()}
+}
+function nlogHtml(k){
+  const rows=k.nlog.map((e,i)=>`<tr><td>${fmtD(e.d)}</td><td>${esc(e.wat)}</td><td class="nl-v"><s>${esc(e.van===''?'–':e.van)}</s> → <b>${esc(e.naar===''?'–':e.naar)}</b></td><td><input ${da('kpis',k.id,'nlog.'+i+'.reden')} value="${esc(e.reden)}" placeholder="Waarom is de norm bijgestuurd?"></td><td><button class="icon-btn" data-act="delnl" data-id="${k.id}" data-i="${i}" title="Regel uit logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}</button></td></tr>`).join('');
+  return k.nlog.length?`<table><thead><tr><th>Datum</th><th>Wat</th><th>Was → nu</th><th>Reden</th><th></th></tr></thead><tbody>${rows}</tbody></table>`:'<p class="hint" style="margin:6px 0 0">Nog niets bijgestuurd. Pas je de norm, de eindnorm of een gewenste waarde aan, dan wordt dat hier automatisch vastgelegd met de datum. Vul daarna de reden in.</p>';
+}
+function nlogUI(k){
+  const box=document.querySelector(`[data-nlog="${k.id}"]`);if(!box)return;
+  const ae=document.activeElement,key=ae&&box.contains(ae)?ae.dataset.f:null;
+  box.innerHTML=nlogHtml(k);
+  if(key){const n=box.querySelector(`[data-f="${key}"]`);if(n){n.focus();try{n.setSelectionRange(n.value.length,n.value.length)}catch(e){}}}
+  const c=document.querySelector(`[data-nlogn="${k.id}"]`);if(c)c.innerHTML=nSumHtml(k);
+}
+const nSumHtml=k=>k.nlog.length?`<span class="badge warn">Norm aangepast · ${k.nlog.length}×</span>`:'<span class="muted" style="font-weight:400">nog niet bijgestuurd</span>';
 function loadState(){
   try{const raw=localStorage.getItem(STORE);if(raw){const p=JSON.parse(raw);if(p&&p.v===1)S=p}}catch(e){}
   if(!S)S=defaults();
@@ -921,10 +985,12 @@ function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');cl
 const lbl=(k,i)=>{if(i===0)return 'Nulm.';const d=k.d[i];return d?(+d.slice(8,10))+'/'+(+d.slice(5,7)):'?'};
 const inHerfst=d=>!!d&&d>='2026-10-17'&&d<='2026-10-25';
 function sortMoments(k){
-  const rows=k.d.map((d,i)=>({d,g:k.g[i],w:k.w[i]}));
+  const rows=k.d.map((d,i)=>({d,g:k.g[i],w:k.w[i],og:k.og?k.og[i]:null,sg:k.sg?k.sg[i]:null}));
   const rest=rows.slice(1).sort((a,b)=>(a.d||'9999').localeCompare(b.d||'9999'));
   const all=[rows[0],...rest];
   k.d=all.map(r=>r.d);k.g=all.map(r=>r.g);k.w=all.map(r=>r.w);
+  if(k.og)k.og=all.map(r=>r.og==null?null:r.og);
+  if(k.sg)k.sg=all.map(r=>r.sg==null?null:r.sg);
 }
 /* Het meetmoment waar je nu zit: het laatste moment dat geweest is (de nulmeting telt niet mee).
    Is er nog geen echt meetmoment geweest, dan het eerstvolgende. */
@@ -1073,6 +1139,8 @@ BIND['kpi.endstat']=id=>{const k=KPI(id);return `<small>Meting ${k.eindD}${k.ein
 BIND['kpi.mstat']=a=>{const [id,i]=a.split('|');return badge(kStatAt(KPI(id),+i)).replace('class="badge','class="badge plain').replace(/>(Niet gemeten)</,'>–<')};
 BIND['kpi.chart']=id=>KPI(id).bars?barSvg(KPI(id)):chartSvg(KPI(id));
 BIND['kpi.barpct']=a=>{const [id,i]=a.split('|'),k=KPI(id);const b=k.bars[+i],base=k.bars[0].w;if(+i===0||b.w==null||!base)return '';return String(Math.round(b.w/base*1000)/10).replace('.',',')+'%'};
+BIND['kpi.gwas']=a=>{const [id,i]=a.split('|');const k=KPI(id);if(!k||!k.og)return '';const o=k.og[+i]==null?null:k.og[+i],c=k.g[+i]==null?null:k.g[+i];return o!==c&&(o!=null)?`<span class="was">was ${nFmt(k,o)}</span>`:''};
+BIND['kpi.nb']=id=>{const k=KPI(id);if(!k||!k.nlog||!k.nlog.length)return '';const l=k.nlog[k.nlog.length-1];const parts=[];if(k.o.eind!==(k.eind==null?null:k.eind))parts.push('Oorspronkelijke eindnorm: '+nFmt(k,k.o.eind));return `<span class="badge warn">Norm aangepast · ${k.nlog.length}×</span><small>${parts.length?parts.join(' · ')+'<br>':''}Laatst: ${fmtD(l.d)}</small>`};
 BIND['kpi.gph']=a=>{const [id,i]=a.split('|');const k=KPI(id),G=gEffA(k);return G.auto[+i]&&G.v[+i]!=null?String(Math.round(G.v[+i]*10)/10):'–'};
 
 function niceStep(x){const p=Math.pow(10,Math.floor(Math.log10(x)));const m=x/p;return (m<=1?1:m<=2?2:m<=5?5:10)*p}
@@ -1099,7 +1167,11 @@ function chartSvg(k){
   const G0=gEffA(k),sc=k.basis?100/k.basis:1;
   const G={v:G0.v.map(v=>v==null?null:v*sc),auto:G0.auto};
   const WV=k.w.map(v=>v==null?null:v*sc),EIND=k.eind==null?null:k.eind*sc;
-  const vals=[...G.v,...WV].filter(v=>v!=null);if(EIND!=null)vals.push(EIND);
+  const og=(k.og&&!k.bars)?k.g.map((_,i)=>k.og[i]==null?null:k.og[i]):null;
+  const norm=a=>a.map(v=>v==null?null:v);
+  const changed=!!og&&k.o&&(JSON.stringify(norm(og))!==JSON.stringify(norm(k.g))||k.o.eind!==(k.eind==null?null:k.eind))&&og.some(v=>v!=null);
+  const GO=changed?gEffA({g:og,w:k.w}).v.map(v=>v==null?null:v*sc):null;
+  const vals=[...G.v,...WV,...(GO||[])].filter(v=>v!=null);if(EIND!=null)vals.push(EIND);
   const has=G.v.some(v=>v!=null)||WV.some(v=>v!=null);
   const cn=(v)=>k.basis?` (${Math.round(v/sc)} van ${k.basis})`:'';
   let max=vals.length?Math.max(...vals):10;if(max<=0)max=10;
@@ -1111,6 +1183,7 @@ function chartSvg(k){
   for(let v=0;v<=ymax+1e-9;v+=step)s+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L-8}" y="${y(v)+4}" text-anchor="end">${nf(v,step<1?1:0)}${u}</text>`;
   k.d.forEach((d,i)=>s+=`<text class="ax${i===cur?' cur':''}" x="${x(i)}" y="${H-12}" text-anchor="middle">${lbl(k,i)}</text>`);
   const line=a=>a.map((v,i)=>v==null?null:`${x(i).toFixed(1)} ${y(v).toFixed(1)}`).filter(Boolean).map((p,i)=>(i?'L':'M')+p).join(' ');
+  if(GO&&GO.filter(v=>v!=null).length>1)s+=`<path class="lo" d="${line(GO)}"><title>Oorspronkelijke norm</title></path><text class="lotxt" x="${W-R}" y="12" text-anchor="end">· · · oorspronkelijke norm</text>`;
   if(G.v.filter(v=>v!=null).length>1)s+=`<path class="lg" d="${line(G.v)}"/>`;
   if(WV.filter(v=>v!=null).length>1)s+=`<path class="lw" d="${line(WV)}"/>`;
   G.v.forEach((v,i)=>{if(v!=null&&!G.auto[i])s+=`<circle class="dg" cx="${x(i)}" cy="${y(v)}" r="4.5"><title>Gewenst ${lbl(k,i)}: ${nf(v,1)}${u}${cn(v)}</title></circle>`});
@@ -1300,7 +1373,7 @@ function kpiHtml(k){
     <div class="kt">
       <div class="kc kc-title"><span class="kid">${k.id}</span><div style="flex:1"><span class="kl">Titel KPI</span>${txa('kpis',k.id,'titel',k.titel)}</div></div>
       <div class="kc"><span class="kl">Type</span>${selP('kpis',k.id,'type',['Strategisch','Proces'],k.type)}</div>
-      <div class="kc"><span class="kl">Norm</span>${txa('kpis',k.id,'norm',k.norm)}<div class="eindrow">Eindnorm ${inpN('kpis',k.id,'eind',k.eind,'placeholder="–"')} ${esc(k.unit)}${k.basis?` <small ${B('kpi.pct',k.id+'|eind')}></small>`:''}</div>${k.basis?`<div class="eindrow">100% = ${inpN('kpis',k.id,'basis',k.basis)} afnemers</div>`:''}</div>
+      <div class="kc"><span class="kl">Norm</span>${txa('kpis',k.id,'norm',k.norm)}<div class="eindrow">Eindnorm ${inpN('kpis',k.id,'eind',k.eind,'placeholder="–"')} ${esc(k.unit)}${k.basis?` <small ${B('kpi.pct',k.id+'|eind')}></small>`:''}</div>${k.basis?`<div class="eindrow">100% = ${inpN('kpis',k.id,'basis',k.basis)} afnemers</div>`:''}<div class="nbadge" ${B('kpi.nb',k.id)}></div></div>
       <div class="kc sig" ${B('kpi.flag',k.id,'data-t="cls" data-base="kc sig"')}><span class="kl">Bijsturingssignaal</span>${txa('kpis',k.id,'signaal',k.signaal)}</div>
       <div class="kc"><span class="kl">Nulmeting</span><div class="chk"><div class="row">${inpN('kpis',k.id,'w.0',k.w[0],'placeholder="invullen"')}<span class="muted">${esc(u||k.unit)}</span></div>${k.basis?`<small ${B('kpi.pct',k.id+'|w.0')}></small>`:''}${inpD('kpis',k.id,'d.0',k.d[0])}${k.nulNvt?'<small>In het projectplan n.v.t.; vul in als je toch een beginwaarde hebt.</small>':'<small>Beginmeting vóór de start.</small>'}</div></div>
       <div class="kc"><span class="kl">Voortgangscheck</span><div class="chk"><div class="row"><small>${lbl(k,cur)}${cur>0&&k.d[cur]&&k.d[cur]>todayStr()?' · volgende':''}</small>${inpN('kpis',k.id,'w.'+cur,k.w[cur],'placeholder="invullen"')}<span class="muted">${esc(u||k.unit)}</span></div>${k.basis?`<small ${B('kpi.pct',k.id+'|w.'+cur)}></small>`:''}<small ${B('kpi.chkstat',k.id)}></small></div></div>
@@ -1309,12 +1382,13 @@ function kpiHtml(k){
     <div class="kviz">
       <div class="chartbox"><div class="legend"><span><i class="g"></i>Gewenst</span><span><i></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span></div><div ${B('kpi.chart',k.id)}></div></div>
       <div><table class="mt"><thead><tr><th>Meetmoment (datum)</th>${k.basis?'<th>Gewenst (aantal)</th><th class="pc">%</th><th>Werkelijk (aantal)</th><th class="pc">%</th>':'<th>Gewenst</th><th>Werkelijk</th>'}<th></th><th></th></tr></thead><tbody>
-        ${k.d.map((d,i)=>`<tr ${B('kpi.rowdue',k.id+'|'+i,`data-t="cls" data-base="${i===cur?'cur':''}"`)}><td class="dt">${i===0?'<small>Nulmeting</small>':''}${inpD('kpis',k.id,'d.'+i,d).replace('data-c','data-re="1" data-c')}${inHerfst(d)?'<small class="bad-t">Herfstvakantie: niet meten</small>':''}${i>0&&!d?'<small class="muted">Datum volgt</small>':''}</td><td><input class="num" type="number" step="any" inputmode="decimal" ${da('kpis',k.id,'g.'+i)} value="${k.g[i]==null?'':k.g[i]}" placeholder="–" ${B('kpi.gph',k.id+'|'+i,'data-t="ph"')}></td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|g.'+i)}></td>`:''}<td>${inpN('kpis',k.id,'w.'+i,k.w[i],'placeholder="–"')}</td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|w.'+i)}></td>`:''}<td ${B('kpi.mstat',k.id+'|'+i)}></td><td>${i>0?`<button class="icon-btn" data-act="delmom" data-id="${k.id}" data-i="${i}" title="Meetmoment verwijderen" aria-label="Meetmoment verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('')}
+        ${k.d.map((d,i)=>`<tr ${B('kpi.rowdue',k.id+'|'+i,`data-t="cls" data-base="${i===cur?'cur':''}"`)}><td class="dt">${i===0?'<small>Nulmeting</small>':''}${inpD('kpis',k.id,'d.'+i,d).replace('data-c','data-re="1" data-c')}${inHerfst(d)?'<small class="bad-t">Herfstvakantie: niet meten</small>':''}${i>0&&!d?'<small class="muted">Datum volgt</small>':''}</td><td><input class="num" type="number" step="any" inputmode="decimal" ${da('kpis',k.id,'g.'+i)} value="${k.g[i]==null?'':k.g[i]}" placeholder="–" ${B('kpi.gph',k.id+'|'+i,'data-t="ph"')}><span ${B('kpi.gwas',k.id+'|'+i)}></span></td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|g.'+i)}></td>`:''}<td>${inpN('kpis',k.id,'w.'+i,k.w[i],'placeholder="–"')}</td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|w.'+i)}></td>`:''}<td ${B('kpi.mstat',k.id+'|'+i)}></td><td>${i>0?`<button class="icon-btn" data-act="delmom" data-id="${k.id}" data-i="${i}" title="Meetmoment verwijderen" aria-label="Meetmoment verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('')}
       </tbody></table>
       <div style="margin-top:8px"><button class="btn sm" data-act="addmom" data-id="${k.id}">${icon('plus',16)}Meetmoment toevoegen</button></div>
       <p class="hint" style="margin-top:6px">Hier staan alleen de momenten waarop deze KPI wordt gemeten; niet elke KPI is wekelijks. Op 17 t/m 25 oktober (herfstvakantie) wordt niet gemeten. Grijze waarden bij Gewenst zijn automatisch: de lijn loopt gelijkmatig omhoog van de startwaarde (nulmeting) naar de volgende norm.</p>
       <div class="meth"><span class="kl">Hoe meten</span>${txa('kpis',k.id,'meting',k.meting)}</div></div>
     </div>
+    <details class="nlog" ${k.nlog.length?'open':''}><summary>Bijsturing van de norm <span data-nlogn="${k.id}">${nSumHtml(k)}</span></summary><div data-nlog="${k.id}">${nlogHtml(k)}</div></details>
   </article>`;
 }
 
@@ -1790,6 +1864,7 @@ document.addEventListener('keydown',e=>{
   else{t.value=v.slice(0,pos)+'\n* '+v.slice(t.selectionEnd);t.setSelectionRange(pos+3,pos+3)}
   t.dispatchEvent(new Event('input',{bubbles:true}));
 });
+document.addEventListener('change',e=>{const el=e.target;if(el.dataset&&el.dataset.c==='kpis'&&/^(eind|norm|g\.\d+)$/.test(el.dataset.f)){const k=S.kpis.find(x=>x.id===el.dataset.id);normTrack(k)}});
 document.addEventListener('focusout',e=>{if(e.target.dataset&&e.target.dataset.c)setTimeout(()=>{applyBindings();renderTiles2()},0)});
 function renderTiles2(){$$('#tiles [data-b]').forEach(el=>{const v=BIND[el.dataset.b]();if(el._v!==v){el._v=v;el.innerHTML=v}})}
 
@@ -1877,12 +1952,13 @@ const ACT={
     const last=k.d.slice(1).filter(Boolean).sort().pop();
     let d=last?fromDay(toDay(last)+7):todayStr();
     while(inHerfst(d))d=fromDay(toDay(d)+1);
-    k.d.push(d);k.g.push(null);k.w.push(null);sortMoments(k);save();render();
+    k.d.push(d);k.g.push(null);k.w.push(null);if(k.og)k.og.push(null);if(k.sg)k.sg.push(null);sortMoments(k);save();render();
   },
   delmom(a){
     const k=S.kpis.find(x=>x.id===a.dataset.id),i=+a.dataset.i;
-    if(i>0&&confirm('Dit meetmoment verwijderen, inclusief de ingevulde waarde?')){k.d.splice(i,1);k.g.splice(i,1);k.w.splice(i,1);save();render()}
+    if(i>0&&confirm('Dit meetmoment verwijderen, inclusief de ingevulde waarde?')){k.d.splice(i,1);k.g.splice(i,1);k.w.splice(i,1);if(k.og)k.og.splice(i,1);if(k.sg)k.sg.splice(i,1);save();render()}
   },
+  delnl(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k&&confirm('Deze regel uit het logboek verwijderen? De norm zelf blijft zoals hij nu is.')){k.nlog.splice(+a.dataset.i,1);save();nlogUI(k)}},
   mfilter(a){UI.f.meet=a.dataset.id;saveUI();render()},
   addmeet(){const m={id:uid(),datum:todayStr(),titel:'',soort:'KPI-meting',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delmeet(a){if(confirm('Dit meetmoment verwijderen?')){S.meet=S.meet.filter(x=>x.id!==a.dataset.id);save();render()}},
@@ -1900,7 +1976,7 @@ const ACT={
   color(a,e){e.stopPropagation();openPop(a.dataset.id,a)},
   export(){const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const l=document.createElement('a');l.href=URL.createObjectURL(blob);l.download=`impact-desk-back-up-${todayStr()}.json`;l.click();setTimeout(()=>URL.revokeObjectURL(l.href),1000);toast('Back-up opgeslagen in je downloads')},
   import(){$('#importFile').click()},
-  reset(){if(confirm('Alle ingevulde gegevens vervangen door de startgegevens uit het projectplan? Dit kan niet ongedaan worden gemaakt (maak eerst een back-up).')){S=defaults();save();render();toast('Startgegevens hersteld')}}
+  reset(){if(confirm('Alle ingevulde gegevens vervangen door de startgegevens uit het projectplan? Dit kan niet ongedaan worden gemaakt (maak eerst een back-up).')){S=defaults();ensureNorm();save();render();toast('Startgegevens hersteld')}}
 };
 function syncTogAll(){const b=$('#togall');if(!b)return;const all=activeSd().every(n=>UI.open['sd'+n]);b.innerHTML=icon(all?'chevrons-down-up':'chevrons-up-down')+(all?'Alles inklappen':'Alles uitklappen')}
 document.addEventListener('click',e=>{
