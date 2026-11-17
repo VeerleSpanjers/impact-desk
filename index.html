@@ -1395,13 +1395,13 @@ function kpiBarsHtml(k){
       <div class="kc" style="grid-column:span 3"><span class="kl">Meting op de dag van de PR-stunt</span><div class="chk">${inpD('kpis',k.id,'d.1',k.d[1])}<small>Eén meting. Zet de datum hier zodra die bekend is.</small></div></div>
     </div>
     <div class="kviz">
-      <div class="chartbox"><div class="legend"><span><i class="sw bg"></i>Gewenst</span><span><i class="sw bw"></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Norm bijsturen">${icon('pencil',16)}Norm bijsturen</button></div><div ${B('kpi.chart',k.id)}></div></div>
+      <div class="chartbox"><div class="legend"><span><i class="sw bg"></i>Gewenst</span><span><i class="sw bw"></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Logboek: norm bijsturen met datum en reden">${icon('pencil',16)}Logboek</button></div><div ${B('kpi.chart',k.id)}></div></div>
       <div><table class="mt"><thead><tr><th>Categorie</th><th>Gewenst (aantal)</th><th>Werkelijk (aantal)</th><th class="pc">% van bezoekers</th><th></th></tr></thead><tbody>${rows}</tbody></table>
       <div style="margin-top:8px"><button class="btn sm" data-act="addbar" data-id="${k.id}">${icon('plus',16)}Categorie toevoegen</button></div>
       <p class="hint" style="margin-top:6px">Vul op de dag van de PR-stunt de aantallen in. Het percentage rekent af tegen het aantal bezoekers (eerste regel). Namen en aantal categorieën kun je zelf aanpassen.</p>
       <div class="meth"><span class="kl">Hoe meten</span>${txa('kpis',k.id,'meting',k.meting)}</div></div>
     </div>
-    <details class="nlog" ${k.nlog.length?'open':''}><summary>Norm bijsturen &amp; logboek <span data-nlogn="${k.id}">${nSumHtml(k)}</span></summary><div data-nlog="${k.id}">${nlogHtml(k)}</div></details>
+    <details class="nlog" ${k.nlog.length?'open':''}><summary>Logboek <span data-nlogn="${k.id}">${nSumHtml(k)}</span></summary><div data-nlog="${k.id}">${nlogHtml(k)}</div></details>
   </article>`;
 }
 function kpiHtml(k){
@@ -1418,7 +1418,7 @@ function kpiHtml(k){
       <div class="kc"><span class="kl">Eindmeting</span><div class="chk"><div class="row">${inpN('kpis',k.id,'eindmeting',k.eindmeting,'placeholder="invullen"')}<span class="muted">${esc(u||k.unit)}</span></div>${k.basis?`<small ${B('kpi.pct',k.id+'|eindmeting')}></small>`:''}<div ${B('kpi.endstat',k.id)}></div></div></div>
     </div>
     <div class="kviz">
-      <div class="chartbox"><div class="legend"><span><i class="g"></i>Gewenst</span><span><i></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Norm bijsturen">${icon('pencil',16)}Norm bijsturen</button></div><div ${B('kpi.chart',k.id)}></div></div>
+      <div class="chartbox"><div class="legend"><span><i class="g"></i>Gewenst</span><span><i></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Logboek: norm bijsturen met datum en reden">${icon('pencil',16)}Logboek</button></div><div ${B('kpi.chart',k.id)}></div></div>
       <div><table class="mt"><thead><tr><th>Meetmoment (datum)</th>${k.basis?'<th>Gewenst (aantal)</th><th class="pc">%</th><th>Werkelijk (aantal)</th><th class="pc">%</th>':'<th>Gewenst</th><th>Werkelijk</th>'}<th></th><th></th></tr></thead><tbody>
         ${k.d.map((d,i)=>`<tr ${B('kpi.rowdue',k.id+'|'+i,`data-t="cls" data-base="${i===cur?'cur':''}"`)}><td class="dt">${i===0?'<small>Nulmeting</small>':''}${inpD('kpis',k.id,'d.'+i,d).replace('data-c','data-re="1" data-c')}${inHerfst(d)?'<small class="bad-t">Herfstvakantie: niet meten</small>':''}${i>0&&!d?'<small class="muted">Datum volgt</small>':''}</td><td><input class="num" type="number" step="any" inputmode="decimal" ${da('kpis',k.id,'g.'+i)} value="${k.g[i]==null?'':k.g[i]}" placeholder="–" ${B('kpi.gph',k.id+'|'+i,'data-t="ph"')}><span ${B('kpi.gwas',k.id+'|'+i)}></span></td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|g.'+i)}></td>`:''}<td>${inpN('kpis',k.id,'w.'+i,k.w[i],'placeholder="–"')}</td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|w.'+i)}></td>`:''}<td ${B('kpi.mstat',k.id+'|'+i)}></td><td>${i>0?`<button class="icon-btn" data-act="delmom" data-id="${k.id}" data-i="${i}" title="Meetmoment verwijderen" aria-label="Meetmoment verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('')}
       </tbody></table>
@@ -1426,7 +1426,7 @@ function kpiHtml(k){
       <p class="hint" style="margin-top:6px">Hier staan alleen de momenten waarop deze KPI wordt gemeten; niet elke KPI is wekelijks. Op 17 t/m 25 oktober (herfstvakantie) wordt niet gemeten. Grijze waarden bij Gewenst zijn automatisch: de lijn loopt gelijkmatig omhoog van de startwaarde (nulmeting) naar de volgende norm.</p>
       <div class="meth"><span class="kl">Hoe meten</span>${txa('kpis',k.id,'meting',k.meting)}</div></div>
     </div>
-    <details class="nlog" ${k.nlog.length?'open':''}><summary>Norm bijsturen &amp; logboek <span data-nlogn="${k.id}">${nSumHtml(k)}</span></summary><div data-nlog="${k.id}">${nlogHtml(k)}</div></details>
+    <details class="nlog" ${k.nlog.length?'open':''}><summary>Logboek <span data-nlogn="${k.id}">${nSumHtml(k)}</span></summary><div data-nlog="${k.id}">${nlogHtml(k)}</div></details>
   </article>`;
 }
 
@@ -1974,7 +1974,7 @@ const ACT={
     const gr=k.bars
       ?k.bars.map((b,i)=>`<tr><td>${esc(b.l||('Categorie '+(i+1)))}</td><td class="nu">nu: ${nFmt(k,b.g)}</td><td><input type="number" step="any" data-bg="${i}" value="${num(b.g)}" placeholder="–"></td></tr>`).join('')
       :k.g.map((v,i)=>i===0?'':`<tr><td>${k.d[i]?esc(fmtD(k.d[i])):'Datum volgt'}</td><td class="nu">nu: ${nFmt(k,v)}</td><td><input type="number" step="any" data-bg="${i}" value="${num(v)}" placeholder="${esc(String(gEffA(k).v[i]==null?'–':Math.round(gEffA(k).v[i]*10)/10))}"></td></tr>`).join('');
-    dlg.innerHTML=`<form id="bf" autocomplete="off"><h3>Norm bijsturen · KPI ${esc(k.id)}</h3>
+    dlg.innerHTML=`<form id="bf" autocomplete="off"><h3>Logboek · KPI ${esc(k.id)}</h3>
       <p class="hint" style="margin:-6px 0 12px">Pas hieronder aan wat je wilt bijsturen. De oude norm blijft bewaard en zichtbaar; de aanpassing komt met datum en reden in het logboek onder de grafiek.</p>
       ${k.bars?'':`<label class="fl" for="be">Eindnorm${u?' ('+u+')':''} <span class="muted">· nu: ${nFmt(k,k.eind)}</span></label><input id="be" type="number" step="any" value="${num(k.eind)}" placeholder="–">`}
       <label class="fl" style="margin-top:10px">Gewenste waarde per ${k.bars?'categorie':'meetmoment'}</label>
