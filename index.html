@@ -212,6 +212,8 @@ table.aanw th,table.aanw td{vertical-align:middle}
 .aanwh-dt input{padding:4px 6px;font-size:13px;color:var(--ink)}
 .aanwh-dt input[type=date]{min-width:128px}
 .aanwh-dt input[type=time]{width:92px}
+.bps{display:flex;align-items:center;gap:6px}
+.bps input{min-width:0}
 .chk-in{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-right:6px;cursor:pointer;white-space:nowrap}
 .mtg-head .dl{display:flex;align-items:center}
 table.aanw td .acell{display:flex;flex-direction:column;gap:5px;min-width:150px}
@@ -968,7 +970,7 @@ function ensureExtra(){
     S.fin.pot.push({id:uid(),naam,kost:r.id,items:[]});
   };
   if(!S.finPotV){mk('PR-pakketten',/pr/i);mk('Showroom',/showroom/i);S.finPotV=1}
-  S.fin.pot.forEach(p=>{if(!p.items)p.items=[];if(!p.begr)p.begr=[]});
+  S.fin.pot.forEach(p=>{if(!p.items)p.items=[];if(!p.begr)p.begr=[];p.begr.forEach(b=>{if(b.ps===undefined){b.ps=b.prijs!=null;b.tot=null}})});
 }
 const POTSTAT=['Gepland','Besteld','Betaald'];
 function potCalc(p){
@@ -977,10 +979,11 @@ function potCalc(p){
   const lt=i=>q(i)*(+i.prijs||0);
   const done=i=>i.status&&i.status!=='Gepland';
   const tot=sum(items.map(lt)),uitg=sum(items.filter(done).map(lt));
-  const bt=sum(begr.map(lt));
+  const bl=b=>b.ps?q(b)*(+b.prijs||0):(+b.tot||0);
+  const bt=sum(begr.map(bl));
   const postW=b=>sum(items.filter(i=>i.bi===b.id&&done(i)).map(lt));
   const ongekoppeld=sum(items.filter(i=>done(i)&&!begr.some(b=>b.id===i.bi)).map(lt));
-  return {bud,tot,uitg,over:bud-tot,pct:bud?tot/bud:0,n:items.length,lt,bt,nb:begr.length,postW,ongekoppeld,bpct:bud?bt/bud:0};
+  return {bud,tot,uitg,over:bud-tot,pct:bud?tot/bud:0,n:items.length,lt,bl,bt,nb:begr.length,postW,ongekoppeld,bpct:bud?bt/bud:0};
 }
 
 function ensureNorm(){
@@ -1307,9 +1310,9 @@ BIND['pot.badge']=id=>{const p=potById(id);if(!p)return '';const c=potCalc(p);
   if(!c.bud&&!c.n)return '<span class="muted" style="font-weight:400">nog geen budget of artikelen</span>';
   const cls=c.pct>1?'bad':c.pct>.85?'warn':'ok';
   return `<span class="bar sm ${cls}"><i style="width:${Math.min(100,Math.round(c.pct*100))}%"></i></span><span>${c.over>=0?'nog '+eur(c.over)+' over':'<span class="bad-t">'+eur(-c.over)+' over budget</span>'}</span>`};
-BIND['pot.bit']=a=>{const [id,i]=a.split('|'),p=potById(id);if(!p||!p.begr[+i])return '';return eur(potCalc(p).lt(p.begr[+i]),2)};
+BIND['pot.bit']=a=>{const [id,i]=a.split('|'),p=potById(id);if(!p||!p.begr[+i])return '';return eur(potCalc(p).bl(p.begr[+i]),2)};
 BIND['pot.bw']=a=>{const [id,i]=a.split('|'),p=potById(id);if(!p||!p.begr[+i])return '';const w=potCalc(p).postW(p.begr[+i]);return w?eur(w,2):'<span class="muted">–</span>'};
-BIND['pot.bd']=a=>{const [id,i]=a.split('|'),p=potById(id);if(!p||!p.begr[+i])return '';const c=potCalc(p),b=p.begr[+i],w=c.postW(b);return w?afwHtml(w,c.lt(b),2):'<span class="muted">–</span>'};
+BIND['pot.bd']=a=>{const [id,i]=a.split('|'),p=potById(id);if(!p||!p.begr[+i])return '';const c=potCalc(p),b=p.begr[+i],w=c.postW(b);return w?afwHtml(w,c.bl(b),2):'<span class="muted">–</span>'};
 BIND['pot.btot']=id=>{const p=potById(id);return p?eur(potCalc(p).bt,2):''};
 BIND['pot.bwt']=id=>{const p=potById(id);if(!p)return '';const c=potCalc(p),w=sum(p.begr.map(c.postW));return w?eur(w,2):'<span class="muted">–</span>'};
 BIND['pot.bdt']=id=>{const p=potById(id);if(!p)return '';const c=potCalc(p),w=sum(p.begr.map(c.postW));return w?afwHtml(w,c.bt,2):'<span class="muted">–</span>'};
@@ -1764,8 +1767,7 @@ function potHtml(p){
   const open=!!UI.open['pot'+p.id];
   const brows=(p.begr||[]).map((b,i)=>`<tr>
     <td style="min-width:200px">${inpT('fin.pot',p.id,'begr.'+i+'.art',b.art,'Begrote post of artikel')}</td>
-    <td style="width:86px">${inpN('fin.pot',p.id,'begr.'+i+'.aantal',b.aantal)}</td>
-    <td style="width:120px">${inpN('fin.pot',p.id,'begr.'+i+'.prijs',b.prijs,'placeholder="€ per stuk"')}</td>
+    <td style="min-width:230px">${b.ps?`<div class="bps">${inpN('fin.pot',p.id,'begr.'+i+'.aantal',b.aantal,'placeholder="Aantal" aria-label="Aantal"')}<span class="muted">×</span>${inpN('fin.pot',p.id,'begr.'+i+'.prijs',b.prijs,'placeholder="€ per stuk" aria-label="Prijs per stuk"')}</div>`:`<div class="bps">${inpN('fin.pot',p.id,'begr.'+i+'.tot',b.tot,'placeholder="Totaalprijs (€)" aria-label="Totaalprijs van deze post"')}</div>`}<label class="chk-in" style="margin:6px 0 0"><input type="checkbox" class="chkb" ${da('fin.pot',p.id,'begr.'+i+'.ps')} data-re="1" ${b.ps?'checked':''}>Aantal en prijs per stuk invullen</label></td>
     <td class="r nowrap" style="font-weight:700" ${B('pot.bit',p.id+'|'+i)}></td>
     <td class="r nowrap" ${B('pot.bw',p.id+'|'+i)}></td>
     <td class="r nowrap" ${B('pot.bd',p.id+'|'+i)}></td>
@@ -1791,9 +1793,9 @@ function potHtml(p){
 
       <h4 class="pot-h"><span class="pot-n">1</span>Begroting <span class="muted">· vooraf, wat verwacht je nodig te hebben</span></h4>
       <div class="toolbar" style="margin-top:0"><span class="muted">Zet hier vooraf per post wat je verwacht uit te geven. Zo laat je tijdens het project zien dat je er rekening mee hebt gehouden.</span><span class="grow"></span><button class="btn cta sm" data-act="addbegr" data-id="${p.id}">${icon('plus',16)}Post aan begroting toevoegen</button></div>
-      ${(p.begr||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Begrote post</th><th>Aantal</th><th>Prijs per stuk (€)</th><th class="r">Begroot</th><th class="r">Werkelijk</th><th class="r">Verschil</th><th>Toelichting</th><th></th></tr></thead><tbody>${brows}</tbody>
-      <tfoot><tr><td>Totaal begroting</td><td></td><td></td><td class="r" ${B('pot.btot',p.id)}></td><td class="r" ${B('pot.bwt',p.id)}></td><td class="r" ${B('pot.bdt',p.id)}></td><td colspan="2"></td></tr>
-      <tr><td colspan="8" class="hint" ${B('pot.bunl',p.id)}></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen begroting. Klik op “Post aan begroting toevoegen” om te beginnen.</p>'}
+      ${(p.begr||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Begrote post</th><th>Bedrag</th><th class="r">Begroot</th><th class="r">Werkelijk</th><th class="r">Verschil</th><th>Toelichting</th><th></th></tr></thead><tbody>${brows}</tbody>
+      <tfoot><tr><td>Totaal begroting</td><td></td><td class="r" ${B('pot.btot',p.id)}></td><td class="r" ${B('pot.bwt',p.id)}></td><td class="r" ${B('pot.bdt',p.id)}></td><td colspan="2"></td></tr>
+      <tr><td colspan="7" class="hint" ${B('pot.bunl',p.id)}></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen begroting. Klik op “Post aan begroting toevoegen” om te beginnen.</p>'}
 
       <h4 class="pot-h"><span class="pot-n">2</span>Werkelijke kosten <span class="muted">· wat je daadwerkelijk koopt</span></h4>
       <div class="toolbar" style="margin-top:0"><span class="muted">Voeg de artikelen toe die je koopt, met aantal en prijs per stuk. Kies bij status “Besteld” of “Betaald” zodra het gekocht is: dat telt mee als werkelijk uitgegeven in de tabel Kosten. Koppel het artikel aan een begrote post om te zien of je binnen de begroting blijft.</span><span class="grow"></span><button class="btn cta sm" data-act="addart" data-id="${p.id}">${icon('plus',16)}Artikel toevoegen</button></div>
@@ -2171,7 +2173,7 @@ const ACT={
   delmeet(a){if(confirm('Dit meetmoment verwijderen?')){S.meet=S.meet.filter(x=>x.id!==a.dataset.id);save();render()}},
   addcost(){S.fin.kosten.push({id:uid(),cat:'',begroot:null,werkelijk:null,toel:''});save();render();const i=$$('#main input[data-f=cat]');i.length&&i[i.length-1].focus()},
   addart(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(!p)return;p.items.push({id:uid(),art:'',aantal:1,prijs:null,status:'Gepland',toel:''});UI.open['pot'+p.id]=true;save();saveUI();render();const el=$$(`#pot${p.id} input[data-f$=".art"]`);el.length&&el[el.length-1].focus()},
-  addbegr(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(!p)return;p.begr.push({id:uid(),art:'',aantal:1,prijs:null,toel:''});UI.open['pot'+p.id]=true;save();saveUI();render();const el=$$(`#pot${p.id} input[data-f$=".art"][data-f^="begr"]`);el.length&&el[el.length-1].focus()},
+  addbegr(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(!p)return;p.begr.push({id:uid(),art:'',ps:false,tot:null,aantal:1,prijs:null,toel:''});UI.open['pot'+p.id]=true;save();saveUI();render();const el=$$(`#pot${p.id} input[data-f$=".art"][data-f^="begr"]`);el.length&&el[el.length-1].focus()},
   delbegr(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(!p)return;const b=p.begr[+a.dataset.i];if(b&&confirm('Deze post uit de begroting verwijderen? Gekoppelde artikelen blijven bestaan, maar zijn dan niet meer aan een post gekoppeld.')){p.items.forEach(i=>{if(i.bi===b.id)i.bi=''});p.begr.splice(+a.dataset.i,1);save();render()}},
   delart(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(p&&confirm('Dit artikel van de lijst verwijderen?')){p.items.splice(+a.dataset.i,1);save();render()}},
   addpot(){
