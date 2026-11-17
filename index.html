@@ -269,6 +269,12 @@ table.mt td input[data-f$=".l"]{min-width:180px;text-align:left}
 .was{display:block;font-size:11.5px;color:var(--warn);font-weight:700;text-align:right;padding-top:2px}
 .nbadge{margin-top:8px;display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .nbadge small{color:var(--muted);font-size:12px}
+.bsr{width:100%;border-collapse:collapse;font-size:13.5px;margin:4px 0 10px}
+.bsr td{padding:3px 6px;border-top:1px solid var(--line)}
+.bsr td:first-child{white-space:nowrap}
+.bsr input{width:100%;text-align:right;padding:4px 6px}
+.bsr .nu{color:var(--muted);font-size:12px;white-space:nowrap}
+.bsr-scroll{max-height:210px;overflow:auto}
 .nlog{margin-top:14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;padding:0}
 .nlog>div{padding:0 14px 14px}
 .nlog-sum{padding:12px 14px}
@@ -284,6 +290,7 @@ table.mt td input[data-f$=".l"]{min-width:180px;text-align:left}
 .nlog td.nl-v{white-space:pre-wrap;max-width:260px}
 .nlog td.nl-v s{color:var(--muted)}
 .nlog td input{width:100%;min-width:200px;text-align:left}
+.legend{align-items:center}
 .legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-bottom:2px;flex-wrap:wrap}
 .legend i{display:inline-block;width:22px;height:0;border-top:3px solid var(--orange);vertical-align:middle;margin-right:6px;border-radius:2px}
 .legend i.sw{display:inline-block;width:14px;height:12px;border:0;border-radius:3px;vertical-align:middle;margin-right:6px}
@@ -1388,7 +1395,7 @@ function kpiBarsHtml(k){
       <div class="kc" style="grid-column:span 3"><span class="kl">Meting op de dag van de PR-stunt</span><div class="chk">${inpD('kpis',k.id,'d.1',k.d[1])}<small>Eén meting. Zet de datum hier zodra die bekend is.</small></div></div>
     </div>
     <div class="kviz">
-      <div class="chartbox"><div class="legend"><span><i class="sw bg"></i>Gewenst</span><span><i class="sw bw"></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span></div><div ${B('kpi.chart',k.id)}></div></div>
+      <div class="chartbox"><div class="legend"><span><i class="sw bg"></i>Gewenst</span><span><i class="sw bw"></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Norm bijsturen">${icon('pencil',16)}Norm bijsturen</button></div><div ${B('kpi.chart',k.id)}></div></div>
       <div><table class="mt"><thead><tr><th>Categorie</th><th>Gewenst (aantal)</th><th>Werkelijk (aantal)</th><th class="pc">% van bezoekers</th><th></th></tr></thead><tbody>${rows}</tbody></table>
       <div style="margin-top:8px"><button class="btn sm" data-act="addbar" data-id="${k.id}">${icon('plus',16)}Categorie toevoegen</button></div>
       <p class="hint" style="margin-top:6px">Vul op de dag van de PR-stunt de aantallen in. Het percentage rekent af tegen het aantal bezoekers (eerste regel). Namen en aantal categorieën kun je zelf aanpassen.</p>
@@ -1411,7 +1418,7 @@ function kpiHtml(k){
       <div class="kc"><span class="kl">Eindmeting</span><div class="chk"><div class="row">${inpN('kpis',k.id,'eindmeting',k.eindmeting,'placeholder="invullen"')}<span class="muted">${esc(u||k.unit)}</span></div>${k.basis?`<small ${B('kpi.pct',k.id+'|eindmeting')}></small>`:''}<div ${B('kpi.endstat',k.id)}></div></div></div>
     </div>
     <div class="kviz">
-      <div class="chartbox"><div class="legend"><span><i class="g"></i>Gewenst</span><span><i></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span></div><div ${B('kpi.chart',k.id)}></div></div>
+      <div class="chartbox"><div class="legend"><span><i class="g"></i>Gewenst</span><span><i></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Norm bijsturen">${icon('pencil',16)}Norm bijsturen</button></div><div ${B('kpi.chart',k.id)}></div></div>
       <div><table class="mt"><thead><tr><th>Meetmoment (datum)</th>${k.basis?'<th>Gewenst (aantal)</th><th class="pc">%</th><th>Werkelijk (aantal)</th><th class="pc">%</th>':'<th>Gewenst</th><th>Werkelijk</th>'}<th></th><th></th></tr></thead><tbody>
         ${k.d.map((d,i)=>`<tr ${B('kpi.rowdue',k.id+'|'+i,`data-t="cls" data-base="${i===cur?'cur':''}"`)}><td class="dt">${i===0?'<small>Nulmeting</small>':''}${inpD('kpis',k.id,'d.'+i,d).replace('data-c','data-re="1" data-c')}${inHerfst(d)?'<small class="bad-t">Herfstvakantie: niet meten</small>':''}${i>0&&!d?'<small class="muted">Datum volgt</small>':''}</td><td><input class="num" type="number" step="any" inputmode="decimal" ${da('kpis',k.id,'g.'+i)} value="${k.g[i]==null?'':k.g[i]}" placeholder="–" ${B('kpi.gph',k.id+'|'+i,'data-t="ph"')}><span ${B('kpi.gwas',k.id+'|'+i)}></span></td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|g.'+i)}></td>`:''}<td>${inpN('kpis',k.id,'w.'+i,k.w[i],'placeholder="–"')}</td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|w.'+i)}></td>`:''}<td ${B('kpi.mstat',k.id+'|'+i)}></td><td>${i>0?`<button class="icon-btn" data-act="delmom" data-id="${k.id}" data-i="${i}" title="Meetmoment verwijderen" aria-label="Meetmoment verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('')}
       </tbody></table>
@@ -1959,6 +1966,51 @@ const ACT={
       const c=$('#p'+slug(n));c&&c.scrollIntoView({block:'center'});toast(n+' toegevoegd aan het team');
     };
     dlg.showModal();$('#mn',dlg).focus();
+  },
+  bijstuur(a){
+    const k=S.kpis.find(x=>x.id===a.dataset.id);if(!k)return;
+    const dlg=$('#dlg'),num=v=>v==null?'':v;
+    const u=nUnit(k);
+    const gr=k.bars
+      ?k.bars.map((b,i)=>`<tr><td>${esc(b.l||('Categorie '+(i+1)))}</td><td class="nu">nu: ${nFmt(k,b.g)}</td><td><input type="number" step="any" data-bg="${i}" value="${num(b.g)}" placeholder="–"></td></tr>`).join('')
+      :k.g.map((v,i)=>i===0?'':`<tr><td>${k.d[i]?esc(fmtD(k.d[i])):'Datum volgt'}</td><td class="nu">nu: ${nFmt(k,v)}</td><td><input type="number" step="any" data-bg="${i}" value="${num(v)}" placeholder="${esc(String(gEffA(k).v[i]==null?'–':Math.round(gEffA(k).v[i]*10)/10))}"></td></tr>`).join('');
+    dlg.innerHTML=`<form id="bf" autocomplete="off"><h3>Norm bijsturen · KPI ${esc(k.id)}</h3>
+      <p class="hint" style="margin:-6px 0 12px">Pas hieronder aan wat je wilt bijsturen. De oude norm blijft bewaard en zichtbaar; de aanpassing komt met datum en reden in het logboek onder de grafiek.</p>
+      ${k.bars?'':`<label class="fl" for="be">Eindnorm${u?' ('+u+')':''} <span class="muted">· nu: ${nFmt(k,k.eind)}</span></label><input id="be" type="number" step="any" value="${num(k.eind)}" placeholder="–">`}
+      <label class="fl" style="margin-top:10px">Gewenste waarde per ${k.bars?'categorie':'meetmoment'}</label>
+      <div class="bsr-scroll"><table class="bsr"><tbody>${gr}</tbody></table></div>
+      <label class="fl" for="bn">Normtekst</label><textarea id="bn" rows="3">${esc(k.norm||'')}</textarea>
+      <div style="display:grid;grid-template-columns:170px 1fr;gap:12px;margin-top:10px">
+        <div><label class="fl" for="bd">Datum bijsturing</label><input id="bd" type="date" required value="${todayStr()}"></div>
+        <div><label class="fl" for="br">Reden voor bijsturing <span class="muted">· verplicht</span></label><textarea id="br" rows="2" required placeholder="Waarom stuur je de norm bij?"></textarea></div>
+      </div>
+      <div class="dfoot"><span class="sp"></span><button type="button" class="btn" id="bcancel">Annuleren</button><button class="btn pri" type="submit">Bijsturing vastleggen</button></div></form>`;
+    $('#bcancel',dlg).onclick=()=>dlg.close();
+    $('#bf',dlg).onsubmit=e=>{
+      e.preventDefault();
+      const rd=$('#br',dlg).value.trim(),dd=$('#bd',dlg).value||todayStr();
+      if(!rd){$('#br',dlg).focus();return}
+      const pn=v=>{v=String(v).trim().replace(',','.');if(v==='')return null;const n=Number(v);return Number.isNaN(n)?null:n};
+      const ch=[];
+      const add=(wat,van,naar,txt)=>{k.nlog.push({id:uid(),d:dd,wat,van,naar,txt:!!txt,reden:rd})};
+      if(!k.bars){
+        const ne=pn($('#be',dlg).value),oe=k.eind==null?null:k.eind;
+        if(ne!==oe){add('Eindnorm',nFmt(k,oe),nFmt(k,ne));k.eind=ne;k.sn.eind=ne;ch.push(1)}
+      }
+      $$('[data-bg]',dlg).forEach(inp=>{
+        const i=+inp.dataset.bg,nw=pn(inp.value);
+        if(k.bars){const b=k.bars[i],ov=b.g==null?null:b.g;if(nw!==ov){add('Gewenst '+(b.l||('categorie '+(i+1))),nFmt(k,ov),nFmt(k,nw));b.g=nw;if(k.sb)k.sb[i]=nw;ch.push(1)}}
+        else{const ov=k.g[i]==null?null:k.g[i];if(nw!==ov){add('Gewenst '+lbl(k,i),nFmt(k,ov),nFmt(k,nw));k.g[i]=nw;k.sg[i]=nw;ch.push(1)}}
+      });
+      const nt=$('#bn',dlg).value;
+      if(nt!==(k.norm||'')){add('Normtekst',k.norm||'',nt,true);k.norm=nt;k.sn.norm=nt;ch.push(1)}
+      if(!ch.length){toast('Er is niets gewijzigd. Pas eerst een waarde of de normtekst aan.');return}
+      k.nlog.sort((x,y)=>(x.d||'').localeCompare(y.d||''));
+      save();dlg.close();render();
+      const box=document.querySelector(`[data-nlog="${k.id}"]`);if(box){const dt=box.closest('details');if(dt)dt.open=true;box.closest('article').scrollIntoView({block:'nearest'})}
+      toast('Norm bijgestuurd en vastgelegd in het logboek');
+    };
+    dlg.showModal();
   },
   tkview(a){UI.f.tkview=a.dataset.id;saveUI();render()},
   addblok(){const last=[...S.blokken].sort((a,b)=>b.tot-a.tot)[0];const van=last?last.tot+1:Math.max(1,weekOf(todayStr()));S.blokken.push({id:uid(),van,tot:van+1});save();render()},
