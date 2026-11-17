@@ -984,7 +984,7 @@ function nOrigHtml(k){
   return `<div class="nl-cmp">${same&&!k.nlog.length?block('Norm (nog niet bijgestuurd)',cur,k.norm):block('Oorspronkelijke norm',k.o.eind,k.o.norm)+block('Huidige norm',cur,k.norm)}</div>`;
 }
 function nlogHtml(k){
-  const rows=k.nlog.map((e,i)=>`<tr><td class="nl-d">${inpD('kpis',k.id,'nlog.'+i+'.d',e.d)}</td><td>${esc(e.wat)}</td><td class="nl-v"><s>${esc(e.van===''?'–':e.van)}</s> → <b>${esc(e.naar===''?'–':e.naar)}</b></td><td><input class="${(e.reden||'').trim()?'':'need'}" ${da('kpis',k.id,'nlog.'+i+'.reden')} value="${esc(e.reden)}" placeholder="Waarom bijgestuurd?"></td><td><button class="icon-btn" data-act="delnl" data-id="${k.id}" data-i="${i}" title="Regel uit logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}</button></td></tr>`).join('');
+  const rows=k.nlog.map((e,i)=>`<tr><td class="nl-d">${inpD('kpis',k.id,'nlog.'+i+'.d',e.d)}</td><td>${esc(e.wat)}</td><td class="nl-v"><s>${esc(e.van===''?'–':e.van)}</s> → <b>${esc(e.naar===''?'–':e.naar)}</b></td><td><input class="${(e.reden||'').trim()?'':'need'}" ${da('kpis',k.id,'nlog.'+i+'.reden')} value="${esc(e.reden)}" placeholder="Waarom bijgestuurd?"></td><td><button class="btn sm" data-act="delnl" data-id="${k.id}" data-i="${i}" title="Deze regel uit het logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}Verwijderen</button></td></tr>`).join('');
   return nOrigHtml(k)+(k.nlog.length?`<table><thead><tr><th>Datum bijsturing</th><th>Wat</th><th>Was → nu</th><th>Reden voor bijsturing</th><th></th></tr></thead><tbody>${rows}</tbody></table><p class="hint" style="margin:6px 0 0">Elke aanpassing staat hier met datum en reden, zodat je later kunt teruglezen wat er is bijgestuurd en waarom. De datum kun je aanpassen.</p>`:'<p class="hint" style="margin:8px 0 0">Nog niets bijgestuurd. Pas hierboven de norm, de eindnorm of een gewenste waarde aan: de oude norm blijft hier zichtbaar staan en de aanpassing komt automatisch in dit logboek, met datum. Vul daarna de reden in.</p>');
 }
 function nSumHtml(k){
@@ -2042,7 +2042,7 @@ const ACT={
     const k=S.kpis.find(x=>x.id===a.dataset.id),i=+a.dataset.i;
     if(i>0&&confirm('Dit meetmoment verwijderen, inclusief de ingevulde waarde?')){k.d.splice(i,1);k.g.splice(i,1);k.w.splice(i,1);if(k.og)k.og.splice(i,1);if(k.sg)k.sg.splice(i,1);save();render()}
   },
-  delnl(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k&&confirm('Deze regel uit het logboek verwijderen? De norm zelf blijft zoals hij nu is.')){k.nlog.splice(+a.dataset.i,1);save();nlogUI(k)}},
+  delnl(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k&&confirm('Deze regel uit het logboek verwijderen? De norm zelf blijft zoals hij nu is.')){k.nlog.splice(+a.dataset.i,1);save();nlogUI(k);applyBindings();toast('Regel uit het logboek verwijderd')}},
   mfilter(a){UI.f.meet=a.dataset.id;saveUI();render()},
   addmeet(){const m={id:uid(),datum:todayStr(),titel:'',soort:'KPI-meting',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delmeet(a){if(confirm('Dit meetmoment verwijderen?')){S.meet=S.meet.filter(x=>x.id!==a.dataset.id);save();render()}},
