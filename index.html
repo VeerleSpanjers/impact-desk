@@ -1764,6 +1764,7 @@ function viewWait(){
 
 /* ---------- Financiën ---------- */
 const potOfRow=id=>(S.fin.pot||[]).find(p=>p.kost===id&&(p.items||[]).length);
+function potBiOptsI(p,it){const o=potBiOpts(p);if(it&&it.art)o[0]=['','Niet gekoppeld · '+it.art];return o}
 function potBiOpts(p){return [['','Niet gekoppeld'],...(p.begr||[]).map((b,i)=>[b.id,(i+1)+'. '+(b.art||'(naamloos)')])]}
 function potHtml(p){
   const r=S.fin.kosten.find(x=>x.id===p.kost);if(!r)return '';
@@ -1778,11 +1779,10 @@ function potHtml(p){
     <td style="min-width:200px">${txa('fin.pot',p.id,'begr.'+i+'.toel',b.toel,'Toelichting op deze post')}</td>
     <td><button class="icon-btn" data-act="delbegr" data-id="${p.id}" data-i="${i}" title="Post uit de begroting verwijderen" aria-label="Post uit de begroting verwijderen">${icon('trash-2')}</button></td></tr>`).join('');
   const rows=(p.items||[]).map((it,i)=>`<tr>
-    <td style="min-width:200px">${inpT('fin.pot',p.id,'items.'+i+'.art',it.art,'Artikel')}</td>
+    <td style="min-width:200px">${selN('fin.pot',p.id,'items.'+i+'.bi',potBiOptsI(p,it),it.bi||'')}</td>
     <td style="min-width:230px">${it.ps?`<div class="bps">${inpN('fin.pot',p.id,'items.'+i+'.aantal',it.aantal,'placeholder="Aantal" aria-label="Aantal"')}<span class="muted">×</span>${inpN('fin.pot',p.id,'items.'+i+'.prijs',it.prijs,'placeholder="€ per stuk" aria-label="Prijs per stuk"')}</div>`:`<div class="bps">${inpN('fin.pot',p.id,'items.'+i+'.tot',it.tot,'placeholder="Totaalprijs (€)" aria-label="Totaalprijs van dit artikel"')}</div>`}<label class="chk-in" style="margin:6px 0 0"><input type="checkbox" class="chkb" ${da('fin.pot',p.id,'items.'+i+'.ps')} data-re="1" ${it.ps?'checked':''}>Aantal en prijs per stuk invullen</label></td>
     <td class="r nowrap" style="font-weight:700" ${B('pot.it',p.id+'|'+i)}></td>
     <td style="width:130px">${selP('fin.pot',p.id,'items.'+i+'.status',POTSTAT,it.status||'Gepland')}</td>
-    <td style="min-width:170px">${selN('fin.pot',p.id,'items.'+i+'.bi',potBiOpts(p),it.bi||'')}</td>
     <td style="min-width:170px">${inpT('fin.pot',p.id,'items.'+i+'.fin',it.fin||'','Invullen')}</td>
     <td style="min-width:200px">${txa('fin.pot',p.id,'items.'+i+'.toel',it.toel,'Toelichting of link')}</td>
     <td><button class="icon-btn" data-act="delart" data-id="${p.id}" data-i="${i}" title="Artikel verwijderen" aria-label="Artikel verwijderen">${icon('trash-2')}</button></td></tr>`).join('');
@@ -1802,9 +1802,9 @@ function potHtml(p){
       <tr><td colspan="8" class="hint" ${B('pot.bunl',p.id)}></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen posten.</p>'}
 
       <h4 class="pot-h"><span class="pot-n">2</span>Werkelijke kosten</h4>
-      <div class="toolbar" style="margin-top:0"><span class="muted">Alleen artikelen met status “Besteld” of “Betaald” tellen mee als werkelijk uitgegeven.</span><span class="grow"></span><button class="btn cta sm" data-act="addart" data-id="${p.id}">${icon('plus',16)}Artikel toevoegen</button></div>
-      ${(p.items||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Artikel</th><th>Bedrag</th><th class="r">Totaal</th><th>Status</th><th>Begrote post</th><th>Financieringsmethode</th><th>Toelichting</th><th></th></tr></thead><tbody>${rows}</tbody>
-      <tfoot><tr><td>Totaal artikelen</td><td></td><td class="r" ${B('pot.tot',p.id)}></td><td colspan="5"></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen artikelen.</p>'}
+      <div class="toolbar" style="margin-top:0"><span class="muted">Kies per regel de begrote post. Alleen regels met status “Besteld” of “Betaald” tellen mee als werkelijk uitgegeven.</span><span class="grow"></span><button class="btn cta sm" data-act="addart" data-id="${p.id}">${icon('plus',16)}Artikel toevoegen</button></div>
+      ${(p.items||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Begrote post</th><th>Bedrag</th><th class="r">Totaal</th><th>Status</th><th>Financieringsmethode</th><th>Toelichting</th><th></th></tr></thead><tbody>${rows}</tbody>
+      <tfoot><tr><td>Totaal artikelen</td><td></td><td class="r" ${B('pot.tot',p.id)}></td><td colspan="4"></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen artikelen.</p>'}
       <div style="margin-top:12px"><button class="btn sm" data-act="delpot" data-id="${p.id}">${icon('trash-2',16)}Dit onderdeel verwijderen</button></div>
     </div></section>`;
 }
@@ -2032,7 +2032,7 @@ document.addEventListener('input',e=>{const el=e.target;if(el.dataset&&el.datase
 document.addEventListener('change',e=>{
   const el=e.target;if(!el.dataset||el.dataset.c!=='fin.pot'||!/^begr\.\d+\.art$/.test(el.dataset.f))return;
   const p=S.fin.pot.find(x=>x.id===el.dataset.id);if(!p)return;
-  $$(`#pot${p.id} select[data-f$=".bi"]`).forEach(sel=>{const v=sel.value;sel.innerHTML=opt(potBiOpts(p),v)});
+  $$(`#pot${p.id} select[data-f$=".bi"]`).forEach(sel=>{const m=/^items\.(\d+)\.bi$/.exec(sel.dataset.f),v=sel.value;sel.innerHTML=opt(potBiOptsI(p,m?p.items[+m[1]]:null),v)});
 });
 document.addEventListener('focusout',e=>{if(e.target.dataset&&e.target.dataset.c)setTimeout(()=>{applyBindings();renderTiles2()},0)});
 function renderTiles2(){$$('#tiles [data-b]').forEach(el=>{const v=BIND[el.dataset.b]();if(el._v!==v){el._v=v;el.innerHTML=v}})}
@@ -2177,7 +2177,7 @@ const ACT={
   addmeet(){const m={id:uid(),datum:todayStr(),titel:'',soort:'KPI-meting',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delmeet(a){if(confirm('Dit meetmoment verwijderen?')){S.meet=S.meet.filter(x=>x.id!==a.dataset.id);save();render()}},
   addcost(){S.fin.kosten.push({id:uid(),cat:'',begroot:null,werkelijk:null,toel:''});save();render();const i=$$('#main input[data-f=cat]');i.length&&i[i.length-1].focus()},
-  addart(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(!p)return;p.items.push({id:uid(),art:'',ps:false,tot:null,aantal:1,prijs:null,status:'Gepland',toel:''});UI.open['pot'+p.id]=true;save();saveUI();render();const el=$$(`#pot${p.id} input[data-f$=".art"]`);el.length&&el[el.length-1].focus()},
+  addart(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(!p)return;p.items.push({id:uid(),art:'',ps:false,tot:null,aantal:1,prijs:null,status:'Gepland',toel:''});UI.open['pot'+p.id]=true;save();saveUI();render();const el=$$(`#pot${p.id} select[data-f$=".bi"]`);el.length&&el[el.length-1].focus()},
   addbegr(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(!p)return;p.begr.push({id:uid(),art:'',ps:false,tot:null,aantal:1,prijs:null,toel:''});UI.open['pot'+p.id]=true;save();saveUI();render();const el=$$(`#pot${p.id} input[data-f$=".art"][data-f^="begr"]`);el.length&&el[el.length-1].focus()},
   delbegr(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(!p)return;const b=p.begr[+a.dataset.i];if(b&&confirm('Deze post uit de begroting verwijderen? Gekoppelde artikelen blijven bestaan, maar zijn dan niet meer aan een post gekoppeld.')){p.items.forEach(i=>{if(i.bi===b.id)i.bi=''});p.begr.splice(+a.dataset.i,1);save();render()}},
   delart(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(p&&confirm('Dit artikel van de lijst verwijderen?')){p.items.splice(+a.dataset.i,1);save();render()}},
