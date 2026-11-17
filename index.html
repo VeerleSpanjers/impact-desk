@@ -275,6 +275,19 @@ table.mt td input[data-f$=".l"]{min-width:180px;text-align:left}
 .bsr input{width:100%;text-align:right;padding:4px 6px}
 .bsr .nu{color:var(--muted);font-size:12px;white-space:nowrap}
 .bsr-scroll{max-height:210px;overflow:auto}
+.hoofddoel{background:#fff;border:1px solid var(--line);border-left:5px solid var(--blue);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px 18px;margin-bottom:16px}
+.hoofddoel textarea{font-size:17px;font-weight:700;line-height:1.4;border:1.5px solid transparent;background:#f5f7fb;margin-top:4px}
+.hoofddoel textarea:focus{background:#fff}
+.hoofddoel small{display:block;color:var(--muted);margin-top:4px}
+.pot .sd-head{flex-wrap:wrap}
+.pot-top{display:grid;grid-template-columns:minmax(200px,1fr) 190px;gap:14px;margin:14px 0 4px}
+.pot-top .fl{display:block;margin-bottom:4px}
+.pot .sumgrid{margin:12px 0}
+.pot table.tbl td input.num{min-width:84px}
+.pot-badge{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px}
+.pot-badge .bar.sm{width:80px}
+select.pill[data-v=besteld]{background-color:var(--warn-soft);color:var(--warn)}
+select.pill[data-v=betaald]{background-color:var(--ok-soft);color:var(--ok)}
 .nlog{margin-top:14px;border:1.5px solid var(--line);border-radius:12px;background:#fff;padding:0}
 .nlog>div{padding:0 14px 14px}
 .nlog-sum{padding:12px 14px}
@@ -930,7 +943,7 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
-  ensureNorm();
+  ensureExtra();ensureNorm();
   S.kpis.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
   syncPeople();syncSd();
 }
@@ -941,6 +954,26 @@ function migrate(){
 const STORE='impactdesk.v1', UISTORE='impactdesk.ui.v1';
 let S, UI;
 /* Norm bijsturen: oorspronkelijke norm blijft bewaard (k.o / k.og / k.ob), wijzigingen komen in een logboek (k.nlog) met datum en reden */
+const HD0='Het aanvraagproces bij HAN Green Office is uiterlijk 18 december 2026 gestructureerd door middel van de Impact Desk, waarbij alle componenten worden behaald.';
+function ensureExtra(){
+  if(!S.hd||typeof S.hd.tekst!=='string')S.hd={tekst:HD0};
+  if(!S.fin.pot)S.fin.pot=[];
+  const mk=(naam,re)=>{
+    if(S.fin.pot.some(p=>p.naam===naam))return;
+    let r=S.fin.kosten.find(x=>!x.auto&&re.test(x.cat||'')&&!S.fin.pot.some(p=>p.kost===x.id));
+    if(!r){r={id:uid(),cat:naam,begroot:null,werkelijk:null,toel:''};S.fin.kosten.push(r)}
+    S.fin.pot.push({id:uid(),naam,kost:r.id,items:[]});
+  };
+  if(!S.finPotV){mk('PR-pakketten',/pr/i);mk('Showroom',/showroom/i);S.finPotV=1}
+  S.fin.pot.forEach(p=>{if(!p.items)p.items=[]});
+}
+const POTSTAT=['Gepland','Besteld','Betaald'];
+function potCalc(p){
+  const r=S.fin.kosten.find(x=>x.id===p.kost),bud=r?(+r.begroot||0):0,items=p.items||[];
+  const lt=i=>(i.aantal==null||i.aantal===''?1:+i.aantal||0)*(+i.prijs||0);
+  const tot=sum(items.map(lt)),uitg=sum(items.filter(i=>i.status&&i.status!=='Gepland').map(lt));
+  return {bud,tot,uitg,over:bud-tot,pct:bud?tot/bud:0,n:items.length,lt};
+}
 function ensureNorm(){
   S.kpis.forEach(k=>{
     if(!k.nlog)k.nlog=[];
@@ -1089,7 +1122,8 @@ function finCalc(){
   const lrow=S.fin.kosten.find(r=>r.auto==='loon');
   const loonSum=sum(loon.map(x=>x.begr)),loonB=lrow&&lrow.begroot!=null?lrow.begroot:loonSum,loonW=sum(loon.map(x=>x.kosten));
   const rows=S.fin.kosten.map(r=>{
-    const b=r.auto==='loon'?loonB:(+r.begroot||0), w=r.auto==='loon'?loonW:(+r.werkelijk||0);
+    const pt=(S.fin.pot||[]).find(p=>p.kost===r.id&&(p.items||[]).length);
+    const b=r.auto==='loon'?loonB:(+r.begroot||0), w=r.auto==='loon'?loonW:(pt?potCalc(pt).uitg:(+r.werkelijk||0));
     return {id:r.id,b,w,afw:w-b,auto:r.auto};
   });
   const totB=sum(rows.map(r=>r.b)),totW=sum(rows.map(r=>r.w));
@@ -1257,6 +1291,19 @@ BIND['fin.sum']=()=>{
   <div class="card sum"><div class="lbl">Nog beschikbaar</div><div class="val ${afw>0?'bad':''}">${eur(Math.max(0,-afw))}</div><div class="sub">${afw>0?'begroting overschreden met '+eur(afw):nf(100-Math.round(p*100))+'% van de begroting'}</div></div>
   <div class="card sum"><div class="lbl">Uren geregistreerd</div><div class="val">${nf(c.uren,0)}</div><div class="sub">van ${nf(c.buren,0)} begrote uren</div></div>`;
 };
+const potById=id=>(S.fin.pot||[]).find(p=>p.id===id);
+BIND['pot.it']=a=>{const [id,i]=a.split('|'),p=potById(id);if(!p||!p.items[+i])return '';return eur(potCalc(p).lt(p.items[+i]),2)};
+BIND['pot.tot']=id=>{const p=potById(id);return p?eur(potCalc(p).tot,2):''};
+BIND['pot.badge']=id=>{const p=potById(id);if(!p)return '';const c=potCalc(p);
+  if(!c.bud&&!c.n)return '<span class="muted" style="font-weight:400">nog geen budget of artikelen</span>';
+  const cls=c.pct>1?'bad':c.pct>.85?'warn':'ok';
+  return `<span class="bar sm ${cls}"><i style="width:${Math.min(100,Math.round(c.pct*100))}%"></i></span><span>${c.over>=0?'nog '+eur(c.over)+' over':'<span class="bad-t">'+eur(-c.over)+' over budget</span>'}</span>`};
+BIND['pot.cards']=id=>{const p=potById(id);if(!p)return '';const c=potCalc(p);
+  const cls=c.pct>1?'bad':c.pct>.85?'warn':'ok';
+  return `<div class="card sum"><div class="lbl">Budget</div><div class="val">${eur(c.bud)}</div><div class="bar ${cls}" style="margin-top:6px"><i style="width:${Math.min(100,Math.round(c.pct*100))}%"></i></div><div class="sub">${c.bud?Math.round(c.pct*100)+'% van het budget op de lijst':'vul het budget in'}</div></div>
+  <div class="card sum"><div class="lbl">Totaal artikelen</div><div class="val">${eur(c.tot,2)}</div><div class="sub">${c.n} ${c.n===1?'artikel':'artikelen'} op de lijst</div></div>
+  <div class="card sum"><div class="lbl">Nog over</div><div class="val ${c.over<0?'bad':''}">${eur(c.over,2)}</div><div class="sub">${c.over<0?'het budget wordt overschreden':'budget min totaal artikelen'}</div></div>
+  <div class="card sum"><div class="lbl">Al besteld of betaald</div><div class="val">${eur(c.uitg,2)}</div><div class="sub">nog te kopen: ${eur(c.tot-c.uitg,2)}</div></div>`};
 BIND['fin.rowB']=id=>eur(fc().rows.find(r=>r.id===id).b);
 BIND['fin.rowW']=id=>eur(fc().rows.find(r=>r.id===id).w);
 BIND['fin.rowA']=id=>{const r=fc().rows.find(x=>x.id===id);return afwHtml(r.w,r.b)};
@@ -1377,6 +1424,7 @@ function viewKpi(){
       ${sdKpis(n).map(k=>kpiHtml(k)).join('')}
     </div></section>`}).join('');
   return `<div class="panel-head"><div><h2>Subdoelen en KPI’s</h2><p>Per subdoel de KPI’s met norm, bijsturingssignaal en meetmomenten. Vul de werkelijke waarden in; status, voortgang en grafiek rekenen mee.</p></div></div>
+  <div class="hoofddoel"><span class="kl">Hoofddoel</span><textarea rows="2" ${da('hd',null,'tekst')} placeholder="Formuleer hier het hoofddoel van het project">${esc(S.hd.tekst)}</textarea><small>Het doel van het hele project. Je kunt de tekst zelf aanpassen; de subdoelen hieronder dragen hieraan bij.</small></div>
   <p class="due-note" ${B('due.note')}></p>
   <div class="sumgrid" ${B('kpi.sum')}></div>
   <h3 class="sec-title">Voortgang per subdoel in één oogopslag</h3>
@@ -1689,11 +1737,37 @@ function viewWait(){
 }
 
 /* ---------- Financiën ---------- */
+const potOfRow=id=>(S.fin.pot||[]).find(p=>p.kost===id&&(p.items||[]).length);
+function potHtml(p){
+  const r=S.fin.kosten.find(x=>x.id===p.kost);if(!r)return '';
+  const open=!!UI.open['pot'+p.id];
+  const rows=(p.items||[]).map((it,i)=>`<tr>
+    <td style="min-width:200px">${inpT('fin.pot',p.id,'items.'+i+'.art',it.art,'Artikel')}</td>
+    <td style="width:86px">${inpN('fin.pot',p.id,'items.'+i+'.aantal',it.aantal)}</td>
+    <td style="width:120px">${inpN('fin.pot',p.id,'items.'+i+'.prijs',it.prijs,'placeholder="€ per stuk"')}</td>
+    <td class="r nowrap" style="font-weight:700" ${B('pot.it',p.id+'|'+i)}></td>
+    <td style="width:130px">${selP('fin.pot',p.id,'items.'+i+'.status',POTSTAT,it.status||'Gepland')}</td>
+    <td style="min-width:220px">${txa('fin.pot',p.id,'items.'+i+'.toel',it.toel,'Opmerking of link')}</td>
+    <td><button class="icon-btn" data-act="delart" data-id="${p.id}" data-i="${i}" title="Artikel verwijderen" aria-label="Artikel verwijderen">${icon('trash-2')}</button></td></tr>`).join('');
+  return `<section class="sd pot${open?' open':''}" id="pot${p.id}">
+    <button class="sd-head" data-act="tog" data-id="pot${p.id}" aria-expanded="${open}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>${esc(p.naam||'Onderdeel')}</b> · begroting en artikelen</span><span class="pot-badge" ${B('pot.badge',p.id)}></span></button>
+    <div class="sd-body">
+      <div class="pot-top">
+        <div><span class="fl">Naam van dit onderdeel</span>${inpT('fin.pot',p.id,'naam',p.naam,'Bijvoorbeeld Showroom')}</div>
+        <div><span class="fl">Budget (€)</span>${inpN('fin.kosten',r.id,'begroot',r.begroot,'placeholder="Budget invullen"')}</div>
+      </div>
+      <div class="sumgrid" ${B('pot.cards',p.id)}></div>
+      <div class="toolbar" style="margin-top:6px"><span class="muted">Voeg alle artikelen toe die je wilt kopen, met aantal en prijs per stuk. Kies bij status “Besteld” of “Betaald” zodra het gekocht is: dat telt mee als werkelijk uitgegeven in de tabel Kosten.</span><span class="grow"></span><button class="btn cta sm" data-act="addart" data-id="${p.id}">${icon('plus',16)}Artikel toevoegen</button></div>
+      ${(p.items||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Artikel</th><th>Aantal</th><th>Prijs per stuk (€)</th><th class="r">Totaal</th><th>Status</th><th>Opmerking</th><th></th></tr></thead><tbody>${rows}</tbody>
+      <tfoot><tr><td>Totaal artikelen</td><td></td><td></td><td class="r" ${B('pot.tot',p.id)}></td><td colspan="3"></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen artikelen. Klik op “Artikel toevoegen” om te beginnen.</p>'}
+      <div style="margin-top:12px"><button class="btn sm" data-act="delpot" data-id="${p.id}">${icon('trash-2',16)}Dit onderdeel verwijderen</button></div>
+    </div></section>`;
+}
 function viewFin(){
   const kost=S.fin.kosten.map(r=>`<tr>
     <td style="min-width:200px">${r.auto?`<b>${esc(r.cat)}</b><div class="hint" style="margin:2px 0 0" ${B('fin.rowNote',r.id)}></div>`:inpT('fin.kosten',r.id,'cat',r.cat,'Kostenpost')}</td>
     <td class="r" style="min-width:120px">${r.auto?`<input class="num" type="number" step="any" inputmode="decimal" ${da('fin.kosten',r.id,'begroot')} value="${r.begroot==null?'':r.begroot}" ${B('fin.rowBin',r.id,'data-t="val"')} title="Aanpasbaar. Leeg laten = som van de loonkosten per persoon">`:inpN('fin.kosten',r.id,'begroot',r.begroot)}</td>
-    <td class="r" style="min-width:120px">${r.auto?`<span ${B('fin.rowW',r.id)}></span>`:inpN('fin.kosten',r.id,'werkelijk',r.werkelijk)}</td>
+    <td class="r" style="min-width:120px">${r.auto||potOfRow(r.id)?`<span ${B('fin.rowW',r.id)}></span>${potOfRow(r.id)?'<div class="hint" style="margin:2px 0 0">uit artikellijst (besteld + betaald)</div>':''}`:inpN('fin.kosten',r.id,'werkelijk',r.werkelijk)}</td>
     <td class="r nowrap" ${B('fin.rowA',r.id)}></td>
     <td style="min-width:260px">${txa('fin.kosten',r.id,'toel',r.toel,'Toelichting op afwijking')}</td>
     <td>${r.auto?'':del('delcost',r.id)}</td></tr>`).join('');
@@ -1711,7 +1785,7 @@ function viewFin(){
   const sc=(key,naam,cls)=>{const s=S.fin.scen[key];return `<div class="card sc ${cls}"><h4>${naam}</h4>
     <div class="two"><div><span class="fl">Uren t.o.v. begroot (%)</span>${inpN('fin.scen.'+key,null,'urenPct',s.urenPct)}</div><div><span class="fl">Overige kosten (%)</span>${inpN('fin.scen.'+key,null,'overigPct',s.overigPct)}</div></div>
     <dl ${B('fin.sc',key)}></dl><span class="fl">Wat gebeurt er</span>${txa('fin.scen.'+key,null,'tekst',s.tekst)}</div>`};
-  return `<div class="panel-head"><div><h2>Financiën</h2><p>Algemeen overzicht, kosten, loonkosten per maand (september t/m januari) en drie scenario’s. Loonkosten = uren × tarief; de uren komen automatisch uit het Takenoverzicht.</p></div></div>
+  return `<div class="panel-head"><div><h2>Financiën</h2><p>Algemeen overzicht, kosten, begroting per onderdeel (zoals PR-pakketten en showroom), loonkosten per maand (september t/m januari) en drie scenario’s. Loonkosten = uren × tarief; de uren komen automatisch uit het Takenoverzicht.</p></div></div>
   <div class="sumgrid" ${B('fin.sum')}></div>
 
   <h3 class="sec-title">Kosten</h3>
@@ -1719,6 +1793,10 @@ function viewFin(){
   <div class="tw"><table class="tbl"><thead><tr><th>Kosten (categorie)</th><th class="r">Begroot (€)</th><th class="r">Werkelijk (€)</th><th class="r">Afwijking</th><th>Toelichting</th><th></th></tr></thead><tbody>${kost}</tbody>
   <tfoot><tr><td>Totaal</td><td class="r" ${B('fin.totB')}></td><td class="r" ${B('fin.totW')}></td><td class="r" ${B('fin.totA')}></td><td colspan="2"></td></tr></tfoot></table></div>
   <p class="hint">Afwijking = werkelijk − begroot. Rood is boven de begroting, groen eronder. Zolang kosten nog lopen is een negatieve afwijking normaal: kijk vooral naar “Nog beschikbaar” bovenaan. Zonder ingevulde kosten blijft de afwijking leeg.</p>
+
+  <h3 class="sec-title">Begroting en budget per onderdeel</h3>
+  <div class="toolbar" style="margin-top:0"><span class="muted" style="max-width:80ch">Klap een onderdeel open om artikelen met kosten toe te voegen. Je ziet het totaal, het budget en hoeveel er nog over is.</span><span class="grow"></span><button class="btn cta sm" data-act="addpot">${icon('plus',16)}Onderdeel toevoegen</button></div>
+  ${(S.fin.pot||[]).map(potHtml).join('')}
 
   <h3 class="sec-title">Loonkosten per persoon per maand</h3>
   <div class="toolbar" style="margin-top:0"><span class="muted" style="max-width:80ch">Het uurtarief vul je hier in. De uren komen automatisch uit het Takenoverzicht, in de maand van de deadline van de taak. Heb je extra uren die daar niet in staan, typ ze dan onder het getal.</span><span class="grow"></span><button class="btn cta sm" data-act="addloon">${icon('plus',16)}Persoon toevoegen</button></div>
@@ -2047,7 +2125,18 @@ const ACT={
   addmeet(){const m={id:uid(),datum:todayStr(),titel:'',soort:'KPI-meting',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delmeet(a){if(confirm('Dit meetmoment verwijderen?')){S.meet=S.meet.filter(x=>x.id!==a.dataset.id);save();render()}},
   addcost(){S.fin.kosten.push({id:uid(),cat:'',begroot:null,werkelijk:null,toel:''});save();render();const i=$$('#main input[data-f=cat]');i.length&&i[i.length-1].focus()},
-  delcost(a){if(confirm('Deze kostenpost verwijderen?')){S.fin.kosten=S.fin.kosten.filter(x=>x.id!==a.dataset.id);save();render()}},
+  addart(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(!p)return;p.items.push({id:uid(),art:'',aantal:1,prijs:null,status:'Gepland',toel:''});UI.open['pot'+p.id]=true;save();saveUI();render();const el=$$(`#pot${p.id} input[data-f$=".art"]`);el.length&&el[el.length-1].focus()},
+  delart(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(p&&confirm('Dit artikel van de lijst verwijderen?')){p.items.splice(+a.dataset.i,1);save();render()}},
+  addpot(){
+    const dlg=$('#dlg');
+    dlg.innerHTML=`<form id="pf2" autocomplete="off"><h3>Onderdeel toevoegen</h3><p class="hint" style="margin:-6px 0 12px">Het onderdeel krijgt een eigen artikellijst en budget, en komt ook als regel in de tabel Kosten.</p><label class="fl" for="pn">Naam</label><input id="pn" required placeholder="Bijvoorbeeld Workshop of Drukwerk"><div class="dfoot"><span class="sp"></span><button type="button" class="btn" id="pcancel2">Annuleren</button><button class="btn pri" type="submit">Toevoegen</button></div></form>`;
+    $('#pcancel2',dlg).onclick=()=>dlg.close();
+    $('#pf2',dlg).onsubmit=e=>{e.preventDefault();const n=$('#pn',dlg).value.trim();if(!n)return;
+      const r={id:uid(),cat:n,begroot:null,werkelijk:null,toel:''};S.fin.kosten.push(r);const p={id:uid(),naam:n,kost:r.id,items:[]};S.fin.pot.push(p);UI.open['pot'+p.id]=true;save();saveUI();dlg.close();render();const el=$('#pot'+p.id);el&&el.scrollIntoView({block:'center'});toast(n+' toegevoegd')};
+    dlg.showModal();$('#pn',dlg).focus();
+  },
+  delpot(a){const p=S.fin.pot.find(x=>x.id===a.dataset.id);if(p&&confirm('Het onderdeel “'+(p.naam||'')+'” verwijderen, inclusief de artikellijst en de bijbehorende regel in de tabel Kosten? Dit kan niet ongedaan worden gemaakt.')){S.fin.kosten=S.fin.kosten.filter(x=>x.id!==p.kost);S.fin.pot=S.fin.pot.filter(x=>x.id!==p.id);save();render()}},
+  delcost(a){const pp=(S.fin.pot||[]).find(p=>p.kost===a.dataset.id);if(confirm(pp?'Deze kostenpost verwijderen? Ook het onderdeel “'+(pp.naam||'')+'” met de artikellijst verdwijnt dan.':'Deze kostenpost verwijderen?')){S.fin.pot=(S.fin.pot||[]).filter(p=>p.kost!==a.dataset.id);S.fin.kosten=S.fin.kosten.filter(x=>x.id!==a.dataset.id);save();render()}},
   addloon(){S.fin.loon.push({id:uid(),naam:'',rol:'Teamlid',tarief:null,bu:0,u:MONTHS.map(()=>null),toel:''});save();render();const i=$$('#main input[data-f=naam]');i.length&&i[i.length-1].focus()},
   delloon(a){if(confirm('Deze persoon uit het loonoverzicht verwijderen?')){S.fin.loon=S.fin.loon.filter(x=>x.id!==a.dataset.id);save();render()}},
   togpeople(){const people=teamList();const all=people.every(p=>UI.open['p'+p]!==false);people.forEach(p=>UI.open['p'+p]=!all);saveUI();render()},
@@ -2060,7 +2149,7 @@ const ACT={
   color(a,e){e.stopPropagation();openPop(a.dataset.id,a)},
   export(){const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const l=document.createElement('a');l.href=URL.createObjectURL(blob);l.download=`impact-desk-back-up-${todayStr()}.json`;l.click();setTimeout(()=>URL.revokeObjectURL(l.href),1000);toast('Back-up opgeslagen in je downloads')},
   import(){$('#importFile').click()},
-  reset(){if(confirm('Alle ingevulde gegevens vervangen door de startgegevens uit het projectplan? Dit kan niet ongedaan worden gemaakt (maak eerst een back-up).')){S=defaults();ensureNorm();save();render();toast('Startgegevens hersteld')}}
+  reset(){if(confirm('Alle ingevulde gegevens vervangen door de startgegevens uit het projectplan? Dit kan niet ongedaan worden gemaakt (maak eerst een back-up).')){S=defaults();ensureExtra();ensureNorm();save();render();toast('Startgegevens hersteld')}}
 };
 function syncTogAll(){const b=$('#togall');if(!b)return;const all=activeSd().every(n=>UI.open['sd'+n]);b.innerHTML=icon(all?'chevrons-down-up':'chevrons-up-down')+(all?'Alles inklappen':'Alles uitklappen')}
 document.addEventListener('click',e=>{
