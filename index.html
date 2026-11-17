@@ -1136,12 +1136,13 @@ function finCalc(){
   const rows=S.fin.kosten.map(r=>{
     const pt=(S.fin.pot||[]).find(p=>p.kost===r.id&&(p.items||[]).length);
     const b=r.auto==='loon'?loonB:(+r.begroot||0), w=r.auto==='loon'?loonW:(pt?potCalc(pt).uitg:(+r.werkelijk||0));
-    return {id:r.id,b,w,afw:w-b,auto:r.auto};
+    const pg=(S.fin.pot||[]).find(p=>p.kost===r.id),bg=pg&&(pg.begr||[]).length?potCalc(pg).bt:null;
+    return {id:r.id,b,w,afw:w-b,auto:r.auto,bg};
   });
-  const totB=sum(rows.map(r=>r.b)),totW=sum(rows.map(r=>r.w));
+  const totB=sum(rows.map(r=>r.b)),totW=sum(rows.map(r=>r.w)),totBg=sum(rows.map(r=>r.bg||0));
   const overB=sum(rows.filter(r=>!r.auto).map(r=>r.b)),overW=sum(rows.filter(r=>!r.auto).map(r=>r.w));
   const mU=MONTHS.map((_,i)=>sum(loon.map(x=>x.u[i]))),mK=MONTHS.map((_,i)=>sum(loon.map(x=>x.u[i]*x.tarief)));
-  return {unmapped,loon,loonB,loonSum,loonW,rows,totB,totW,overB,overW,mU,mK,uren:sum(loon.map(x=>x.uren)),buren:sum(S.fin.loon.map(p=>p.bu))};
+  return {unmapped,loon,loonB,loonSum,loonW,rows,totB,totW,totBg,overB,overW,mU,mK,uren:sum(loon.map(x=>x.uren)),buren:sum(S.fin.loon.map(p=>p.bu))};
 }
 const afwHtml=(w,b,d=0)=>{if(!w)return '<span class="muted">–</span>';const a=w-b;return `<span class="${a>0?'bad-t':'ok-t'}">${a>0?'+':a<0?'−':''}${eur(Math.abs(a),d).replace('−','')}</span>`};
 
@@ -1330,6 +1331,8 @@ BIND['pot.cards']=id=>{const p=potById(id);if(!p)return '';const c=potCalc(p);
 BIND['fin.rowB']=id=>eur(fc().rows.find(r=>r.id===id).b);
 BIND['fin.rowW']=id=>eur(fc().rows.find(r=>r.id===id).w);
 BIND['fin.rowA']=id=>{const r=fc().rows.find(x=>x.id===id);return afwHtml(r.w,r.b)};
+BIND['fin.rowBg']=id=>{const r=fc().rows.find(x=>x.id===id);if(!r||r.bg==null)return '<span class="muted">–</span>';return `<span class="${r.b&&r.bg>r.b?'bad-t':''}">${eur(r.bg)}</span>`};
+BIND['fin.totBg']=()=>{const t=fc().totBg;return t?eur(t):'<span class="muted">–</span>'};
 BIND['fin.totB']=()=>eur(fc().totB);
 BIND['fin.totW']=()=>eur(fc().totW);
 BIND['fin.totA']=()=>afwHtml(fc().totW,fc().totB)||'';
@@ -1771,6 +1774,7 @@ function potHtml(p){
     <td class="r nowrap" style="font-weight:700" ${B('pot.bit',p.id+'|'+i)}></td>
     <td class="r nowrap" ${B('pot.bw',p.id+'|'+i)}></td>
     <td class="r nowrap" ${B('pot.bd',p.id+'|'+i)}></td>
+    <td style="min-width:170px">${inpT('fin.pot',p.id,'begr.'+i+'.fin',b.fin||'','Invullen')}</td>
     <td style="min-width:200px">${txa('fin.pot',p.id,'begr.'+i+'.toel',b.toel,'Toelichting op deze post')}</td>
     <td><button class="icon-btn" data-act="delbegr" data-id="${p.id}" data-i="${i}" title="Post uit de begroting verwijderen" aria-label="Post uit de begroting verwijderen">${icon('trash-2')}</button></td></tr>`).join('');
   const rows=(p.items||[]).map((it,i)=>`<tr>
@@ -1779,6 +1783,7 @@ function potHtml(p){
     <td class="r nowrap" style="font-weight:700" ${B('pot.it',p.id+'|'+i)}></td>
     <td style="width:130px">${selP('fin.pot',p.id,'items.'+i+'.status',POTSTAT,it.status||'Gepland')}</td>
     <td style="min-width:170px">${selN('fin.pot',p.id,'items.'+i+'.bi',potBiOpts(p),it.bi||'')}</td>
+    <td style="min-width:170px">${inpT('fin.pot',p.id,'items.'+i+'.fin',it.fin||'','Invullen')}</td>
     <td style="min-width:200px">${txa('fin.pot',p.id,'items.'+i+'.toel',it.toel,'Toelichting of link')}</td>
     <td><button class="icon-btn" data-act="delart" data-id="${p.id}" data-i="${i}" title="Artikel verwijderen" aria-label="Artikel verwijderen">${icon('trash-2')}</button></td></tr>`).join('');
   return `<section class="sd pot${open?' open':''}" id="pot${p.id}">
@@ -1790,16 +1795,16 @@ function potHtml(p){
       </div>
       <div class="sumgrid" ${B('pot.cards',p.id)}></div>
 
-      <h4 class="pot-h"><span class="pot-n">1</span>Begroting <span class="muted">· vooraf, wat verwacht je nodig te hebben</span></h4>
-      <div class="toolbar" style="margin-top:0"><span class="muted">Zet hier vooraf per post wat je verwacht uit te geven. Zo laat je tijdens het project zien dat je er rekening mee hebt gehouden.</span><span class="grow"></span><button class="btn cta sm" data-act="addbegr" data-id="${p.id}">${icon('plus',16)}Post aan begroting toevoegen</button></div>
-      ${(p.begr||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Begrote post</th><th>Bedrag</th><th class="r">Begroot</th><th class="r">Werkelijk</th><th class="r">Verschil</th><th>Toelichting</th><th></th></tr></thead><tbody>${brows}</tbody>
-      <tfoot><tr><td>Totaal begroting</td><td></td><td class="r" ${B('pot.btot',p.id)}></td><td class="r" ${B('pot.bwt',p.id)}></td><td class="r" ${B('pot.bdt',p.id)}></td><td colspan="2"></td></tr>
-      <tr><td colspan="7" class="hint" ${B('pot.bunl',p.id)}></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen begroting. Klik op “Post aan begroting toevoegen” om te beginnen.</p>'}
+      <h4 class="pot-h"><span class="pot-n">1</span>Begroting</h4>
+      <div class="toolbar" style="margin-top:0"><span class="grow"></span><button class="btn cta sm" data-act="addbegr" data-id="${p.id}">${icon('plus',16)}Post aan begroting toevoegen</button></div>
+      ${(p.begr||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Begrote post</th><th>Bedrag</th><th class="r">Begroot</th><th class="r">Werkelijk</th><th class="r">Verschil</th><th>Financieringsmethode</th><th>Toelichting</th><th></th></tr></thead><tbody>${brows}</tbody>
+      <tfoot><tr><td>Totaal begroting</td><td></td><td class="r" ${B('pot.btot',p.id)}></td><td class="r" ${B('pot.bwt',p.id)}></td><td class="r" ${B('pot.bdt',p.id)}></td><td colspan="3"></td></tr>
+      <tr><td colspan="8" class="hint" ${B('pot.bunl',p.id)}></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen posten.</p>'}
 
-      <h4 class="pot-h"><span class="pot-n">2</span>Werkelijke kosten <span class="muted">· wat je daadwerkelijk koopt</span></h4>
-      <div class="toolbar" style="margin-top:0"><span class="muted">Voeg de artikelen toe die je koopt, met een totaalprijs of (via het vinkje) aantal en prijs per stuk. Kies bij status “Besteld” of “Betaald” zodra het gekocht is: dat telt mee als werkelijk uitgegeven in de tabel Kosten. Koppel het artikel aan een begrote post om te zien of je binnen de begroting blijft.</span><span class="grow"></span><button class="btn cta sm" data-act="addart" data-id="${p.id}">${icon('plus',16)}Artikel toevoegen</button></div>
-      ${(p.items||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Artikel</th><th>Bedrag</th><th class="r">Totaal</th><th>Status</th><th>Begrote post</th><th>Toelichting</th><th></th></tr></thead><tbody>${rows}</tbody>
-      <tfoot><tr><td>Totaal artikelen</td><td></td><td class="r" ${B('pot.tot',p.id)}></td><td colspan="4"></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen artikelen. Klik op “Artikel toevoegen” om te beginnen.</p>'}
+      <h4 class="pot-h"><span class="pot-n">2</span>Werkelijke kosten</h4>
+      <div class="toolbar" style="margin-top:0"><span class="muted">Alleen artikelen met status “Besteld” of “Betaald” tellen mee als werkelijk uitgegeven.</span><span class="grow"></span><button class="btn cta sm" data-act="addart" data-id="${p.id}">${icon('plus',16)}Artikel toevoegen</button></div>
+      ${(p.items||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Artikel</th><th>Bedrag</th><th class="r">Totaal</th><th>Status</th><th>Begrote post</th><th>Financieringsmethode</th><th>Toelichting</th><th></th></tr></thead><tbody>${rows}</tbody>
+      <tfoot><tr><td>Totaal artikelen</td><td></td><td class="r" ${B('pot.tot',p.id)}></td><td colspan="5"></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen artikelen.</p>'}
       <div style="margin-top:12px"><button class="btn sm" data-act="delpot" data-id="${p.id}">${icon('trash-2',16)}Dit onderdeel verwijderen</button></div>
     </div></section>`;
 }
@@ -1808,6 +1813,7 @@ function viewFin(){
   const kost=S.fin.kosten.map(r=>`<tr>
     <td style="min-width:200px">${r.auto?`<b>${esc(r.cat)}</b><div class="hint" style="margin:2px 0 0" ${B('fin.rowNote',r.id)}></div>`:inpT('fin.kosten',r.id,'cat',r.cat,'Kostenpost')}</td>
     <td class="r" style="min-width:120px">${r.auto?`<input class="num" type="number" step="any" inputmode="decimal" ${da('fin.kosten',r.id,'begroot')} value="${r.begroot==null?'':r.begroot}" ${B('fin.rowBin',r.id,'data-t="val"')} title="Aanpasbaar. Leeg laten = som van de loonkosten per persoon">`:inpN('fin.kosten',r.id,'begroot',r.begroot)}</td>
+    <td class="r nowrap" style="min-width:110px" ${B('fin.rowBg',r.id)}></td>
     <td class="r" style="min-width:120px">${r.auto||potOfRow(r.id)?`<span ${B('fin.rowW',r.id)}></span>${potOfRow(r.id)?'<div class="hint" style="margin:2px 0 0">uit artikellijst (besteld + betaald)</div>':''}`:inpN('fin.kosten',r.id,'werkelijk',r.werkelijk)}</td>
     <td class="r nowrap" ${B('fin.rowA',r.id)}></td>
     <td style="min-width:260px">${txa('fin.kosten',r.id,'toel',r.toel,'Toelichting op afwijking')}</td>
@@ -1826,17 +1832,17 @@ function viewFin(){
   const sc=(key,naam,cls)=>{const s=S.fin.scen[key];return `<div class="card sc ${cls}"><h4>${naam}</h4>
     <div class="two"><div><span class="fl">Uren t.o.v. begroot (%)</span>${inpN('fin.scen.'+key,null,'urenPct',s.urenPct)}</div><div><span class="fl">Overige kosten (%)</span>${inpN('fin.scen.'+key,null,'overigPct',s.overigPct)}</div></div>
     <dl ${B('fin.sc',key)}></dl><span class="fl">Wat gebeurt er</span>${txa('fin.scen.'+key,null,'tekst',s.tekst)}</div>`};
-  return `<div class="panel-head"><div><h2>Financiën</h2><p>Algemeen overzicht, kosten, begroting per onderdeel (zoals PR-pakketten en showroom), loonkosten per maand (september t/m januari) en drie scenario’s. Loonkosten = uren × tarief; de uren komen automatisch uit het Takenoverzicht.</p></div></div>
+  return `<div class="panel-head"><div><h2>Financiën</h2></div></div>
   <div class="sumgrid" ${B('fin.sum')}></div>
 
   <h3 class="sec-title">Kosten</h3>
   <div class="toolbar" style="margin-top:0"><span class="grow"></span><button class="btn cta sm" data-act="addcost">${icon('plus',16)}Kostenpost toevoegen</button></div>
-  <div class="tw"><table class="tbl"><thead><tr><th>Kosten (categorie)</th><th class="r">Begroot (€)</th><th class="r">Werkelijk (€)</th><th class="r">Afwijking</th><th>Toelichting</th><th></th></tr></thead><tbody>${kost}</tbody>
-  <tfoot><tr><td>Totaal</td><td class="r" ${B('fin.totB')}></td><td class="r" ${B('fin.totW')}></td><td class="r" ${B('fin.totA')}></td><td colspan="2"></td></tr></tfoot></table></div>
-  <p class="hint">Afwijking = werkelijk − begroot. Rood is boven de begroting, groen eronder. Zolang kosten nog lopen is een negatieve afwijking normaal: kijk vooral naar “Nog beschikbaar” bovenaan. Zonder ingevulde kosten blijft de afwijking leeg.</p>
+  <div class="tw"><table class="tbl"><thead><tr><th>Kosten (categorie)</th><th class="r">Budget (€)</th><th class="r" title="Totaal van de begrote posten in het onderdeel hieronder">Begroting (€)</th><th class="r">Werkelijk (€)</th><th class="r">Afwijking</th><th>Toelichting</th><th></th></tr></thead><tbody>${kost}</tbody>
+  <tfoot><tr><td>Totaal</td><td class="r" ${B('fin.totB')}></td><td class="r" ${B('fin.totBg')}></td><td class="r" ${B('fin.totW')}></td><td class="r" ${B('fin.totA')}></td><td colspan="2"></td></tr></tfoot></table></div>
+  <p class="hint">Budget en Begroting komen uit de onderdelen hieronder; Begroting is rood als die boven het budget komt. Afwijking = werkelijk − budget. Zolang kosten nog lopen is een negatieve afwijking normaal: kijk vooral naar “Nog beschikbaar” bovenaan.</p>
 
   <h3 class="sec-title">Begroting en budget per onderdeel</h3>
-  <div class="toolbar" style="margin-top:0"><span class="muted" style="max-width:80ch">Klap een onderdeel open om artikelen met kosten toe te voegen. Je ziet het totaal, het budget en hoeveel er nog over is.</span><span class="grow"></span><button class="btn cta sm" data-act="addpot">${icon('plus',16)}Onderdeel toevoegen</button></div>
+  <div class="toolbar" style="margin-top:0"><span class="grow"></span><button class="btn cta sm" data-act="addpot">${icon('plus',16)}Onderdeel toevoegen</button></div>
   ${(S.fin.pot||[]).map(potHtml).join('')}
 
   <h3 class="sec-title">Loonkosten per persoon per maand</h3>
