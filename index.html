@@ -630,6 +630,7 @@ const ICONS={
   upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>',
   'chevrons-up-down':'<path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/>',
   'chevrons-down-up':'<path d="m7 20 5-5 5 5"/><path d="m7 4 5 5 5-5"/>',
+  'book-open':'<path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/>',
   'clipboard-list':'<rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/>',
   hourglass:'<path d="M5 22h14"/><path d="M5 2h14"/><path d="M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22"/><path d="M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2"/>',
   check:'<path d="M20 6 9 17l-5-5"/>',
@@ -841,14 +842,18 @@ function defaults(){
     T('Afronding','Afstudeerdossier afronden en inleveren',['Veerle'],'2026-12-14','2027-01-08',0)
   ];
   const blokken=[[3,4],[5,6],[7,8],[10,11],[12,13],[14,15],[16,16]].map(([van,tot])=>({id:uid(),van,tot}));
-  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:3,barsV:1,kpiPruned:1,kpiMoved:1,kpiRenum:1,blokV:2,team:TEAM0.slice(),kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{},bes:[]};
+  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:3,barsV:1,kpiPruned:1,kpiMoved:1,kpiRenum:1,blokV:2,team:TEAM0.slice(),kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{},bes:[],log:logSeed()};
 }
 /* oudere back-ups en opgeslagen gegevens aanvullen met nieuwe onderdelen */
+/* Logboek van Veerle: letterlijk overgenomen uit het Word-bestand (week, datum, hoogtepunten, minpunten, deelcompetentie) */
+const LOG0=[["1","31 aug t/m 4 sept","Trainingsweek ","",""],["2","7 t/m 11 sept","Orientatie week ","",""],["3","14 t/m 18 sept","Deze week heb ik de orëntatiegesprekken met al mijn teamleden gehad. dit geeft mij een goed idee van iedereens idee waarom we dit nu moeten doen, hun motivatie etc. ","",""],["4","21 t/m 25 sept","1)Dinsdag had ik mijn eerste teammeeting. Hierin had ik een leuke werkvorm gedaan namelijk: “Stop / Start / Continue” Laat iedereen één post-it invullen bij: wat moeten we stoppen, starten en blijven doen? Daarna alleen de belangrijkste patronen bespreken. Dit werkt goed als mensen al een tijdje bezig zijn.\nEn dit deze we om onze manier van werken in het team in kaart te brengen. Daarnaast ook besproken wanneer binnen dit semester we zeggen dat het behaald is.\nVoor was deze meeting ook fijn omdat ik in een net gecreëerd team binnenkom. Ik wilde graag een goede indruk maken en naar de meningen van de teamleden te waren ze tevreden dus een goede eerste aftrap en sara heeft mooi notulen gemaakt, die gaan we ook wekelijks bijhouden dus hier wil ik ook een lijstje van maken. \n2)Daarnaast heb ik een wekelijkse meeting ingepland waarin we de zelf aan de gang gaan en ook deels een scrum update doen. Een aantal konden een of meedere keren niet maar ik heb wel nagevraagd wat de reden was zodat niet iedereen zou maar zou kunnen cancelen. Dit is waar ze zelf op gestuurd wilde worden om niet zomaar af te zeggen. Ik heb Senna en Sam gevraagd waarom ze er dus niet bij konden zijn en daardoor gefixt dat Senna toch wel 1 van z’n 2 geweigerde meetings kan zijn. Anders had ik los iets met hem ingepland had ik gezegd zodat hij wel aan de gang zou kunnen gaan. ik wil ze ook minimaal 2 a 3 uur per week hiermee aan het werk zetten en dat zeg ik ze dinsdag ook in de meeting.\n\n3)Sara en ik hebben samen een hele deconstructie gemaakt voor het project zelf om taken te creëen voor het team want uit de eerste meeting kwamen we achter dat er eigenlijk nauwelijks taken kwamen. En vanuit daar hebben ik de taken in de kanban gezet. Dit zijn hoofdtaken, ze kunnen zelf nog de deeltaken toevoegen.  ","Ik wilde graag het projectplan volgens deadline maandag 21-9 inleveren, ik heb wat ik tot dan toe had als conceptversie ingeleverd en definitief stuur ik vrijdag op heb ik aangegeven. \n\n\n\n\n\n\n\n\nDe wekelijkse meeting is tijdens school les dus die mis ik helaas. Gelukkig heb ik het allemaal al een keer gehad en kan ik terugluisteren. ","1)Vastleggen & communiceren van afspraken want: we hebben door middel van een werkwijze samen besproken hoe we graag samenwerken. Notulen zijn gemaakt en worden opgestuurd + concrete taken van gemaakt voor in de scrum. \n\n1)Doelen, KPI’s en resultaatkaders want: we hebben samen een doel met KPI voor het project opgesteld dus toen waren we het er gelijk ook allemaal mee eens.\n\n2)Uitvoering van activiteiten: Ik merkte dat teamleden meetings afzegden. Ik zag dit als een risico, want als mensen zomaar afzeggen, loopt het werk vertraging op. Daarom heb ik direct actie ondernomen. Ik heb Senna en Sam gevraagd waarom ze er niet bij konden zijn. Zo heb ik geregeld dat Senna toch bij één van zijn twee afgezegde meetings kon zijn. Als dat niet was gelukt, had ik een aparte afspraak met hem gepland, zodat hij toch verder kon met zijn taken. Zo heb ik voorkomen dat het werk stil kwam te liggen. Het team had zelf aangegeven dat ze hierop gestuurd wilden worden, dus ik heb hierin ook de wens van het team meegenomen.\n\n3) Projectplan & fasering:\nNa de eerste meeting merkte ik dat er bijna geen taken uit het team kwamen. Daarom heb ik samen met Sara een deconstructie van het project gemaakt. Hierin hebben we het project opgedeeld in concrete hoofdtaken. Deze hoofdtaken heb ik in de kanban gezet. Zo heeft het team een duidelijke to-do-lijst met activiteiten op hoofdlijn die bijdragen aan het project. De teamleden kunnen zelf deeltaken toevoegen, zodat ze eigenaar worden van hun eigen werk.\n\n3) Uitvoering van activiteiten:\nIk zag tijdens de eerste meeting een probleem: er kwamen te weinig taken, waardoor het team niet goed aan de slag kon. Ik heb dit direct opgepakt door de deconstructie te maken en de taken in de kanban te zetten. Zo heb ik voorkomen dat het project vertraging opliep."],["5","28 sept t/m 2 okt ","Voornamelijk bezig geweest met het opstellen van het projectplan, de planning en de KPI’s gemaakt samen met een van mijn teamleden die allemaal binnen het plan vallen.\n Ik stuur het projecplan volgende week gelijk op zodat de rest van het team er doorheen kan lezen en feedback kan geven. ","Ook nog teammeeting gehad, we hebben vooral veel gesproken ipv aan de gang dus ik hoop dat dit volgende week minder is.","Projectplan & fasering: je maakt een plan met fasering, planning en activiteiten op hoofdlijn. Dat is de basis van dit criterium.\nDoelen, KPI's & resultaatkaders: je formuleert KPI's die binnen het plan vallen en koppelt ze aan je doelen.\nKritisch: je hebt dit samen met een teamlid gemaakt. Maak duidelijk wat jouw aandeel was, anders kan de beoordelaar jouw werk niet los zien.\n\nVastleggen & communiceren van afspraken: het criterium vraagt dat je het plan actief doorneemt met je team en bedrijfscoach, en dat hun feedback zichtbaar wordt verwerkt."],["6","5 t/m 9 okt ","MA & DI \nDeze week ben ik bezig met het maken van mijn dashboard op een website. \n\nDaarnaast heb ik ook een overzicht gemaakt wanneer wie aanwezig is, zo kan ik hierop bijsturen of vragen waarom ze er zo vaak niet zijn. \n\n WOE: in mijn cluster meeting met Sara en aangesloten Fabian had ik de realisatie (MEETMOMENT) dat door het uitstel van de cursus topdesk naar 15 oktober, we een week minder hebben en eigenlijk nog maar 1 week in totaal om de eerste 5 aanmeldingen binnen te halen. Dit wel even aangewakkerd want de 1 nov deadline verplaatsen is de makkelijkste maar stomste oplossing. Ik heb een aantal acties met ze besproken hoe we op een andere manier naar dat doel kunnen toe streven.  \n\nDO: ik heb het dashboard in elkaar gezet en ik ben er echt heel trots op, ik ga dit gewoon als levend bestand gebruiken. Daarnaast vind ik het ook een fijn iets om mee te werken dus dat is top. ","Topdesk crusus is week uitgesteld waardoor ons formulier pas week later live kan. ","Doelen, KPI’s & resultaatkaders: dashboard met indicatoren die de voortgang laten zien.\nMonitoring: meetinformatie bijhouden in een dashboard. \n\nMonitoring: je houdt de procesvoortgang bij.\nUitvoering: je ziet risico's vroeg en kunt bijsturen.\n\n\n\nMonitoring: je houdt de procesvoortgang bij.\nUitvoering: je ziet risico's vroeg en kunt bijsturen.\n3 Vastleggen & communiceren: je betrekt Sara en Fabian direct bij de verandering.\n\nMonitoring: meetinformatie bijhouden in een dashboard. "],["7","12 t/m 16 okt","Nadat sam en ik afgelopen dinsdag testcases hadden gemaakt in geheim voor alle teamleden heb ik dit dinsdag 13-10 in de teammeeting laten zien. Alleen anouk zag het de dag ervoor toevallig maar dat duurde ook 6 dagen en de rest had het helemaal niet gezien. Dus we hebben dit doorgezet ","",""],["","","Vakantie ","",""],["8","26 t/m 30 okt","","",""],["9","2 t/m 6 nov","1) KPI’s aangescherpt na feedback bij Meet the Experts, samen met Sam en twee ORM-studenten. Alleen relevante KPI’s behouden: [welke en waarom].\n2) Sara en een stagiaire hebben de PR-pakketjes ingepakt.","3) 3D-modellen voor de PR-pakketjes vertraagd: printen kan alleen in Arnhem. Actie: Ella zet in haar 3 dagen daar zoveel mogelijk prints aan.\n4) Portfolio van Sam V loopt uit, waardoor de pakketjes incompleet blijven. Zorgvuldigheid is terecht (lang gebruik), maar het vertraagt. Actie: regelmatig check-in, nieuwe deadline [datum].","1) Doelen, KPI’s & resultaatkaders: KPI’s meten beter wat het subdoel vraagt.\n1) Vastleggen & communiceren: feedback zichtbaar verwerkt in het plan.\n2) Uitvoering van activiteiten: taak verdeeld en uitgevoerd.\n3) Uitvoering van activiteiten: risico gesignaleerd en direct actie ingezet.\n4) Uitvoering van activiteiten: deadline bewaakt.\n4) Projectplan & fasering: herplanning doorgevoerd."],["10","9 t/m 13 nov","1) Bijgestuurd op aantal aanvragen. Gemeten: [X], norm: [Y], actie: [Z].\n2) Opfristraining gegeven aan [wie]. Aanleiding: [wat ging er mis / wat werd gemeten].\n3) Ella heeft in totaal [aantal] 3D-modellen geprint, dus we hebben weer een mooie voorraad.","","1) Monitoring: afwijking op meetmoment leidt direct tot actie.\n2) Monitoring: meetmoment of reactie op afwijking.\n2) Uitvoering van activiteiten: risico direct opgevangen.\n3) Uitvoering van activiteiten: vertraging uit week 9 opgevangen."],["11","16 t/m 20 nov","1) Het portfolio is af! De PR-pakketjes kunnen compleet worden.\n2) Gemiddeld 2 à 3 gesprekken per week ingepland.\n3) Opvolging in kaart gebracht: wat moet er na de gesprekken nog gebeuren?\n4) Anouk heeft de taak gekregen om standaard nazorgmails op te stellen, deadline [datum].\n5) Tweede opfristraining gegeven: [wie / resultaat].\n6) Bijgestuurd: tussendoel [welk] verlaagd van [X] naar [Y], omdat het te optimistisch was ingeschat. Het einddoel blijft staan, en we halen het door [hoe].","7) Senna is lastig in te zetten nu de PR-stunt meer een experience is (wel nog voor het project van Tijn op 1 en 3 dec). Actie: [invullen].","1) Uitvoering van activiteiten: vertraging uit week 9 opgevangen, taak afgerond.\n2) Monitoring: voortgang bijgehouden.\n3) Projectplan & fasering: to-do-lijst gebruikt om prioriteiten te bepalen.\n4) Uitvoering van activiteiten: taak verdeeld.\n4) Vastleggen & communiceren: afspraak vastgelegd.\n5) Monitoring: meetmoment of reactie op afwijking.\n6) Monitoring: afwijking leidt tot aanpassing.\n6) Projectplan & fasering: herplanning.\n6) Doelen, KPI’s & resultaatkaders: norm realistischer gemaakt.\n7) Uitvoering van activiteiten: [pas geldig als bewijs met een actie erbij]."],["12","23 t/m 27 nov","1) Brainstorm met het team, met nog 4 weken tot de inleverdeadline. Twee doelen: in kaart brengen welke taken nog uitgevoerd moeten worden, en de overdracht voorbereiden, zodat het nieuwe aanmeldproces blijft lopen na mijn vertrek eind januari. Uitkomst: [taken + wie + deadline], [afspraken over overdracht].","","1) Projectplan & fasering: to-do-lijst gebruikt om prioriteiten te bepalen, borging na het project ingepland.\n1) Vastleggen & communiceren: afspraken vastgelegd en verwerkt in de planning."],["13","30 nov t/m 4 dec","","",""],["14","7 t/m 11 dec ","","",""],["15","14 t/m 18 dec","","",""]];
+const logSeed=()=>LOG0.map(r=>({id:uid(),week:r[0],datum:r[1],hoog:r[2],min:r[3],comp:r[4]}));
 function migrate(){
   S.kpis.forEach(k=>{if(!k.d)k.d=MOM.map(m=>m.d)});
   if(!S.meet){S.meet=defaults().meet;S.mlAdded=true}
   if(!S.wait)S.wait=defaults().wait;
   if(!S.bes)S.bes=[];
+  if(!S.log)S.log=logSeed();
   if(!S.meetings)S.meetings=defaults().meetings;
   S.meetings.forEach(m=>{if(m.aanwezig===undefined){   // oud verslagformat naar notulen-opbouw
     const oud={besproken:m.besproken,besluiten:m.besluiten,acties:m.acties,aandacht:m.volgende};
@@ -1364,6 +1369,10 @@ BIND['pt.hours']=p=>nf(personHours(p),1)+' u';
 BIND['pt.sub']=p=>{const ts=personTasks(p);const lp=S.fin.loon.find(x=>x.naam===p);return `${ts.length} ${ts.length===1?'taak':'taken'} · gem. ${Math.round(avg(ts.map(tPct)))}% klaar`+(ts.filter(t=>isBezig(t,p)).length?` · ${ts.filter(t=>isBezig(t,p)).length} bezig`:'')+(lp?` · begroot ${nf(lp.bu,0)} u`:'')};
 BIND['pt.res']=p=>{const lp=S.fin.loon.find(x=>x.naam===p);if(!lp)return '';const b=lp.bu||0,h=personHours(p),r=b-h;return `Bestede uren ${nf(h,1)} · ${r>=0?'nog '+nf(r,1)+' u beschikbaar':'<span class="bad-t">'+nf(-r,1)+' u over de begroting</span>'}`};
 BIND['meet.title']=id=>{const m=S.meet.find(x=>x.id===id);return esc(m.titel||'Zonder titel')};
+BIND['tile.log']=()=>{const n=S.log.filter(w=>(w.hoog||'').trim()).length;return `${n} van ${S.log.length} weken ingevuld`};
+BIND['log.title']=id=>{const w=S.log.find(x=>x.id===id);if(!w)return '';return esc(w.week?'Week '+w.week:((w.hoog||'').trim().slice(0,40)||'Nieuwe regel'))};
+BIND['log.dat']=id=>{const w=S.log.find(x=>x.id===id);return w?esc((w.datum||'').trim()):''};
+BIND['log.st']=id=>{const w=S.log.find(x=>x.id===id);return w&&(w.hoog||w.min||w.comp||'').trim()?'':'nog leeg'};
 BIND['tile.meet']=()=>{const u=S.meet.filter(m=>m.status==='Uitgevoerd').length,g=S.meet.filter(m=>m.status==='Gepland').length;return `${u} uitgevoerd · ${g} gepland`};
 const wLate=w=>w.status!=='Ontvangen'&&!!w.deadline&&w.deadline<todayStr();
 BIND['tile.wait']=()=>{const o=S.wait.filter(w=>w.status!=='Ontvangen');return `${o.length} openstaand · ${o.filter(wLate).length} te laat`};
@@ -1425,9 +1434,10 @@ const del=(act,id,label='Verwijderen')=>`<button class="icon-btn" data-act="${ac
 const TABS=[
   {id:'kpi',label:'Subdoelen en KPI’s',icon:'target',stat:'tile.kpi'},
   {id:'risks',label:'Risico’s',icon:'triangle-alert',stat:'tile.risks'},
-  {id:'notes',label:'Notities & afspraken',icon:'file-text',stat:'tile.notes'},
+  {id:'notes',label:'Notities, afspraken & besluiten',icon:'file-text',stat:'tile.notes'},
   {id:'meetings',label:'Meetings',icon:'calendar-check',stat:'tile.meetings'},
-  {id:'meet',label:'Meetmomenten, bijsturingen & besluiten',icon:'clipboard-list',stat:'tile.meet'},
+  {id:'meet',label:'Meetmomenten & bijsturingen',icon:'clipboard-list',stat:'tile.meet'},
+  {id:'log',label:'Logboek',icon:'book-open',stat:'tile.log'},
   {id:'wait',label:'Waiting for',icon:'hourglass',stat:'tile.wait'},
   {id:'fin',label:'Financiën',icon:'euro',stat:'tile.fin'},
   {id:'taken',label:'Takenoverzicht',icon:'users',stat:'tile.taken'},
@@ -1555,11 +1565,13 @@ function viewNotes(){
         <div class="wide"><label>${n.type==='Bijsturingsactie'?'Actie / bijsturing':n.type==='Afspraak'?'Besproken / besloten':'Notitie'}</label>${txa('notes',n.id,'tekst',n.tekst,'Schrijf hier…')}</div>
       </div><div class="dfoot"><span class="sp"></span><button class="btn sm ghost" data-act="delnote" data-id="${n.id}">${icon('trash-2',16)}Verwijderen</button></div></div></article>`;
   }).join('');
-  return `<div class="panel-head"><div><h2>Notities & afspraken</h2><p>Leg afspraken, notities en bijsturingsacties vast. Open een item om het aan te passen.</p></div></div>
+  return `<div class="panel-head"><div><h2>Notities, afspraken en besluiten</h2><p>Leg afspraken, notities, bijsturingsacties en besluiten vast. Open een item om het aan te passen.</p></div></div>
   <div class="toolbar"><button class="btn cta" data-act="addnote" data-id="Notitie">${icon('plus')}Notitie</button><button class="btn cta" data-act="addnote" data-id="Afspraak">${icon('plus')}Afspraak</button><button class="btn cta" data-act="addnote" data-id="Bijsturingsactie">${icon('plus')}Bijsturingsactie</button><span class="grow"></span>
     <div class="chips" role="group" aria-label="Filter">${chip('alle','Alle')}${chip('Notitie','Notities')}${chip('Afspraak','Afspraken')}${chip('Bijsturingsactie','Bijsturingsacties')}</div></div>
   <div class="toolbar" style="margin-top:-4px"><span class="muted">Tonen</span><div class="chips" role="group" aria-label="Actueel of afgerond">${schip('actueel','Actueel ('+nAct+')')}${schip('afgerond','Afgerond ('+nKlaar+')')}${schip('alles','Alles')}</div></div>
-  ${list||'<div class="empty-state">'+(st==='afgerond'?'Nog niets afgerond. Afgeronde items blijven hier bewaard.':'Niets actueels in deze categorie.')+'</div>'}`;
+  ${list||'<div class="empty-state">'+(st==='afgerond'?'Nog niets afgerond. Afgeronde items blijven hier bewaard.':'Niets actueels in deze categorie.')+'</div>'}
+  <h3 class="sec-title">Besluitenlog</h3>
+  ${besHtml()}`;
 }
 
 /* ---------- Meetings (voorbereiding en verslag per week) ---------- */
@@ -1689,6 +1701,27 @@ function viewMeetings(){
   ${weeks||'<div class="empty-state">Geen weken om te tonen met dit filter.</div>'}`;
 }
 
+/* ---------- Logboek ---------- */
+function viewLog(){
+  const arts=S.log.map(w=>{const open=!!UI.open['l'+w.id];
+    return `<article class="note${open?' open':''}" id="l${w.id}">
+      <button class="note-head" data-act="tog" data-id="l${w.id}" aria-expanded="${open}"><span class="chev">${icon('chevron-down')}</span><b ${B('log.title',w.id)}></b><span class="muted" ${B('log.dat',w.id)}></span><span class="grow"></span><span class="muted nowrap" ${B('log.st',w.id)}></span></button>
+      <div class="note-body"><div class="ngrid">
+        <div><label>Week</label>${inpT('log',w.id,'week',w.week)}</div>
+        <div><label>Datum</label>${inpT('log',w.id,'datum',w.datum)}</div>
+        <div class="wide"><label>Hoogtepunten van de week</label>${txa('log',w.id,'hoog',w.hoog)}</div>
+        <div class="wide"><label>Minpunten</label>${txa('log',w.id,'min',w.min)}</div>
+        <div class="wide"><label>Deelcompetentie M&amp;O + waarom</label>${txa('log',w.id,'comp',w.comp)}</div>
+      </div><div class="dfoot"><span class="sp"></span><button class="btn sm ghost" data-act="dellog" data-id="${w.id}">${icon('trash-2',16)}Verwijderen</button></div></div></article>`}).join('');
+  const miles=S.meet.filter(m=>m.soort==='Mijlpaal').sort((a,b)=>(a.datum||'9999').localeCompare(b.datum||'9999'));
+  const mrows=miles.map(m=>`<tr id="m${m.id}"><td style="width:170px">${inpD('meet',m.id,'datum',m.datum)}</td><td style="min-width:260px">${inpT('meet',m.id,'titel',m.titel,'Naam van de mijlpaal')}</td><td>${selP('meet',m.id,'status',MSTAT,m.status)}</td><td>${del('delmeet',m.id,'Mijlpaal verwijderen')}</td></tr>`).join('');
+  return `<div class="panel-head"><div><h2>Logboek Veerle Spanjers</h2><p>H-cluster project Impact desk HAN Green Office</p></div></div>
+  <div class="toolbar"><button class="btn cta" data-act="addlog">${icon('plus')}Week toevoegen</button><span class="grow"></span><button class="btn sm" data-act="logall" data-id="1">${icon('chevrons-up-down',16)}Alles openklappen</button><button class="btn sm" data-act="logall" data-id="0">${icon('chevrons-down-up',16)}Alles inklappen</button></div>
+  ${arts||'<div class="empty-state">Nog geen weken in het logboek.</div>'}
+  <h3 class="sec-title">Mijlpalen</h3>
+  <div class="toolbar" style="margin-top:0"><span class="muted">Dezelfde mijlpalen als op de tab Meetmomenten &amp; bijsturingen en in de planning.</span><span class="grow"></span><button class="btn cta sm" data-act="addmile">${icon('plus',16)}Mijlpaal toevoegen</button></div>
+  ${miles.length?`<div class="tw"><table class="tbl"><thead><tr><th>Datum</th><th>Mijlpaal</th><th>Status</th><th></th></tr></thead><tbody>${mrows}</tbody></table></div>`:'<div class="empty-state">Nog geen mijlpalen.</div>'}`;
+}
 /* ---------- Bijsturingen (uit de KPI-logboeken) en Besluitenlog ---------- */
 const BESTYPE=['Formeel akkoord','Projectkeuze','Bijsturing','Escalatie'];
 const BESTAT=['Open','In uitvoering','Afgerond'];
@@ -1752,7 +1785,7 @@ function viewMeet(){
       <div><label>Toelichting</label>${txa('meet',m.id,'toel',m.toel)}</div>
       <div><label>Uitkomst en vervolg</label>${txa('meet',m.id,'uitkomst',m.uitkomst)}</div>
     </div></td></tr></tbody>`}).join('');
-  return `<div class="panel-head"><div><h2>Meetmomenten, bijsturingen en besluiten</h2><p>Je logboek van meetmomenten en mijlpalen, de bijsturingen van de normen en de besluiten die zijn genomen.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn cta" data-act="addmile">${icon('plus')}Mijlpaal toevoegen</button><button class="btn cta" data-act="addmeet">${icon('plus')}Meetmoment vastleggen</button></div></div>
+  return `<div class="panel-head"><div><h2>Meetmomenten en bijsturingen</h2><p>Je logboek van meetmomenten en mijlpalen en de bijsturingen van de normen.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn cta" data-act="addmile">${icon('plus')}Mijlpaal toevoegen</button><button class="btn cta" data-act="addmeet">${icon('plus')}Meetmoment vastleggen</button></div></div>
   <div class="sumgrid"><div class="card sum"><div class="lbl">Momenten en mijlpalen totaal</div><div class="val">${S.meet.length}</div><div class="sub">${nU} uitgevoerd · ${S.meet.filter(m=>m.soort==='Mijlpaal').length} mijlpalen</div></div>
   <div class="card sum"><div class="lbl">Nog gepland</div><div class="val">${S.meet.filter(m=>m.status==='Gepland').length}</div><div class="sub">${next?'volgende: '+fmtD(next.datum):'geen datum gepland'}</div></div></div>
   <div class="toolbar"><span class="muted">Filter op status</span><span class="grow"></span><div class="chips" role="group" aria-label="Filter">${chip('alle','Alle')}${chip('Gepland','Gepland')}${chip('Uitgevoerd','Uitgevoerd')}${chip('Verplaatst','Verplaatst')}${chip('Vervallen','Vervallen')}</div></div>
@@ -1762,9 +1795,7 @@ function viewMeet(){
   <h3 class="sec-title">Meetmomenten</h3>
   ${list||'<div class="empty-state">Geen meetmomenten in deze categorie.</div>'}
   <h3 class="sec-title">Bijsturingen</h3>
-  ${bijsturHtml()}
-  <h3 class="sec-title">Besluitenlog</h3>
-  ${besHtml()}`;
+  ${bijsturHtml()}`;
 }
 
 /* ---------- Waiting for ---------- */
@@ -2004,7 +2035,7 @@ function viewPlan(){
   <section class="sd" style="margin-top:14px" id="mslistbox"><button class="sd-head" data-act="tog" data-id="mslistbox"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Meetmomenten en mijlpalen</b> · ${ms.length} met een datum, te beheren in de tab Meetmomenten</span></button><div class="sd-body" style="padding:0"><div class="mslist">${ms.map(m=>`<button class="msi" data-act="gomeet" data-id="${m.id}"><i class="${m.status==='Uitgevoerd'?'done':''}"></i><b>${fmtD(m.datum)}</b><span>${esc(m.titel||'Zonder titel')}</span></button>`).join('')}</div></div></section>`;
 }
 
-const VIEWS={kpi:viewKpi,risks:viewRisks,notes:viewNotes,meetings:viewMeetings,meet:viewMeet,wait:viewWait,fin:viewFin,taken:viewTaken,plan:viewPlan};
+const VIEWS={kpi:viewKpi,risks:viewRisks,notes:viewNotes,meetings:viewMeetings,meet:viewMeet,log:viewLog,wait:viewWait,fin:viewFin,taken:viewTaken,plan:viewPlan};
 function autosize(el){el.style.height='auto';if(el.offsetParent!==null||el.scrollHeight)el.style.height=Math.max(36,el.scrollHeight+2)+'px'}
 function render(keepScroll=true){
   const y=window.scrollY;
@@ -2206,6 +2237,9 @@ const ACT={
   delnl(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k&&confirm('Deze regel uit het logboek verwijderen? De norm zelf blijft zoals hij nu is.')){k.nlog.splice(+a.dataset.i,1);save();nlogUI(k);applyBindings();toast('Regel uit het logboek verwijderd')}},
   addbes(){S.bes.push({id:uid(),datum:todayStr(),type:'Projectkeuze',besluit:'',onderbouwing:'',door:'',betrokkenen:'',opvolging:'',status:'Open'});save();render();const el=$$('textarea[data-c="bes"][data-f="besluit"]');el.length&&el[el.length-1].focus()},
   delbes(a){if(confirm('Dit besluit uit het besluitenlog verwijderen?')){S.bes=S.bes.filter(x=>x.id!==a.dataset.id);save();render()}},
+  addlog(){const nums=S.log.map(w=>parseInt(w.week,10)).filter(n=>!Number.isNaN(n));const w={id:uid(),week:String((nums.length?Math.max(...nums):0)+1),datum:'',hoog:'',min:'',comp:''};S.log.push(w);UI.open['l'+w.id]=true;save();saveUI();render();const el=$('#l'+w.id);if(el){el.scrollIntoView({block:'center'});const t=$('textarea[data-f=hoog]',el);t&&t.focus()}},
+  dellog(a){const w=S.log.find(x=>x.id===a.dataset.id);if(w&&confirm('Deze week uit het logboek verwijderen?')){S.log=S.log.filter(x=>x.id!==w.id);save();render()}},
+  logall(a){const on=a.dataset.id==='1';S.log.forEach(w=>UI.open['l'+w.id]=on);saveUI();render()},
   mfilter(a){UI.f.meet=a.dataset.id;saveUI();render()},
   addmeet(){const m={id:uid(),datum:todayStr(),titel:'',soort:'KPI-meting',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delmeet(a){if(confirm('Dit meetmoment verwijderen?')){S.meet=S.meet.filter(x=>x.id!==a.dataset.id);save();render()}},
