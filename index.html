@@ -381,6 +381,8 @@ table.tbl td.r{white-space:nowrap}
 .note-head b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .note-body{display:none;padding:4px 16px 16px;border-top:1px solid var(--line)}
 .note.open .note-body{display:block}
+.logg{display:grid;grid-template-columns:70px 150px repeat(3,minmax(0,1fr));gap:12px;margin-top:12px;align-items:start}
+@media(max-width:1000px){.logg{grid-template-columns:70px 1fr}.logg>div:nth-child(n+3){grid-column:1/-1}}
 .ngrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:12px}
 .ngrid .wide{grid-column:1/-1}
 .ngrid label,.fl{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;display:block;margin-bottom:4px}
@@ -1373,7 +1375,7 @@ BIND['tile.log']=()=>{const n=S.log.filter(w=>(w.hoog||'').trim()).length;return
 BIND['log.title']=id=>{const w=S.log.find(x=>x.id===id);if(!w)return '';return esc(w.week?'Week '+w.week:((w.hoog||'').trim().slice(0,40)||'Nieuwe regel'))};
 BIND['log.dat']=id=>{const w=S.log.find(x=>x.id===id);return w?esc((w.datum||'').trim()):''};
 BIND['log.st']=id=>{const w=S.log.find(x=>x.id===id);return w&&(w.hoog||w.min||w.comp||'').trim()?'':'nog leeg'};
-BIND['tile.meet']=()=>{const u=S.meet.filter(m=>m.status==='Uitgevoerd').length,g=S.meet.filter(m=>m.status==='Gepland').length;return `${u} uitgevoerd · ${g} gepland`};
+BIND['tile.meet']=()=>{const u=S.meet.filter(m=>m.soort!=='Mijlpaal'&&m.status==='Uitgevoerd').length,g=S.meet.filter(m=>m.soort!=='Mijlpaal'&&m.status==='Gepland').length;return `${u} uitgevoerd · ${g} gepland`};
 const wLate=w=>w.status!=='Ontvangen'&&!!w.deadline&&w.deadline<todayStr();
 BIND['tile.wait']=()=>{const o=S.wait.filter(w=>w.status!=='Ontvangen');return `${o.length} openstaand · ${o.filter(wLate).length} te laat`};
 BIND['wait.row']=id=>{const w=S.wait.find(x=>x.id===id);return w?(w.status==='Ontvangen'?'wdone':wLate(w)?'wlate':''):''};
@@ -1706,21 +1708,31 @@ function viewLog(){
   const arts=S.log.map(w=>{const open=!!UI.open['l'+w.id];
     return `<article class="note${open?' open':''}" id="l${w.id}">
       <button class="note-head" data-act="tog" data-id="l${w.id}" aria-expanded="${open}"><span class="chev">${icon('chevron-down')}</span><b ${B('log.title',w.id)}></b><span class="muted" ${B('log.dat',w.id)}></span><span class="grow"></span><span class="muted nowrap" ${B('log.st',w.id)}></span></button>
-      <div class="note-body"><div class="ngrid">
+      <div class="note-body"><div class="logg">
         <div><label>Week</label>${inpT('log',w.id,'week',w.week)}</div>
         <div><label>Datum</label>${inpT('log',w.id,'datum',w.datum)}</div>
-        <div class="wide"><label>Hoogtepunten van de week</label>${txa('log',w.id,'hoog',w.hoog)}</div>
-        <div class="wide"><label>Minpunten</label>${txa('log',w.id,'min',w.min)}</div>
-        <div class="wide"><label>Deelcompetentie M&amp;O + waarom</label>${txa('log',w.id,'comp',w.comp)}</div>
+        <div><label>Hoogtepunten van de week</label>${txa('log',w.id,'hoog',w.hoog)}</div>
+        <div><label>Minpunten</label>${txa('log',w.id,'min',w.min)}</div>
+        <div><label>Deelcompetentie M&amp;O + waarom</label>${txa('log',w.id,'comp',w.comp)}</div>
       </div><div class="dfoot"><span class="sp"></span><button class="btn sm ghost" data-act="dellog" data-id="${w.id}">${icon('trash-2',16)}Verwijderen</button></div></div></article>`}).join('');
   const miles=S.meet.filter(m=>m.soort==='Mijlpaal').sort((a,b)=>(a.datum||'9999').localeCompare(b.datum||'9999'));
-  const mrows=miles.map(m=>`<tr id="m${m.id}"><td style="width:170px">${inpD('meet',m.id,'datum',m.datum)}</td><td style="min-width:260px">${inpT('meet',m.id,'titel',m.titel,'Naam van de mijlpaal')}</td><td>${selP('meet',m.id,'status',MSTAT,m.status)}</td><td>${del('delmeet',m.id,'Mijlpaal verwijderen')}</td></tr>`).join('');
+  const mrows=miles.map(m=>{const open=!!UI.open['m'+m.id];return `<tbody class="rg${open?' open':''}" id="m${m.id}"><tr>
+      <td style="width:170px">${inpD('meet',m.id,'datum',m.datum)}</td>
+      <td style="min-width:260px">${inpT('meet',m.id,'titel',m.titel,'Naam van de mijlpaal')}</td>
+      <td>${selP('meet',m.id,'status',MSTAT,m.status)}</td>
+      <td class="nowrap"><button class="icon-btn rchev" data-act="tog" data-id="m${m.id}" title="Toelichting openen" aria-label="Toelichting openen">${icon('chevron-down')}</button>${del('delmeet',m.id,'Mijlpaal verwijderen')}</td>
+    </tr><tr class="rdetail"><td colspan="4"><div class="rdgrid">
+      <div><label>Subdoel</label>${selN('meet',m.id,'sd',SDOPT,m.sd)}</div>
+      <div><label>Waarom is deze mijlpaal belangrijk</label>${txa('meet',m.id,'waarom',m.waarom)}</div>
+      <div><label>Toelichting</label>${txa('meet',m.id,'toel',m.toel)}</div>
+      <div><label>Uitkomst en vervolg</label>${txa('meet',m.id,'uitkomst',m.uitkomst)}</div>
+    </div></td></tr></tbody>`}).join('');
   return `<div class="panel-head"><div><h2>Logboek Veerle Spanjers</h2><p>H-cluster project Impact desk HAN Green Office</p></div></div>
   <div class="toolbar"><button class="btn cta" data-act="addlog">${icon('plus')}Week toevoegen</button><span class="grow"></span><button class="btn sm" data-act="logall" data-id="1">${icon('chevrons-up-down',16)}Alles openklappen</button><button class="btn sm" data-act="logall" data-id="0">${icon('chevrons-down-up',16)}Alles inklappen</button></div>
   ${arts||'<div class="empty-state">Nog geen weken in het logboek.</div>'}
   <h3 class="sec-title">Mijlpalen</h3>
-  <div class="toolbar" style="margin-top:0"><span class="muted">Dezelfde mijlpalen als op de tab Meetmomenten &amp; bijsturingen en in de planning.</span><span class="grow"></span><button class="btn cta sm" data-act="addmile">${icon('plus',16)}Mijlpaal toevoegen</button></div>
-  ${miles.length?`<div class="tw"><table class="tbl"><thead><tr><th>Datum</th><th>Mijlpaal</th><th>Status</th><th></th></tr></thead><tbody>${mrows}</tbody></table></div>`:'<div class="empty-state">Nog geen mijlpalen.</div>'}`;
+  <div class="toolbar" style="margin-top:0"><span class="muted">Mijlpalen met een datum staan als ruitje in de planning. Open de pijl voor de toelichting.</span><span class="grow"></span><button class="btn cta sm" data-act="addmile">${icon('plus',16)}Mijlpaal toevoegen</button></div>
+  ${miles.length?`<div class="tw"><table class="tbl"><thead><tr><th>Datum</th><th>Mijlpaal</th><th>Status</th><th></th></tr></thead>${mrows}</table></div>`:'<div class="empty-state">Nog geen mijlpalen.</div>'}`;
 }
 /* ---------- Bijsturingen (uit de KPI-logboeken) en Besluitenlog ---------- */
 const BESTYPE=['Formeel akkoord','Projectkeuze','Bijsturing','Escalatie'];
@@ -1756,7 +1768,7 @@ function viewMeet(){
   const miles=all.filter(m=>m.soort==='Mijlpaal'),items=all.filter(m=>m.soort!=='Mijlpaal');
   const chip=(v,l)=>`<button class="chip${f===v?' on':''}" data-act="mfilter" data-id="${v}">${l}</button>`;
   const kpiOpt=[['','Geen specifieke KPI'],...S.kpis.map(k=>[k.id,`${k.id} · ${k.titel}`])];
-  const t=todayStr(),next=S.meet.filter(m=>m.status==='Gepland'&&m.datum>=t).sort((a,b)=>a.datum.localeCompare(b.datum))[0];
+  const t=todayStr(),next=S.meet.filter(m=>m.soort!=='Mijlpaal'&&m.status==='Gepland'&&m.datum>=t).sort((a,b)=>a.datum.localeCompare(b.datum))[0];
   const list=items.map(m=>{
     const open=!!UI.open['m'+m.id];
     return `<article class="note${open?' open':''}" data-t="${slug(m.status)}" id="m${m.id}">
@@ -1773,26 +1785,12 @@ function viewMeet(){
         <div class="wide"><label>Uitkomst en vervolg</label>${txa('meet',m.id,'uitkomst',m.uitkomst,'Wat is de uitkomst en wat ga je daarmee doen?')}</div>
       </div><div class="dfoot"><span class="sp"></span><button class="btn sm ghost" data-act="delmeet" data-id="${m.id}">${icon('trash-2',16)}Verwijderen</button></div></div></article>`;
   }).join('');
-  const nU=S.meet.filter(m=>m.status==='Uitgevoerd').length;
-  const mrows=miles.map(m=>{const open=!!UI.open['m'+m.id];return `<tbody class="rg${open?' open':''}" id="m${m.id}"><tr>
-      <td style="width:170px">${inpD('meet',m.id,'datum',m.datum)}</td>
-      <td style="min-width:260px">${inpT('meet',m.id,'titel',m.titel,'Naam van de mijlpaal')}</td>
-      <td>${selP('meet',m.id,'status',MSTAT,m.status)}</td>
-      <td class="nowrap"><button class="icon-btn rchev" data-act="tog" data-id="m${m.id}" title="Toelichting openen" aria-label="Toelichting openen">${icon('chevron-down')}</button>${del('delmeet',m.id,'Mijlpaal verwijderen')}</td>
-    </tr><tr class="rdetail"><td colspan="4"><div class="rdgrid">
-      <div><label>Subdoel</label>${selN('meet',m.id,'sd',SDOPT,m.sd)}</div>
-      <div><label>Waarom is deze mijlpaal belangrijk</label>${txa('meet',m.id,'waarom',m.waarom)}</div>
-      <div><label>Toelichting</label>${txa('meet',m.id,'toel',m.toel)}</div>
-      <div><label>Uitkomst en vervolg</label>${txa('meet',m.id,'uitkomst',m.uitkomst)}</div>
-    </div></td></tr></tbody>`}).join('');
-  return `<div class="panel-head"><div><h2>Meetmomenten en bijsturingen</h2><p>Je logboek van meetmomenten en mijlpalen en de bijsturingen van de normen.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn cta" data-act="addmile">${icon('plus')}Mijlpaal toevoegen</button><button class="btn cta" data-act="addmeet">${icon('plus')}Meetmoment vastleggen</button></div></div>
-  <div class="sumgrid"><div class="card sum"><div class="lbl">Momenten en mijlpalen totaal</div><div class="val">${S.meet.length}</div><div class="sub">${nU} uitgevoerd · ${S.meet.filter(m=>m.soort==='Mijlpaal').length} mijlpalen</div></div>
-  <div class="card sum"><div class="lbl">Nog gepland</div><div class="val">${S.meet.filter(m=>m.status==='Gepland').length}</div><div class="sub">${next?'volgende: '+fmtD(next.datum):'geen datum gepland'}</div></div></div>
+  const nU=S.meet.filter(m=>m.soort!=='Mijlpaal'&&m.status==='Uitgevoerd').length;
+  return `<div class="panel-head"><div><h2>Meetmomenten en bijsturingen</h2><p>Je logboek van meetmomenten en de bijsturingen van de normen.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn cta" data-act="addmeet">${icon('plus')}Meetmoment vastleggen</button></div></div>
+  <div class="sumgrid"><div class="card sum"><div class="lbl">Meetmomenten totaal</div><div class="val">${S.meet.filter(m=>m.soort!=='Mijlpaal').length}</div><div class="sub">${nU} uitgevoerd</div></div>
+  <div class="card sum"><div class="lbl">Nog gepland</div><div class="val">${S.meet.filter(m=>m.soort!=='Mijlpaal'&&m.status==='Gepland').length}</div><div class="sub">${next?'volgende: '+fmtD(next.datum):'geen datum gepland'}</div></div></div>
   <div class="toolbar"><span class="muted">Filter op status</span><span class="grow"></span><div class="chips" role="group" aria-label="Filter">${chip('alle','Alle')}${chip('Gepland','Gepland')}${chip('Uitgevoerd','Uitgevoerd')}${chip('Verplaatst','Verplaatst')}${chip('Vervallen','Vervallen')}</div></div>
-  <h3 class="sec-title" style="margin-top:6px">Mijlpalen</h3>
-  <div class="toolbar" style="margin-top:0"><span class="muted" style="max-width:80ch">Mijlpalen met een datum staan als ruitje in de planning. Pas hier datum, naam of status aan, of voeg zelf een mijlpaal toe. Open de pijl voor de toelichting.</span></div>
-  ${miles.length?`<div class="tw"><table class="tbl"><thead><tr><th>Datum</th><th>Mijlpaal</th><th>Status</th><th></th></tr></thead>${mrows}</table></div>`:'<div class="empty-state">Geen mijlpalen in deze categorie.</div>'}
-  <h3 class="sec-title">Meetmomenten</h3>
+  <h3 class="sec-title" style="margin-top:6px">Meetmomenten</h3>
   ${list||'<div class="empty-state">Geen meetmomenten in deze categorie.</div>'}
   <h3 class="sec-title">Bijsturingen</h3>
   ${bijsturHtml()}`;
@@ -2025,14 +2023,14 @@ function viewPlan(){
     <label>Toon taken van <select data-ui="f.plan"><option value="">Iedereen</option>${opt(PEOPLE,f)}</select></label>
     <button class="btn sm" data-act="gotoday">${icon('crosshair',16)}Naar vandaag</button>
     <button class="btn sm" data-act="phall">${icon(allPh?'chevrons-down-up':'chevrons-up-down',16)}${allPh?'Fases inklappen':'Fases uitklappen'}</button>
-    <span class="grow"></span><span class="muted" style="font-size:13px">Gearceerd = vakantie · ruit = meetmoment uit de tab Meetmomenten (groen = uitgevoerd)</span>
+    <span class="grow"></span><span class="muted" style="font-size:13px">Gearceerd = vakantie · ruit = meetmoment of mijlpaal (groen = uitgevoerd)</span>
   </div>
   <div class="gscroll" id="gscroll"><div class="gantt" id="gantt">
     <div class="overlay">${ov}</div><div class="overlay2">${ov2}</div>
     <div class="grow gh"><div class="lc">Fase / taak</div><div class="rc"><div class="gh-month">${months}</div><div class="gh-week">${weeks}</div></div></div>
     ${mrow}${rows}
   </div></div>
-  <section class="sd" style="margin-top:14px" id="mslistbox"><button class="sd-head" data-act="tog" data-id="mslistbox"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Meetmomenten en mijlpalen</b> · ${ms.length} met een datum, te beheren in de tab Meetmomenten</span></button><div class="sd-body" style="padding:0"><div class="mslist">${ms.map(m=>`<button class="msi" data-act="gomeet" data-id="${m.id}"><i class="${m.status==='Uitgevoerd'?'done':''}"></i><b>${fmtD(m.datum)}</b><span>${esc(m.titel||'Zonder titel')}</span></button>`).join('')}</div></div></section>`;
+  <section class="sd" style="margin-top:14px" id="mslistbox"><button class="sd-head" data-act="tog" data-id="mslistbox"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Meetmomenten en mijlpalen</b> · ${ms.length} met een datum · meetmomenten beheer je in de tab Meetmomenten, mijlpalen in de tab Logboek</span></button><div class="sd-body" style="padding:0"><div class="mslist">${ms.map(m=>`<button class="msi" data-act="gomeet" data-id="${m.id}"><i class="${m.status==='Uitgevoerd'?'done':''}"></i><b>${fmtD(m.datum)}</b><span>${esc(m.titel||'Zonder titel')}</span></button>`).join('')}</div></div></section>`;
 }
 
 const VIEWS={kpi:viewKpi,risks:viewRisks,notes:viewNotes,meetings:viewMeetings,meet:viewMeet,log:viewLog,wait:viewWait,fin:viewFin,taken:viewTaken,plan:viewPlan};
@@ -2220,7 +2218,7 @@ const ACT={
       if(confirm(`“${t.naam}” is ook van ${rest}. Alleen ${p} van deze taak halen? De taak blijft in de planning staan voor ${rest}.`)){t.owners=t.owners.filter(o=>o!==p);if(t.uren)delete t.uren[p];if(t.bezig)delete t.bezig[p];save();render()}
     }else if(confirm(`“${t.naam}” verwijderen? De taak verdwijnt ook uit de planning.`)){S.plan=S.plan.filter(x=>x.id!==t.id);save();render()}
   },
-  gomeet(a){const id=a.dataset.id;UI.tab='meet';UI.f.meet='alle';UI.open['m'+id]=true;saveUI();render(false);const el=$('#m'+id);el&&el.scrollIntoView({block:'center'})},
+  gomeet(a){const id=a.dataset.id;const mm=S.meet.find(x=>x.id===id);UI.tab=mm&&mm.soort==='Mijlpaal'?'log':'meet';UI.f.meet='alle';UI.open['m'+id]=true;saveUI();render(false);const el=$('#m'+id);el&&el.scrollIntoView({block:'center'})},
   addbar(a){const k=S.kpis.find(x=>x.id===a.dataset.id);k.bars.push({l:'',g:null,w:null});if(k.ob)k.ob.push(null);if(k.sb)k.sb.push(null);save();render()},
   delbar(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k.bars.length>1&&confirm('Deze categorie verwijderen?')){k.bars.splice(+a.dataset.i,1);if(k.ob)k.ob.splice(+a.dataset.i,1);if(k.sb)k.sb.splice(+a.dataset.i,1);save();render()}},
   addmom(a){
