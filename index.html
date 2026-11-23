@@ -214,6 +214,7 @@ table.aanw th,table.aanw td{vertical-align:middle}
 .aanwh-dt input[type=time]{width:92px}
 .bps{display:flex;align-items:center;gap:6px}
 .bps input{min-width:0}
+.bes td{vertical-align:top}
 .chk-in{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted);margin-right:6px;cursor:pointer;white-space:nowrap}
 .mtg-head .dl{display:flex;align-items:center}
 table.aanw td .acell{display:flex;flex-direction:column;gap:5px;min-width:150px}
@@ -840,13 +841,14 @@ function defaults(){
     T('Afronding','Afstudeerdossier afronden en inleveren',['Veerle'],'2026-12-14','2027-01-08',0)
   ];
   const blokken=[[3,4],[5,6],[7,8],[10,11],[12,13],[14,15],[16,16]].map(([van,tot])=>({id:uid(),van,tot}));
-  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:3,barsV:1,kpiPruned:1,kpiMoved:1,kpiRenum:1,blokV:2,team:TEAM0.slice(),kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{}};
+  return {v:1,mlAdded:true,weeklyAdded:true,kpiSched:2,basisV:3,barsV:1,kpiPruned:1,kpiMoved:1,kpiRenum:1,blokV:2,team:TEAM0.slice(),kpis,risks,notes,meetings,meet,wait,fin,plan,blokken,aanw:{},bes:[]};
 }
 /* oudere back-ups en opgeslagen gegevens aanvullen met nieuwe onderdelen */
 function migrate(){
   S.kpis.forEach(k=>{if(!k.d)k.d=MOM.map(m=>m.d)});
   if(!S.meet){S.meet=defaults().meet;S.mlAdded=true}
   if(!S.wait)S.wait=defaults().wait;
+  if(!S.bes)S.bes=[];
   if(!S.meetings)S.meetings=defaults().meetings;
   S.meetings.forEach(m=>{if(m.aanwezig===undefined){   // oud verslagformat naar notulen-opbouw
     const oud={besproken:m.besproken,besluiten:m.besluiten,acties:m.acties,aandacht:m.volgende};
@@ -1425,7 +1427,7 @@ const TABS=[
   {id:'risks',label:'Risico’s',icon:'triangle-alert',stat:'tile.risks'},
   {id:'notes',label:'Notities & afspraken',icon:'file-text',stat:'tile.notes'},
   {id:'meetings',label:'Meetings',icon:'calendar-check',stat:'tile.meetings'},
-  {id:'meet',label:'Meetmomenten',icon:'clipboard-list',stat:'tile.meet'},
+  {id:'meet',label:'Meetmomenten, bijsturingen & besluiten',icon:'clipboard-list',stat:'tile.meet'},
   {id:'wait',label:'Waiting for',icon:'hourglass',stat:'tile.wait'},
   {id:'fin',label:'Financiën',icon:'euro',stat:'tile.fin'},
   {id:'taken',label:'Takenoverzicht',icon:'users',stat:'tile.taken'},
@@ -1687,6 +1689,31 @@ function viewMeetings(){
   ${weeks||'<div class="empty-state">Geen weken om te tonen met dit filter.</div>'}`;
 }
 
+/* ---------- Bijsturingen (uit de KPI-logboeken) en Besluitenlog ---------- */
+const BESTYPE=['Formeel akkoord','Projectkeuze','Bijsturing','Escalatie'];
+const BESTAT=['Open','In uitvoering','Afgerond'];
+function bijsturHtml(){
+  const all=[];S.kpis.forEach(k=>(k.nlog||[]).forEach(e=>all.push({k,e})));
+  all.sort((a,b)=>(a.e.d||'').localeCompare(b.e.d||''));
+  if(!all.length)return '<div class="empty-state">Nog geen bijsturingen. Stuur een norm bij via de knop Logboek bij de grafiek van een KPI.</div>';
+  const rows=all.map(({k,e})=>`<tr><td class="nowrap">${e.d?fmtD(e.d):''}</td><td><b>${esc(k.id)}</b> · ${esc(k.titel)}</td><td>${esc(e.wat)}</td><td><s>${esc(e.van===''?'–':e.van)}</s> → <b>${esc(e.naar===''?'–':e.naar)}</b></td><td>${esc(e.reden||'')}</td></tr>`).join('');
+  return `<div class="tw"><table class="tbl"><thead><tr><th>Datum</th><th>KPI</th><th>Wat</th><th>Was → nu</th><th>Reden</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function besHtml(){
+  const rows=S.bes.map((b,i)=>`<tr>
+    <td style="width:40px;font-weight:700">${i+1}</td>
+    <td style="width:150px">${inpD('bes',b.id,'datum',b.datum)}</td>
+    <td style="width:150px">${selN('bes',b.id,'type',BESTYPE,b.type)}</td>
+    <td style="min-width:220px">${txa('bes',b.id,'besluit',b.besluit,'Wat is er besloten?')}</td>
+    <td style="min-width:220px">${txa('bes',b.id,'onderbouwing',b.onderbouwing,'Waarom?')}</td>
+    <td style="min-width:130px">${inpT('bes',b.id,'door',b.door,'Naam')}</td>
+    <td style="min-width:150px">${inpT('bes',b.id,'betrokkenen',b.betrokkenen,'Wie nog meer?')}</td>
+    <td style="min-width:200px">${txa('bes',b.id,'opvolging',b.opvolging,'Actie en wie')}</td>
+    <td style="width:130px">${selP('bes',b.id,'status',BESTAT,b.status)}</td>
+    <td>${del('delbes',b.id,'Besluit verwijderen')}</td></tr>`).join('');
+  return `<div class="toolbar" style="margin-top:0"><span class="grow"></span><button class="btn cta sm" data-act="addbes">${icon('plus',16)}Besluit toevoegen</button></div>
+  ${S.bes.length?`<div class="tw"><table class="tbl bes"><thead><tr><th>#</th><th>Datum</th><th>Type besluit</th><th>Besluit</th><th>Onderbouwing / context</th><th>Genomen door</th><th>Betrokkenen</th><th>Opvolging / actie</th><th>Status</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>`:'<div class="empty-state">Nog geen besluiten. Klik op “Besluit toevoegen”.</div>'}`;
+}
 /* ---------- Meetmomenten (logboek) ---------- */
 const MSOORT=['Nulmeting','KPI-meting','Interview','Evaluatie (PDCA)','Test','Mijlpaal','Overig'];
 const MSTAT=['Gepland','Uitgevoerd','Verplaatst','Vervallen'];
@@ -1725,7 +1752,7 @@ function viewMeet(){
       <div><label>Toelichting</label>${txa('meet',m.id,'toel',m.toel)}</div>
       <div><label>Uitkomst en vervolg</label>${txa('meet',m.id,'uitkomst',m.uitkomst)}</div>
     </div></td></tr></tbody>`}).join('');
-  return `<div class="panel-head"><div><h2>Meetmomenten</h2><p>Je logboek van alle meetmomenten en mijlpalen: wat het moment was, waarom het nodig was en wat eruit kwam.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn cta" data-act="addmile">${icon('plus')}Mijlpaal toevoegen</button><button class="btn cta" data-act="addmeet">${icon('plus')}Meetmoment vastleggen</button></div></div>
+  return `<div class="panel-head"><div><h2>Meetmomenten, bijsturingen en besluiten</h2><p>Je logboek van meetmomenten en mijlpalen, de bijsturingen van de normen en de besluiten die zijn genomen.</p></div><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn cta" data-act="addmile">${icon('plus')}Mijlpaal toevoegen</button><button class="btn cta" data-act="addmeet">${icon('plus')}Meetmoment vastleggen</button></div></div>
   <div class="sumgrid"><div class="card sum"><div class="lbl">Momenten en mijlpalen totaal</div><div class="val">${S.meet.length}</div><div class="sub">${nU} uitgevoerd · ${S.meet.filter(m=>m.soort==='Mijlpaal').length} mijlpalen</div></div>
   <div class="card sum"><div class="lbl">Nog gepland</div><div class="val">${S.meet.filter(m=>m.status==='Gepland').length}</div><div class="sub">${next?'volgende: '+fmtD(next.datum):'geen datum gepland'}</div></div></div>
   <div class="toolbar"><span class="muted">Filter op status</span><span class="grow"></span><div class="chips" role="group" aria-label="Filter">${chip('alle','Alle')}${chip('Gepland','Gepland')}${chip('Uitgevoerd','Uitgevoerd')}${chip('Verplaatst','Verplaatst')}${chip('Vervallen','Vervallen')}</div></div>
@@ -1733,7 +1760,11 @@ function viewMeet(){
   <div class="toolbar" style="margin-top:0"><span class="muted" style="max-width:80ch">Mijlpalen met een datum staan als ruitje in de planning. Pas hier datum, naam of status aan, of voeg zelf een mijlpaal toe. Open de pijl voor de toelichting.</span></div>
   ${miles.length?`<div class="tw"><table class="tbl"><thead><tr><th>Datum</th><th>Mijlpaal</th><th>Status</th><th></th></tr></thead>${mrows}</table></div>`:'<div class="empty-state">Geen mijlpalen in deze categorie.</div>'}
   <h3 class="sec-title">Meetmomenten</h3>
-  ${list||'<div class="empty-state">Geen meetmomenten in deze categorie.</div>'}`;
+  ${list||'<div class="empty-state">Geen meetmomenten in deze categorie.</div>'}
+  <h3 class="sec-title">Bijsturingen</h3>
+  ${bijsturHtml()}
+  <h3 class="sec-title">Besluitenlog</h3>
+  ${besHtml()}`;
 }
 
 /* ---------- Waiting for ---------- */
@@ -2173,6 +2204,8 @@ const ACT={
     if(i>0&&confirm('Dit meetmoment verwijderen, inclusief de ingevulde waarde?')){k.d.splice(i,1);k.g.splice(i,1);k.w.splice(i,1);if(k.og)k.og.splice(i,1);if(k.sg)k.sg.splice(i,1);save();render()}
   },
   delnl(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k&&confirm('Deze regel uit het logboek verwijderen? De norm zelf blijft zoals hij nu is.')){k.nlog.splice(+a.dataset.i,1);save();nlogUI(k);applyBindings();toast('Regel uit het logboek verwijderd')}},
+  addbes(){S.bes.push({id:uid(),datum:todayStr(),type:'Projectkeuze',besluit:'',onderbouwing:'',door:'',betrokkenen:'',opvolging:'',status:'Open'});save();render();const el=$$('textarea[data-c="bes"][data-f="besluit"]');el.length&&el[el.length-1].focus()},
+  delbes(a){if(confirm('Dit besluit uit het besluitenlog verwijderen?')){S.bes=S.bes.filter(x=>x.id!==a.dataset.id);save();render()}},
   mfilter(a){UI.f.meet=a.dataset.id;saveUI();render()},
   addmeet(){const m={id:uid(),datum:todayStr(),titel:'',soort:'KPI-meting',status:'Gepland',sd:0,kpi:'',waarom:'',toel:'',uitkomst:''};S.meet.push(m);UI.open['m'+m.id]=true;UI.f.meet='alle';save();saveUI();render();const el=$('#m'+m.id);el&&(el.scrollIntoView({block:'center'}),$('input[data-f=titel]',el).focus())},
   delmeet(a){if(confirm('Dit meetmoment verwijderen?')){S.meet=S.meet.filter(x=>x.id!==a.dataset.id);save();render()}},
