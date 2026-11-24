@@ -981,7 +981,7 @@ function ensureExtra(){
   if(!S.finPotV){mk('PR-pakketten',/pr/i);mk('Showroom',/showroom/i);S.finPotV=1}
   S.fin.pot.forEach(p=>{if(!p.items)p.items=[];if(!p.begr)p.begr=[];p.begr.forEach(b=>{if(b.ps===undefined){b.ps=b.prijs!=null;b.tot=null}});p.items.forEach(b=>{if(b.ps===undefined){b.ps=b.prijs!=null;b.tot=null}})});
 }
-const POTSTAT=['Gepland','Besteld','Betaald'];
+const POTSTAT=['Gepland','Besteld','Betaald','Ontvangen'];
 function potCalc(p){
   const r=S.fin.kosten.find(x=>x.id===p.kost),bud=r?(+r.begroot||0):0,items=p.items||[],begr=p.begr||[];
   const q=i=>i.aantal==null||i.aantal===''?1:(+i.aantal||0);
@@ -1705,7 +1705,7 @@ function viewMeetings(){
 
 /* ---------- Logboek ---------- */
 function viewLog(){
-  const arts=S.log.map(w=>{const open=!!UI.open['l'+w.id];
+  const arts=S.log.slice().reverse().map(w=>{const open=!!UI.open['l'+w.id];
     return `<article class="note${open?' open':''}" id="l${w.id}">
       <button class="note-head" data-act="tog" data-id="l${w.id}" aria-expanded="${open}"><span class="chev">${icon('chevron-down')}</span><b ${B('log.title',w.id)}></b><span class="muted" ${B('log.dat',w.id)}></span><span class="grow"></span><span class="muted nowrap" ${B('log.st',w.id)}></span></button>
       <div class="note-body"><div class="logg">
@@ -1862,7 +1862,7 @@ function potHtml(p){
       <tr><td colspan="8" class="hint" ${B('pot.bunl',p.id)}></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen posten.</p>'}
 
       <h4 class="pot-h"><span class="pot-n">2</span>Werkelijke kosten</h4>
-      <div class="toolbar" style="margin-top:0"><span class="muted">Kies per regel de begrote post. Alleen regels met status “Besteld” of “Betaald” tellen mee als werkelijk uitgegeven.</span><span class="grow"></span><button class="btn cta sm" data-act="addart" data-id="${p.id}">${icon('plus',16)}Artikel toevoegen</button></div>
+      <div class="toolbar" style="margin-top:0"><span class="muted">Kies per regel de begrote post. Alleen regels met status “Besteld”, “Betaald” of “Ontvangen” tellen mee als werkelijk uitgegeven.</span><span class="grow"></span><button class="btn cta sm" data-act="addart" data-id="${p.id}">${icon('plus',16)}Artikel toevoegen</button></div>
       ${(p.items||[]).length?`<div class="tw"><table class="tbl"><thead><tr><th>Begrote post</th><th>Bedrag</th><th class="r">Totaal</th><th>Status</th><th>Financieringsmethode</th><th>Toelichting</th><th></th></tr></thead><tbody>${rows}</tbody>
       <tfoot><tr><td>Totaal artikelen</td><td></td><td class="r" ${B('pot.tot',p.id)}></td><td colspan="4"></td></tr></tfoot></table></div>`:'<p class="hint" style="margin:10px 0">Nog geen artikelen.</p>'}
       <div style="margin-top:12px"><button class="btn sm" data-act="delpot" data-id="${p.id}">${icon('trash-2',16)}Dit onderdeel verwijderen</button></div>
