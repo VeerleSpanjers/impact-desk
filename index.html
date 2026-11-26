@@ -985,7 +985,7 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
-  ensureExtra();ensureNorm();ensureSd();kpi26();kpi30();kpi42base();
+  ensureExtra();ensureNorm();ensureSd();kpi26();kpi30();kpi42base();kpi42oud();
   S.kpis.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
   syncPeople();syncSd();
 }
@@ -1205,6 +1205,21 @@ function kpi42base(){
     k.o={eind:30,norm:k.norm};k.og=(k.g||[]).slice();k.sg=(k.g||[]).slice();k.sn={eind:30,norm:k.norm};k.nlog=[];
   }
   S.kpi42B=1;
+}
+/* 4.2: de oude norm loopt vanaf 16-10 op naar 30 op 18-12. Alleen de oorspronkelijke norm wordt gezet;
+   de huidige waarden en de eigen bijsturingen met reden blijven staan. */
+function kpi42oud(){
+  if(S.kpi42C)return;
+  const k=S.kpis.find(x=>x.id==='4.2');
+  if(k&&k.d.includes('2026-10-27')){
+    const oud={'2026-10-27':2,'2026-11-03':6,'2026-11-17':11,'2026-11-24':16,'2026-12-01':20,'2026-12-15':25,'2026-12-18':30};
+    k.og=k.d.map((d,i)=>i&&oud[d]!==undefined?oud[d]:null);
+    if(k.og[k.og.length-1]==null)k.og[k.og.length-1]=30;
+    const norm=String((k.o&&k.o.norm)||k.norm||'').replace('Minimaal 20 aanvragen','Minimaal 30 aanvragen');
+    k.o={eind:30,norm};
+    k.nlog=(k.nlog||[]).filter(e=>!(e.wat==='Gewenst 27/10'&&String(e.van)==='30'&&!(e.reden||'').trim()));
+  }
+  S.kpi42C=1;
 }
 function sumBars(k){k.bars.forEach(b=>{if(!b.wd)return;const v=b.wd.filter(x=>x!=null);b.w=v.length?sum(v):null})}
 
@@ -2227,7 +2242,7 @@ function bkUpdate(){
   const late=d===null||d>=7;
   if(late&&UI.bkHide!==todayStr()){
     bar.hidden=false;
-    bar.innerHTML=`${icon('triangle-alert',18)}<span>${d===null?'Je hebt nog geen back-up gemaakt.':`Je laatste back-up is ${d} dagen geleden.`} Je gegevens staan alleen in deze browser en zijn weg als je de browsergegevens wist.</span><span class="grow"></span><button class="btn sm cta" data-act="export">${icon('download',16)}Back-up opslaan</button><button class="btn sm ghost" data-act="bkhide">Later</button>`;
+    bar.innerHTML=`${icon('triangle-alert',18)}<span>${d===null?'Je hebt nog geen back-up gemaakt.':`Je laatste back-up is ${d} dagen geleden.`} Je gegevens staan alleen in deze browser en zijn weg als je de browsergegevens wist. Klik rechtsboven op “Back-up opslaan”.</span><span class="grow"></span><button class="btn sm ghost" data-act="bkhide">Later</button>`;
   }else{bar.hidden=true;bar.innerHTML=''}
 }
 function render(keepScroll=true){
