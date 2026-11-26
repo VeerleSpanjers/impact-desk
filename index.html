@@ -73,7 +73,20 @@ table.mt tr.due td{background:#ffe3c9}
 table.mt tr.due td:first-child{font-weight:800;color:var(--warn)}
 .sd-doelbox{padding:14px 0 8px}
 .sd-doelbox textarea{width:100%;margin-top:4px}
-.sd-doelbox .nlog{margin-top:8px}
+.sdlog{margin-top:4px}
+.sdlog>summary{list-style:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);padding:3px 2px}
+.sdlog>summary::-webkit-details-marker{display:none}
+.sdlog>summary:hover{color:var(--blue)}
+.sdlog>summary>svg{transform:rotate(-90deg);transition:transform .15s}
+.sdlog[open]>summary>svg{transform:none}
+.sdlog>summary .badge{font-size:11px;padding:1px 8px}
+.sdlog-body{margin-top:4px;padding:10px 14px;border-radius:10px;background:#f5f7fb;font-size:13.5px}
+.sdlog-orig{margin:0;color:var(--muted)}
+.sdlog-row{display:grid;grid-template-columns:150px minmax(0,1fr) minmax(0,1.3fr) auto;gap:12px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.sdlog-diff{display:flex;flex-direction:column;gap:2px}
+.sdlog-diff s{color:var(--muted)}
+.sdlog-row textarea.need{border-color:var(--warn);background:var(--warn-soft)}
+@media(max-width:800px){.sdlog-row{grid-template-columns:1fr auto}.sdlog-row>*{grid-column:1/-1}}
 .kviz.wide{grid-template-columns:minmax(0,1fr) minmax(0,1.25fr)}
 table.mt td.xin input{width:76px}
 .aanv{display:flex;align-items:center;gap:8px}
@@ -92,7 +105,6 @@ table.mt td.cat textarea{width:100%;min-height:0}
 table.mt.bars td input.num{width:62px}
 .nlog td textarea{width:100%;min-width:220px}
 .nlog td textarea.need{border-color:var(--warn);background:var(--warn-soft)}
-.nl-base{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:13px}
 .sd-nul{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 0 12px;font-size:13.5px}
 .sd-nul label{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
 .sd-nul input{width:150px}
@@ -1065,20 +1077,14 @@ function nOrigHtml(k){
   const block=(t,eind,norm,b=k.basis)=>`<div class="nl-col"><span class="kl">${t}</span>${ev(eind,b)}<div class="nl-t">${esc(norm||'–')}</div></div>`;
   return `<div class="nl-cmp">${same&&!k.nlog.length?block('Norm (nog niet bijgestuurd)',cur,k.norm):block('Oorspronkelijke norm',k.o.eind,k.o.norm,k.o.basis||k.basis)+block('Huidige norm',cur,k.norm)}</div>`;
 }
-/* Knop om de norm zoals die nu is vast te leggen als oorspronkelijke norm */
-function nBaseBtn(k){
-  const j=a=>JSON.stringify((a||[]).map(v=>v==null?null:v));
-  const anders=k.nlog.length||(k.o&&((k.o.norm||'')!==(k.norm||'')||(!k.bars&&(k.o.eind!==(k.eind==null?null:k.eind)||j(k.og)!==j(k.g)))))||(k.bars&&k.ob&&j(k.ob)!==j(k.bars.map(b=>b.g)));
-  return anders?`<div class="nl-base"><button class="btn sm" data-act="nbase" data-id="${k.id}">${icon('check',16)}Huidige norm is de oorspronkelijke norm</button><span class="muted">Gebruik dit als je de norm nog aan het opbouwen was. Daarna begint het bijsturen vanaf deze waarden.</span></div>`:'';
-}
 function nlogHtml(k){
   const rows=k.nlog.map((e,i)=>`<tr><td class="nl-d">${inpD('kpis',k.id,'nlog.'+i+'.d',e.d)}</td><td>${esc(e.wat)}</td><td class="nl-v"><s>${esc(e.van===''?'–':e.van)}</s> → <b>${esc(e.naar===''?'–':e.naar)}</b></td><td><textarea rows="2" class="${(e.reden||'').trim()?'':'need'}" ${da('kpis',k.id,'nlog.'+i+'.reden')} placeholder="Waarom bijgestuurd?">${esc(e.reden)}</textarea></td><td><button class="btn sm" data-act="delnl" data-id="${k.id}" data-i="${i}" title="Deze regel uit het logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}Verwijderen</button></td></tr>`).join('');
-  return nOrigHtml(k)+nBaseBtn(k)+(k.nlog.length?`<table><thead><tr><th>Datum bijsturing</th><th>Wat</th><th>Was → nu</th><th>Reden voor bijsturing</th><th></th></tr></thead><tbody>${rows}</tbody></table><p class="hint" style="margin:6px 0 0">Elke aanpassing staat hier met datum en reden, zodat je later kunt teruglezen wat er is bijgestuurd en waarom. De datum kun je aanpassen.</p>`:'<p class="hint" style="margin:8px 0 0">Nog niets bijgestuurd. Pas hierboven de norm, de eindnorm of een gewenste waarde aan: de oude norm blijft hier zichtbaar staan en de aanpassing komt automatisch in dit logboek, met datum. Vul daarna de reden in.</p>');
+  return nOrigHtml(k)+(k.nlog.length?`<table><thead><tr><th>Datum bijsturing</th><th>Wat</th><th>Was → nu</th><th>Reden voor bijsturing</th><th></th></tr></thead><tbody>${rows}</tbody></table><p class="hint" style="margin:6px 0 0">Elke aanpassing staat hier met datum en reden, zodat je later kunt teruglezen wat er is bijgestuurd en waarom. De datum kun je aanpassen.</p>`:'<p class="hint" style="margin:8px 0 0">Nog niets bijgestuurd. Pas hierboven de norm, de eindnorm of een gewenste waarde aan: de oude norm blijft hier zichtbaar staan en de aanpassing komt automatisch in dit logboek, met datum. Vul daarna de reden in.</p>');
 }
 function nSumHtml(k){
   if(!k.nlog.length)return '<span class="muted" style="font-weight:400">nog niet bijgestuurd</span>';
   const m=nMissing(k);
-  return `<span class="badge warn">Norm aangepast · ${k.nlog.length}×</span>${m?`<span class="badge bad">${m} zonder reden</span>`:''}`;
+  return m?'<span class="badge bad">reden ontbreekt</span>':'';
 }
 function nlogUI(k){
   const box=document.querySelector(`[data-nlog="${k.id}"]`);if(!box)return;
@@ -1228,12 +1234,27 @@ function ensureSd(){
   if(!S.sd)S.sd={};
   Object.keys(SD).forEach(n=>{if(!S.sd[n])S.sd[n]={doel:SD[n].doel,o:SD[n].doel,sn:SD[n].doel,nlog:[]}});
 }
-function sdSumHtml(n){const l=S.sd[n].nlog;if(!l.length)return '<span class="muted" style="font-weight:400">nog niet aangepast</span>';const m=nMissing(S.sd[n]);return `<span class="badge warn">Subdoel aangepast · ${l.length}×</span>${m?`<span class="badge bad">${m} zonder reden</span>`:''}`}
+function sdSumHtml(n){const l=S.sd[n].nlog;if(!l.length)return '<span class="muted" style="font-weight:400">nog niet aangepast</span>';const m=nMissing(S.sd[n]);return m?'<span class="badge bad">reden ontbreekt</span>':''}
+/* alleen de gewijzigde stukjes tekst tonen: "30 → 20" in plaats van twee keer de hele zin */
+function wordDiff(van,naar){
+  const a=String(van||'').split(/\s+/).filter(Boolean),b=String(naar||'').split(/\s+/).filter(Boolean),n=a.length,m=b.length;
+  const L=Array.from({length:n+1},()=>new Array(m+1).fill(0));
+  for(let i=n-1;i>=0;i--)for(let j=m-1;j>=0;j--)L[i][j]=a[i]===b[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  const out=[];let i=0,j=0,x=[],y=[],vorig='';
+  const kaal=t=>t.replace(/^[(]+|[).,;:]+$/g,'');
+  const flush=()=>{if(x.length||y.length){const met=l=>l.length?kaal([vorig,...l].filter(Boolean).join(' ')):'';out.push([met(x),met(y)])}x=[];y=[]};
+  while(i<n||j<m){
+    if(i<n&&j<m&&a[i]===b[j]){flush();vorig=a[i];i++;j++}
+    else if(j>=m||(i<n&&L[i+1][j]>=L[i][j+1]))x.push(a[i++]);
+    else y.push(b[j++]);
+  }
+  flush();return out;
+}
 function sdLogHtml(n){
   const x=S.sd[n];
-  if(!x.nlog.length)return '<p class="hint" style="margin:8px 0 0">Pas hierboven de tekst van het subdoel aan. De oude tekst blijft hier staan, met datum. Vul daarna de reden in.</p>';
-  const rows=x.nlog.map((e,i)=>`<tr><td class="nl-d">${inpD('sd.'+n,null,'nlog.'+i+'.d',e.d)}</td><td class="nl-v"><s>${esc(e.van||'–')}</s></td><td class="nl-v"><b>${esc(e.naar||'–')}</b></td><td><textarea rows="2" class="${(e.reden||'').trim()?'':'need'}" ${da('sd.'+n,null,'nlog.'+i+'.reden')} placeholder="Waarom aangepast?">${esc(e.reden)}</textarea></td><td><button class="btn sm" data-act="delsdl" data-id="${n}" data-i="${i}" title="Deze regel uit het logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}</button></td></tr>`).join('');
-  return `<div class="nl-cmp"><div class="nl-col"><span class="kl">Oorspronkelijk subdoel</span><div class="nl-t">${esc(x.o)}</div></div><div class="nl-col"><span class="kl">Huidig subdoel</span><div class="nl-t">${esc(x.doel||'–')}</div></div></div><table><thead><tr><th>Datum</th><th>Was</th><th>Nu</th><th>Reden voor aanpassing</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+  if(!x.nlog.length)return '<p class="sdlog-orig">Nog niet aangepast. Wijzig de tekst hierboven; de wijziging komt dan hier te staan met datum en reden.</p>';
+  const rows=x.nlog.map((e,i)=>`<div class="sdlog-row">${inpD('sd.'+n,null,'nlog.'+i+'.d',e.d)}<div class="sdlog-diff">${wordDiff(e.van,e.naar).map(([v,w])=>`<span>${v?`<s>${esc(v)}</s>`:''}${v&&w?' → ':''}${w?`<b>${esc(w)}</b>`:''}</span>`).join('')}</div><textarea rows="1" class="${(e.reden||'').trim()?'':'need'}" ${da('sd.'+n,null,'nlog.'+i+'.reden')} placeholder="Waarom aangepast?">${esc(e.reden)}</textarea><button class="icon-btn" data-act="delsdl" data-id="${n}" data-i="${i}" title="Deze regel uit het logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}</button></div>`).join('');
+  return `<p class="sdlog-orig"><b>Oorspronkelijk:</b> ${esc(x.o)}</p>${rows}`;
 }
 function sdUI(n){const box=document.querySelector(`[data-sdlog="${n}"]`);if(!box)return;box.innerHTML=sdLogHtml(n);const dt=box.closest('details');if(dt&&S.sd[n].nlog.length)dt.open=true;sdSum(n)}
 function sdSum(n){const c=document.querySelector(`[data-sdsum="${n}"]`);if(c)c.innerHTML=sdSumHtml(n)}
@@ -1426,7 +1447,7 @@ BIND['kpi.aanv']=a=>{const [id,i]=a.split('|'),v=aanvOp(KPI(id).d[+i]);if(v==nul
 BIND['kpi.bartot']=a=>{const [id,i]=a.split('|'),v=KPI(id).bars[+i].w;return v==null?'–':nf(v,0)};
 BIND['kpi.barpct']=a=>{const [id,i]=a.split('|'),k=KPI(id);const b=k.bars[+i],base=k.bars[0].w;if(+i===0||b.w==null||!base)return '';return String(Math.round(b.w/base*1000)/10).replace('.',',')+'%'};
 BIND['kpi.gwas']=a=>{const [id,i]=a.split('|');const k=KPI(id);if(!k||!k.og)return '';const o=k.og[+i]==null?null:k.og[+i],c=k.g[+i]==null?null:k.g[+i];return o!==c&&(o!=null)?`<span class="was">was ${nFmt(k,o)}</span>`:''};
-BIND['kpi.nb']=id=>{const k=KPI(id);if(!k||!k.nlog||!k.nlog.length)return '';const l=k.nlog[k.nlog.length-1];const parts=[];if(k.o.eind!==(k.eind==null?null:k.eind))parts.push('Oorspronkelijke eindnorm: '+nFmt(k,k.o.eind)+(k.o.basis?' van '+k.o.basis:''));return `<span class="badge warn">Norm aangepast · ${k.nlog.length}×</span><small>${parts.length?parts.join(' · ')+'<br>':''}Laatst: ${fmtD(l.d)}</small>`};
+BIND['kpi.nb']=id=>{const k=KPI(id);if(!k||!k.nlog||!k.nlog.length)return '';const l=k.nlog[k.nlog.length-1];const parts=[];if(k.o.eind!==(k.eind==null?null:k.eind))parts.push('Oorspronkelijke eindnorm: '+nFmt(k,k.o.eind)+(k.o.basis?' van '+k.o.basis:''));return `<small>${parts.length?parts.join(' · ')+'<br>':''}Bijgestuurd: ${fmtD(l.d)}</small>`};
 BIND['kpi.bwas']=a=>{const [id,i]=a.split('|');const k=KPI(id);if(!k||!k.ob||!k.bars)return '';const o=k.ob[+i]==null?null:k.ob[+i],b=k.bars[+i],c=b&&b.g!=null?b.g:null;return o!=null&&o!==c?`<span class="was">was ${nFmt(k,o)}</span>`:''};
 BIND['kpi.gph']=a=>{const [id,i]=a.split('|');const k=KPI(id),G=gEffA(k);return G.auto[+i]&&G.v[+i]!=null?String(Math.round(G.v[+i]*10)/10):'–'};
 
@@ -1653,7 +1674,7 @@ function viewKpi(){
     <button class="sd-head" ${B('sd.due',n,'data-t="cls" data-base="sd-head"')} data-act="tog" data-id="sd${n}" aria-expanded="${open}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Subdoel ${n}</b> · ${SD[n].naam}</span><span ${B('sd.badges',n)}></span><span class="sd-mini"><span class="bar sm"><i ${B('sd.w',n,'data-t="w"')}></i></span><span ${B('sd.pct',n)}></span></span></button>
     <div class="sd-body">
       <div class="sd-doelbox"><span class="kl">Subdoel ${n}</span><textarea rows="2" ${da('sd.'+n,null,'doel')} placeholder="Formuleer hier het subdoel">${esc(S.sd[n].doel)}</textarea>
-      <details class="nlog" ${S.sd[n].nlog.length?'open':''}><summary>Logboek subdoel <span data-sdsum="${n}">${sdSumHtml(n)}</span></summary><div data-sdlog="${n}">${sdLogHtml(n)}</div></details></div>
+      <details class="sdlog"><summary>${icon('chevron-down',16)}Logboek <span data-sdsum="${n}">${sdSumHtml(n)}</span></summary><div class="sdlog-body" data-sdlog="${n}">${sdLogHtml(n)}</div></details></div>
       <div class="sd-nul"><label>Nulmeting van dit subdoel <input type="date" data-sdnul="${n}" value="${esc((sdKpis(n)[0]||{d:['']}).d[0])}"></label><span class="muted">Zet de nulmeting-datum van alle KPI’s in dit subdoel in één keer. Per KPI kun je alle meetdata ook apart wijzigen in de tabel Meetmoment.</span></div>
       <div class="kt kt-head"><div>Titel KPI</div><div>Type</div><div>Norm</div><div>Bijsturingssignaal</div><div>Nulmeting</div><div>Voortgangscheck</div><div>Eindmeting</div></div>
       ${sdKpis(n).map(k=>kpiHtml(k)).join('')}
@@ -2449,16 +2470,6 @@ const ACT={
   addpr(a){const k=S.kpis.find(x=>x.id===a.dataset.id);const last=k.d.slice(1).filter(Boolean).sort().pop();k.d.push(last?fromDay(toDay(last)+1):todayStr());['g','w','og','sg'].forEach(p=>{if(k[p])k[p].push(null)});k.bars.forEach(b=>{if(b.wd)b.wd.push(null)});sortMoments(k);save();render()},
   delpr(a){const k=S.kpis.find(x=>x.id===a.dataset.id),i=+a.dataset.i;if(k.d.length>2&&confirm('Deze datum verwijderen, inclusief de ingevulde aantallen?')){['d','g','w','og','sg'].forEach(p=>{if(k[p])k[p].splice(i,1)});k.bars.forEach(b=>{if(b.wd)b.wd.splice(i-1,1)});sumBars(k);save();render()}},
   delsdl(a){const n=a.dataset.id;if(confirm('Deze regel uit het logboek verwijderen? Het subdoel zelf blijft zoals het nu is.')){S.sd[n].nlog.splice(+a.dataset.i,1);save();sdUI(n);toast('Regel uit het logboek verwijderd')}},
-  nbase(a){
-    const k=S.kpis.find(x=>x.id===a.dataset.id);if(!k)return;
-    const n=k.nlog.length;
-    if(!confirm(`De norm van KPI ${k.id} zoals die nu is (eindnorm, normtekst en alle gewenste waarden) wordt de oorspronkelijke norm.${n?` De ${n===1?'regel':n+' regels'} in dit logboek ${n===1?'wordt':'worden'} gewist.`:''} Doorgaan?`))return;
-    k.o={eind:k.eind==null?null:k.eind,norm:k.norm||''};k.og=(k.g||[]).slice();k.sg=(k.g||[]).slice();k.sn={eind:k.o.eind,norm:k.o.norm};
-    if(k.bars){k.ob=k.bars.map(b=>b.g==null?null:b.g);k.sb=k.ob.slice()}
-    k.nlog=[];save();render();
-    const box=document.querySelector(`[data-nlog="${k.id}"]`);if(box){const dt=box.closest('details');if(dt)dt.open=true}
-    toast('Vastgelegd als oorspronkelijke norm');
-  },
   delnl(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k&&confirm('Deze regel uit het logboek verwijderen? De norm zelf blijft zoals hij nu is.')){k.nlog.splice(+a.dataset.i,1);save();nlogUI(k);applyBindings();toast('Regel uit het logboek verwijderd')}},
   addbes(){S.bes.push({id:uid(),datum:todayStr(),type:'Projectkeuze',besluit:'',onderbouwing:'',door:'',betrokkenen:'',opvolging:'',status:'Open'});save();render();const el=$$('textarea[data-c="bes"][data-f="besluit"]');el.length&&el[el.length-1].focus()},
   delbes(a){if(confirm('Dit besluit uit het besluitenlog verwijderen?')){S.bes=S.bes.filter(x=>x.id!==a.dataset.id);save();render()}},
