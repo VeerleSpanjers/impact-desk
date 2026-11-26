@@ -985,7 +985,7 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
-  ensureExtra();ensureNorm();ensureSd();kpi26();kpi30();
+  ensureExtra();ensureNorm();ensureSd();kpi26();kpi30();kpi42base();
   S.kpis.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
   syncPeople();syncSd();
 }
@@ -1194,6 +1194,17 @@ function kpi30(){
     x.doel=fix(x.doel);x.sn=fix(x.sn);x.nlog.forEach(e=>{e.van=fix(e.van);e.naar=fix(e.naar)});
   });
   S.kpi30V=1;
+}
+/* 4.2: de eigen opbouw (eindigend op 30) is de oorspronkelijke norm.
+   Eenmalig, en alleen als er in dit logboek nog geen bijsturing met een reden staat. */
+function kpi42base(){
+  if(S.kpi42B)return;
+  const k=S.kpis.find(x=>x.id==='4.2');
+  if(k&&!(k.nlog||[]).some(e=>(e.reden||'').trim())){
+    k.eind=30;k.norm=String(k.norm||'').replace('Minimaal 20 aanvragen','Minimaal 30 aanvragen');
+    k.o={eind:30,norm:k.norm};k.og=(k.g||[]).slice();k.sg=(k.g||[]).slice();k.sn={eind:30,norm:k.norm};k.nlog=[];
+  }
+  S.kpi42B=1;
 }
 function sumBars(k){k.bars.forEach(b=>{if(!b.wd)return;const v=b.wd.filter(x=>x!=null);b.w=v.length?sum(v):null})}
 
