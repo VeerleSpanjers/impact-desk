@@ -71,6 +71,27 @@ button:focus-visible,a:focus-visible{outline:2px solid var(--blue);outline-offse
 .kpi.due::before{content:"";position:absolute;left:-18px;top:0;bottom:0;width:4px;background:var(--orange)}
 table.mt tr.due td{background:#ffe3c9}
 table.mt tr.due td:first-child{font-weight:800;color:var(--warn)}
+.sd-doelbox{padding:14px 0 8px}
+.sd-doelbox textarea{width:100%;margin-top:4px}
+.sd-doelbox .nlog{margin-top:8px}
+.kviz.wide{grid-template-columns:minmax(0,1fr) minmax(0,1.25fr)}
+table.mt td.xin input{width:76px}
+.aanv{display:flex;align-items:center;gap:8px}
+.aanv b{min-width:22px;text-align:right}
+.aanv .bar{width:46px;display:block}
+table.mt td.tot{font-weight:800;text-align:right}
+.prd{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.prd>span{display:flex;align-items:center;gap:4px}
+.prd input{width:150px}
+table.mt th.pc,table.mt td.pc{background:none;border:0;border-radius:0;box-shadow:none}
+table.mt td.pc{border-top:1px solid var(--line)}
+.eindrow{flex-wrap:wrap}
+.eindrow input{flex:none}
+table.mt td.cat{min-width:170px;width:40%}
+table.mt td.cat textarea{width:100%;min-height:0}
+table.mt.bars td input.num{width:62px}
+.nlog td textarea{width:100%;min-width:220px}
+.nlog td textarea.need{border-color:var(--warn);background:var(--warn-soft)}
 .sd-nul{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 0 12px;font-size:13.5px}
 .sd-nul label{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
 .sd-nul input{width:150px}
@@ -521,6 +542,10 @@ dialog h3{font-size:20px;font-weight:800;margin-bottom:14px}
 .vgrow input[type=number]{width:80px}
 .dfoot{display:flex;gap:8px;margin-top:18px;align-items:center}
 .dfoot .sp{flex:1}
+.bkbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:14px 0 0;padding:10px 14px;border-radius:12px;background:var(--warn-soft);color:var(--warn);font-weight:600;font-size:14px}
+.bkbar[hidden]{display:none}
+.bkbar .grow{flex:1}
+.bk-state{font-size:12.5px;color:var(--muted);margin-right:6px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 18px;border-radius:10px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:100}
 .toast.show{opacity:1;transform:translateX(-50%)}
 footer{padding:26px 0 40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:20px}
@@ -537,7 +562,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-con
   .kc .kl{display:block}
   .kc-title{grid-column:1/-1}
   .kc.sig{grid-column:1/-1}
-  .kviz{grid-template-columns:1fr}
+  .kviz,.kviz.wide{grid-template-columns:1fr}
   .scen{grid-template-columns:1fr}
   .rdgrid{grid-template-columns:1fr 1fr}
   .pgrid{grid-template-columns:minmax(0,1fr)}
@@ -573,6 +598,7 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-con
   </div>
   <div class="top-actions">
     <span class="save-state" id="saveState" role="status"></span>
+    <span class="bk-state" id="bkState"></span>
     <button class="btn sm" data-act="export" title="Sla een back-up van al je invoer op als bestand"><span data-i="download"></span>Back-up opslaan</button>
     <button class="btn sm" data-act="import"><span data-i="upload"></span>Back-up laden</button>
     <input type="file" id="importFile" accept="application/json,.json" class="sr" tabindex="-1">
@@ -580,12 +606,13 @@ footer .wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:center;justify-con
 </div></header>
 
 <div class="wrap">
+  <div class="bkbar" id="bkbar" hidden></div>
   <nav class="tiles" id="tiles" role="tablist" aria-label="Onderdelen"></nav>
   <main id="main"></main>
 </div>
 
 <footer><div class="wrap">
-  <span>Alles wat je invult wordt automatisch opgeslagen in deze browser. Maak regelmatig een back-up.</span>
+  <span>Alles wat je invult wordt automatisch opgeslagen in deze browser, niet op een server. Maak regelmatig een back-up.</span>
   <button class="btn sm ghost" data-act="reset">Startgegevens herstellen</button>
 </div></footer>
 
@@ -957,7 +984,7 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
-  ensureExtra();ensureNorm();
+  ensureExtra();ensureNorm();ensureSd();kpi26();
   S.kpis.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
   syncPeople();syncSd();
 }
@@ -1031,14 +1058,14 @@ function normTrack(k){
 }
 const nMissing=k=>k.nlog.filter(e=>!(e.reden||'').trim()).length;
 function nOrigHtml(k){
-  const ev=(x)=>!k.bars&&x!=null?`<div>Eindnorm: <b>${nFmt(k,x)}</b>${k.basis?` van ${k.basis}`:''}</div>`:'';
+  const ev=(x,b)=>!k.bars&&x!=null?`<div>Eindnorm: <b>${nFmt(k,x)}</b>${b?` van ${b}`:''}</div>`:'';
   const cur=k.eind==null?null:k.eind;
   const same=k.o.eind===cur&&k.o.norm===(k.norm||'');
-  const block=(t,eind,norm)=>`<div class="nl-col"><span class="kl">${t}</span>${ev(eind)}<div class="nl-t">${esc(norm||'–')}</div></div>`;
-  return `<div class="nl-cmp">${same&&!k.nlog.length?block('Norm (nog niet bijgestuurd)',cur,k.norm):block('Oorspronkelijke norm',k.o.eind,k.o.norm)+block('Huidige norm',cur,k.norm)}</div>`;
+  const block=(t,eind,norm,b=k.basis)=>`<div class="nl-col"><span class="kl">${t}</span>${ev(eind,b)}<div class="nl-t">${esc(norm||'–')}</div></div>`;
+  return `<div class="nl-cmp">${same&&!k.nlog.length?block('Norm (nog niet bijgestuurd)',cur,k.norm):block('Oorspronkelijke norm',k.o.eind,k.o.norm,k.o.basis||k.basis)+block('Huidige norm',cur,k.norm)}</div>`;
 }
 function nlogHtml(k){
-  const rows=k.nlog.map((e,i)=>`<tr><td class="nl-d">${inpD('kpis',k.id,'nlog.'+i+'.d',e.d)}</td><td>${esc(e.wat)}</td><td class="nl-v"><s>${esc(e.van===''?'–':e.van)}</s> → <b>${esc(e.naar===''?'–':e.naar)}</b></td><td><input class="${(e.reden||'').trim()?'':'need'}" ${da('kpis',k.id,'nlog.'+i+'.reden')} value="${esc(e.reden)}" placeholder="Waarom bijgestuurd?"></td><td><button class="btn sm" data-act="delnl" data-id="${k.id}" data-i="${i}" title="Deze regel uit het logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}Verwijderen</button></td></tr>`).join('');
+  const rows=k.nlog.map((e,i)=>`<tr><td class="nl-d">${inpD('kpis',k.id,'nlog.'+i+'.d',e.d)}</td><td>${esc(e.wat)}</td><td class="nl-v"><s>${esc(e.van===''?'–':e.van)}</s> → <b>${esc(e.naar===''?'–':e.naar)}</b></td><td><textarea rows="2" class="${(e.reden||'').trim()?'':'need'}" ${da('kpis',k.id,'nlog.'+i+'.reden')} placeholder="Waarom bijgestuurd?">${esc(e.reden)}</textarea></td><td><button class="btn sm" data-act="delnl" data-id="${k.id}" data-i="${i}" title="Deze regel uit het logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}Verwijderen</button></td></tr>`).join('');
   return nOrigHtml(k)+(k.nlog.length?`<table><thead><tr><th>Datum bijsturing</th><th>Wat</th><th>Was → nu</th><th>Reden voor bijsturing</th><th></th></tr></thead><tbody>${rows}</tbody></table><p class="hint" style="margin:6px 0 0">Elke aanpassing staat hier met datum en reden, zodat je later kunt teruglezen wat er is bijgestuurd en waarom. De datum kun je aanpassen.</p>`:'<p class="hint" style="margin:8px 0 0">Nog niets bijgestuurd. Pas hierboven de norm, de eindnorm of een gewenste waarde aan: de oude norm blijft hier zichtbaar staan en de aanpassing komt automatisch in dit logboek, met datum. Vul daarna de reden in.</p>');
 }
 function nSumHtml(k){
@@ -1055,8 +1082,113 @@ function nlogUI(k){
   nSum(k);
 }
 function nSum(k){const c=document.querySelector(`[data-nlogn="${k.id}"]`);if(c)c.innerHTML=nSumHtml(k)}
+/* KPI-opzet bijgewerkt op 25-11-2026 */
+const TWEEW=['2026-10-06','2026-11-03','2026-11-17','2026-12-01','2026-12-15','2026-12-18'];   // om de week op dinsdag vanaf 22-9 (niet in de herfstvakantie), plus de einddatum
+function logE(k,d,wat,van,naar,reden,txt){k.nlog.push({id:uid(),d,wat,van,naar,txt:!!txt,reden:reden||''})}
+function setNormTxt(k,nw,d,reden){const old=k.norm||'';if(nw===old)return;logE(k,d,'Normtekst',old,nw,reden,true);k.norm=nw;k.sn.norm=nw}
+function toTweew(k){
+  k.tweew=true;
+  const old=k.d.map((d,i)=>({d,g:k.g[i],w:k.w[i],og:k.og?k.og[i]:null}));
+  const rest=old.slice(1).filter(r=>r.d).sort((a,b)=>a.d.localeCompare(b.d));
+  const at=(d,key)=>{let v=null;rest.forEach(r=>{if(r.d<=d)v=r[key]});return v};
+  const nul=old[0];if(nul.w==null)nul.d='2026-09-22';   // een al ingevulde nulmeting houdt zijn eigen datum
+  const rows=TWEEW.filter(d=>d>nul.d).map(d=>rest.find(r=>r.d===d)||{d,g:at(d,'g'),w:null,og:at(d,'og')});
+  rest.forEach(r=>{if(r.w!=null&&!rows.some(x=>x.d===r.d))rows.push(r)});   // al ingevulde metingen blijven staan
+  rows.sort((a,b)=>a.d.localeCompare(b.d));
+  const all=[nul,...rows],nz=v=>v==null?null:v;
+  k.d=all.map(r=>r.d);k.g=all.map(r=>nz(r.g));k.w=all.map(r=>nz(r.w));k.og=all.map(r=>nz(r.og));k.sg=k.g.slice();
+}
+function kpi26(){
+  if(S.kpiV26)return;
+  const K=id=>S.kpis.find(x=>x.id===id);
+  ['1.1','2.1','4.1'].forEach(id=>{const k=K(id);if(k&&!k.bars)toTweew(k)});
+  ['1.1','4.1'].forEach(id=>{const k=K(id);if(k)k.kol='aanv'});
+  if(!K('4.2')){
+    const t=n=>`Minimaal ${n} aanvragen sinds de nieuwe werkwijze (vanaf 16-10), uiterlijk 18 december 2026.`;
+    const d=['2026-10-16',...TWEEW.filter(x=>x>'2026-10-16')],last=d.length-1,g=d.map((_,i)=>i===last?20:null);
+    S.kpis.push({id:'4.2',sd:4,titel:'Aantal aanvragen sinds de nieuwe werkwijze (vanaf 16-10)',type:'Proces',unit:'aanvragen',eind:20,norm:t(20),signaal:'',
+      meting:'Om de week op dinsdag het totaal aantal aanvragen sinds 16-10 tellen (optellend).',d,g,w:d.map((_,i)=>i?null:0),nulNvt:true,eindmeting:null,eindD:'18 dec',tweew:true,
+      o:{eind:30,norm:t(30)},og:d.map((_,i)=>i===last?30:null),sn:{eind:20,norm:t(20)},sg:g.slice(),nlog:[{id:uid(),d:'2026-11-12',wat:'Eindnorm',van:'30',naar:'20',reden:''}]});
+  }
+  const k41=K('4.1');
+  if(k41&&(k41.norm||'').includes('±30'))setNormTxt(k41,k41.norm.replace('±30','±20'),'2026-11-12','');
+  const why='4 uit 5 geeft beoordelaars een duidelijker middelpunt en minder keuzeopties.';
+  ['1.2','2.2'].forEach(id=>{const k=K(id);if(!k||k.bars)return;
+    const half=v=>v!=null&&v>5?v/2:v;
+    if(k.eind!=null&&k.eind>5){logE(k,'2026-11-25','Eindnorm',nFmt(k,k.eind),nFmt(k,half(k.eind)),why);k.eind=half(k.eind);k.sn.eind=k.eind}
+    k.g=k.g.map(half);k.og=k.g.slice();k.sg=k.g.slice();k.o.noLine=true;
+    setNormTxt(k,(k.norm||'').replace('≥ 8,0','≥ 4,0 uit 5').replace('≥ 8 (uit 10)','≥ 4 (uit 5)').replace('ondergrens 6','ondergrens 3'),'2026-11-25',why);
+    k.signaal=(k.signaal||'').replace('onder de 6','onder de 3');
+  });
+  const k12=K('1.2');if(k12)k12.kol='interviews';
+  const k31=K('3.1');
+  if(k31&&k31.basis===30){
+    const fx=v=>v==null?null:Math.round(v*100/30),r='De aantallen van de experience en de Raad van Advies komen erbij.';
+    logE(k31,'2026-11-25','Groep en eindnorm',`${nFmt(k31,k31.eind)} van 30`,`${nFmt(k31,fx(k31.eind))} van 100`,r);
+    k31.o.basis=30;k31.o.noLine=true;
+    k31.eind=fx(k31.eind);k31.sn.eind=k31.eind;k31.g=k31.g.map(fx);k31.og=k31.g.slice();k31.sg=k31.g.slice();k31.basis=100;
+    k31.titel='Respons (aantal van de 100 contacten die het echt weten)';
+    setNormTxt(k31,'Doel: minimaal 90% van de 100 contacten (90) weet echt waar en hoe ze een aanvraag doen. Het doel is hier aan te passen.','2026-11-25',r);
+    k31.signaal=(k31.signaal||'').replace('18 van de 30','60 van de 100');
+    k31.meting=((k31.meting||'')+' Noteer per meetmoment ook hoeveel mensen het hebben gezien of gehoord (o.a. via de experience en de Raad van Advies).').trim();
+  }
+  if(k31)k31.kol='gezien';
+  const k32=K('3.2');
+  if(k32&&k32.bars){
+    const old=k32.bars.map(b=>b.w);
+    k32.d=[k32.d[0],'2026-12-01','2026-12-03'];['g','w','og','sg'].forEach(p=>k32[p]=[null,null,null]);
+    k32.bars.forEach((b,i)=>b.wd=[old[i],null]);
+    if(!k32.bars.some(b=>/hoe ze een aanvraag/i.test(b.l))){
+      k32.bars.push({l:'Weet nu hoe ze een aanvraag moeten doen (achteraf gevraagd)',g:null,w:null,wd:[null,null]});
+      if(k32.ob)k32.ob.push(null);if(k32.sb)k32.sb.push(null);
+    }
+    const dt=t=>(t||'').replace('(datum volgt)','(1 en 3 december)');
+    k32.signaal=dt(k32.signaal);k32.norm=dt(k32.norm);if(k32.o)k32.o.norm=dt(k32.o.norm);if(k32.sn)k32.sn.norm=dt(k32.sn.norm);
+  }
+  const pr=(S.meet||[]).find(m=>!m.datum&&/PR-stunt/.test(m.titel||''));
+  if(pr){pr.datum='2026-12-01';pr.waarom=(pr.waarom||'').replace(' (datum volgt)','');S.meet.push(Object.assign({},pr,{id:uid(),datum:'2026-12-03'}))}
+  (S.meet||[]).forEach(m=>{m.waarom=(m.waarom||'').replace('≥ 7,0','≥ 3,5').replace('≥ 8,0','≥ 4,0')});
+  const k11=K('1.1');
+  if(k11&&(k11.norm||'').includes('±25 testafnemers')){
+    const was=k11.norm.replace('±25 testafnemers','±30 afnemers');
+    k11.norm=was;k11.sn.norm=was;if(k11.o)k11.o.norm=was;
+    setNormTxt(k11,was.replace('±30','±20'),'2026-11-12','');
+    k11.signaal=(k11.signaal||'').replace('vóór de volgende afnemer test','vóór de volgende afnemer het formulier invult');
+  }
+  const sdSet=(n,reps,d,reden)=>{const x=S.sd[n];let nw=x.doel;reps.forEach(([a,b])=>{nw=nw.replace(a,b)});if(nw===x.doel)return;x.nlog.push({id:uid(),d,van:x.doel,naar:nw,reden});x.doel=x.sn=nw};
+  const s1=S.sd[1],oud='25 afnemers die deelnemen aan de test';
+  if(s1.doel.includes(oud)){['o','doel','sn'].forEach(p=>{s1[p]=s1[p].replace(oud,'30 afnemers')})}
+  sdSet(1,[['30 afnemers','20 afnemers']],'2026-11-12','');
+  sdSet(1,[['een 8 (cijfer uit 10)','een 4 (cijfer uit 5)'],['ondergrens 6','ondergrens 3']],'2026-11-25',why);
+  sdSet(2,[['met 8 uit 10','met 4 uit 5']],'2026-11-25',why);
+  sdSet(3,[['90% (27) van de 30 warme contacten onder de bestaande afnemers','90% (90) van de 100 contacten']],'2026-11-25','De aantallen van de experience en de Raad van Advies komen erbij.');
+  sdSet(4,[['geschatte 30 aanvragen','geschatte 20 aanvragen']],'2026-11-12','');
+  S.kpiV26=1;
+}
+function sumBars(k){k.bars.forEach(b=>{if(!b.wd)return;const v=b.wd.filter(x=>x!=null);b.w=v.length?sum(v):null})}
+
+/* Subdoelen aanpasbaar, met logboek */
+function ensureSd(){
+  if(!S.sd)S.sd={};
+  Object.keys(SD).forEach(n=>{if(!S.sd[n])S.sd[n]={doel:SD[n].doel,o:SD[n].doel,sn:SD[n].doel,nlog:[]}});
+}
+function sdSumHtml(n){const l=S.sd[n].nlog;if(!l.length)return '<span class="muted" style="font-weight:400">nog niet aangepast</span>';const m=nMissing(S.sd[n]);return `<span class="badge warn">Subdoel aangepast · ${l.length}×</span>${m?`<span class="badge bad">${m} zonder reden</span>`:''}`}
+function sdLogHtml(n){
+  const x=S.sd[n];
+  if(!x.nlog.length)return '<p class="hint" style="margin:8px 0 0">Pas hierboven de tekst van het subdoel aan. De oude tekst blijft hier staan, met datum. Vul daarna de reden in.</p>';
+  const rows=x.nlog.map((e,i)=>`<tr><td class="nl-d">${inpD('sd.'+n,null,'nlog.'+i+'.d',e.d)}</td><td class="nl-v"><s>${esc(e.van||'–')}</s></td><td class="nl-v"><b>${esc(e.naar||'–')}</b></td><td><textarea rows="2" class="${(e.reden||'').trim()?'':'need'}" ${da('sd.'+n,null,'nlog.'+i+'.reden')} placeholder="Waarom aangepast?">${esc(e.reden)}</textarea></td><td><button class="btn sm" data-act="delsdl" data-id="${n}" data-i="${i}" title="Deze regel uit het logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}</button></td></tr>`).join('');
+  return `<div class="nl-cmp"><div class="nl-col"><span class="kl">Oorspronkelijk subdoel</span><div class="nl-t">${esc(x.o)}</div></div><div class="nl-col"><span class="kl">Huidig subdoel</span><div class="nl-t">${esc(x.doel||'–')}</div></div></div><table><thead><tr><th>Datum</th><th>Was</th><th>Nu</th><th>Reden voor aanpassing</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+function sdUI(n){const box=document.querySelector(`[data-sdlog="${n}"]`);if(!box)return;box.innerHTML=sdLogHtml(n);const dt=box.closest('details');if(dt&&S.sd[n].nlog.length)dt.open=true;sdSum(n)}
+function sdSum(n){const c=document.querySelector(`[data-sdsum="${n}"]`);if(c)c.innerHTML=sdSumHtml(n)}
+function sdTrack(n){
+  const x=S.sd[n],t=todayStr(),nw=x.doel||'';if(nw===x.sn)return;
+  const e=x.nlog.find(e=>e.d===t);
+  if(e){e.naar=nw;if(e.van===e.naar)x.nlog.splice(x.nlog.indexOf(e),1)}else x.nlog.push({id:uid(),d:t,van:x.sn,naar:nw,reden:''});
+  x.sn=nw;save();sdUI(n);
+}
 function loadState(){
-  try{const raw=localStorage.getItem(STORE);if(raw){const p=JSON.parse(raw);if(p&&p.v===1)S=p}}catch(e){}
+  try{const raw=localStorage.getItem(STORE);if(raw){const p=JSON.parse(raw);if(p&&p.v===1){S=p;if(!p.kpiV26)try{localStorage.setItem(STORE+'.voor-kpi26',raw)}catch(e){}}}}catch(e){}
   if(!S)S=defaults();
   migrate();
   try{UI=JSON.parse(localStorage.getItem(UISTORE))}catch(e){}
@@ -1075,12 +1207,14 @@ function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');cl
 const lbl=(k,i)=>{if(i===0)return 'Nulm.';const d=k.d[i];return d?(+d.slice(8,10))+'/'+(+d.slice(5,7)):'?'};
 const inHerfst=d=>!!d&&d>='2026-10-17'&&d<='2026-10-25';
 function sortMoments(k){
-  const rows=k.d.map((d,i)=>({d,g:k.g[i],w:k.w[i],og:k.og?k.og[i]:null,sg:k.sg?k.sg[i]:null}));
+  const rows=k.d.map((d,i)=>({d,g:k.g[i],w:k.w[i],og:k.og?k.og[i]:null,sg:k.sg?k.sg[i]:null,x:k.x?k.x[i]:null,wd:k.bars&&i>0?k.bars.map(b=>b.wd?b.wd[i-1]:null):null}));
   const rest=rows.slice(1).sort((a,b)=>(a.d||'9999').localeCompare(b.d||'9999'));
-  const all=[rows[0],...rest];
+  const all=[rows[0],...rest],nz=v=>v==null?null:v;
   k.d=all.map(r=>r.d);k.g=all.map(r=>r.g);k.w=all.map(r=>r.w);
-  if(k.og)k.og=all.map(r=>r.og==null?null:r.og);
-  if(k.sg)k.sg=all.map(r=>r.sg==null?null:r.sg);
+  if(k.og)k.og=all.map(r=>nz(r.og));
+  if(k.sg)k.sg=all.map(r=>nz(r.sg));
+  if(k.x)k.x=all.map(r=>nz(r.x));
+  if(k.bars)k.bars.forEach((b,j)=>{if(b.wd)b.wd=all.slice(1).map(r=>nz(r.wd[j]))});
 }
 /* Het meetmoment waar je nu zit: het laatste moment dat geweest is (de nulmeting telt niet mee).
    Is er nog geen echt meetmoment geweest, dan het eerstvolgende. */
@@ -1195,7 +1329,7 @@ BIND['sd.badges']=n=>{const c={ok:0,warn:0,bad:0};sdKpis(+n).forEach(k=>{const s
 const wkNow=()=>{const cw=Math.max(1,weekOf(todayStr()));return {cw,ws:weekStart(cw),we:fromDay(cw*7-1)}};
 const dueIdx=k=>{
   const {ws,we}=wkNow();
-  if(k.bars){const d=k.d[1];return d&&d>=ws&&d<=we&&!k.bars.some(b=>b.w!=null)?[1]:[]}
+  if(k.bars)return k.d.map((d,i)=>i).filter(i=>{const d=k.d[i];return i>0&&d&&d>=ws&&d<=we&&!k.bars.some(b=>b.wd&&b.wd[i-1]!=null)});
   return k.d.map((d,i)=>i).filter(i=>{const d=k.d[i];if(!d||d<ws||d>we)return false;if(i===0&&k.nulNvt)return false;return k.w[i]==null});
 };
 const kpiDue=k=>dueIdx(k).length>0;
@@ -1230,9 +1364,13 @@ BIND['kpi.chkstat']=id=>{const k=KPI(id),i=curIdx(k),G=gEffA(k),g=(i===0&&G.auto
 BIND['kpi.endstat']=id=>{const k=KPI(id);return `<small>Meting ${k.eindD}${k.eind!=null?` · norm ${nf(k.eind,k.eind%1?1:0)}${k.unit==='%'?'%':''}${k.basis?' ('+pctOf(k,k.eind)+')':''}`:''}</small>`+badge(endStat(k),k.eindmeting==null?'Nog niet gemeten':k.eind==null?'Gemeten':k.eindmeting>=k.eind?'Norm gehaald':'Onder de norm')};
 BIND['kpi.mstat']=a=>{const [id,i]=a.split('|');return badge(kStatAt(KPI(id),+i)).replace('class="badge','class="badge plain').replace(/>(Niet gemeten)</,'>–<')};
 BIND['kpi.chart']=id=>KPI(id).bars?barSvg(KPI(id)):chartSvg(KPI(id));
+/* aantallen uit KPI 4.2, op dezelfde datum */
+const aanvOp=d=>{const k=KPI('4.2');if(!k||!d)return null;const i=k.d.indexOf(d);return i<0?null:k.w[i]};
+BIND['kpi.aanv']=a=>{const [id,i]=a.split('|'),v=aanvOp(KPI(id).d[+i]);if(v==null)return '<span class="muted">–</span>';const z=KPI('4.2').eind;return `<span class="aanv"><b>${nf(v,0)}</b><span class="bar sm"><i style="width:${z?Math.min(100,Math.round(v/z*100)):0}%"></i></span></span>`};
+BIND['kpi.bartot']=a=>{const [id,i]=a.split('|'),v=KPI(id).bars[+i].w;return v==null?'–':nf(v,0)};
 BIND['kpi.barpct']=a=>{const [id,i]=a.split('|'),k=KPI(id);const b=k.bars[+i],base=k.bars[0].w;if(+i===0||b.w==null||!base)return '';return String(Math.round(b.w/base*1000)/10).replace('.',',')+'%'};
 BIND['kpi.gwas']=a=>{const [id,i]=a.split('|');const k=KPI(id);if(!k||!k.og)return '';const o=k.og[+i]==null?null:k.og[+i],c=k.g[+i]==null?null:k.g[+i];return o!==c&&(o!=null)?`<span class="was">was ${nFmt(k,o)}</span>`:''};
-BIND['kpi.nb']=id=>{const k=KPI(id);if(!k||!k.nlog||!k.nlog.length)return '';const l=k.nlog[k.nlog.length-1];const parts=[];if(k.o.eind!==(k.eind==null?null:k.eind))parts.push('Oorspronkelijke eindnorm: '+nFmt(k,k.o.eind));return `<span class="badge warn">Norm aangepast · ${k.nlog.length}×</span><small>${parts.length?parts.join(' · ')+'<br>':''}Laatst: ${fmtD(l.d)}</small>`};
+BIND['kpi.nb']=id=>{const k=KPI(id);if(!k||!k.nlog||!k.nlog.length)return '';const l=k.nlog[k.nlog.length-1];const parts=[];if(k.o.eind!==(k.eind==null?null:k.eind))parts.push('Oorspronkelijke eindnorm: '+nFmt(k,k.o.eind)+(k.o.basis?' van '+k.o.basis:''));return `<span class="badge warn">Norm aangepast · ${k.nlog.length}×</span><small>${parts.length?parts.join(' · ')+'<br>':''}Laatst: ${fmtD(l.d)}</small>`};
 BIND['kpi.bwas']=a=>{const [id,i]=a.split('|');const k=KPI(id);if(!k||!k.ob||!k.bars)return '';const o=k.ob[+i]==null?null:k.ob[+i],b=k.bars[+i],c=b&&b.g!=null?b.g:null;return o!=null&&o!==c?`<span class="was">was ${nFmt(k,o)}</span>`:''};
 BIND['kpi.gph']=a=>{const [id,i]=a.split('|');const k=KPI(id),G=gEffA(k);return G.auto[+i]&&G.v[+i]!=null?String(Math.round(G.v[+i]*10)/10):'–'};
 
@@ -1262,7 +1400,7 @@ function chartSvg(k){
   const WV=k.w.map(v=>v==null?null:v*sc),EIND=k.eind==null?null:k.eind*sc;
   const og=(k.og&&!k.bars)?k.g.map((_,i)=>k.og[i]==null?null:k.og[i]):null;
   const norm=a=>a.map(v=>v==null?null:v);
-  const changed=!!og&&k.o&&(JSON.stringify(norm(og))!==JSON.stringify(norm(k.g))||k.o.eind!==(k.eind==null?null:k.eind))&&og.some(v=>v!=null);
+  const changed=!!og&&k.o&&(JSON.stringify(norm(og))!==JSON.stringify(norm(k.g))||(!k.o.noLine&&k.o.eind!==(k.eind==null?null:k.eind)))&&og.some(v=>v!=null);
   const GO=changed?gEffA({g:og,w:k.w}).v.map(v=>v==null?null:v*sc):null;
   const vals=[...G.v,...WV,...(GO||[])].filter(v=>v!=null);if(EIND!=null)vals.push(EIND);
   const has=G.v.some(v=>v!=null)||WV.some(v=>v!=null);
@@ -1458,7 +1596,8 @@ function viewKpi(){
     return `<section class="sd${open?' open':''}" id="sd${n}">
     <button class="sd-head" ${B('sd.due',n,'data-t="cls" data-base="sd-head"')} data-act="tog" data-id="sd${n}" aria-expanded="${open}"><span class="chev">${icon('chevron-down',20)}</span><span class="sd-title"><b>Subdoel ${n}</b> · ${SD[n].naam}</span><span ${B('sd.badges',n)}></span><span class="sd-mini"><span class="bar sm"><i ${B('sd.w',n,'data-t="w"')}></i></span><span ${B('sd.pct',n)}></span></span></button>
     <div class="sd-body">
-      <p class="sd-doel">${SD[n].doel}</p>
+      <div class="sd-doelbox"><span class="kl">Subdoel ${n}</span><textarea rows="2" ${da('sd.'+n,null,'doel')} placeholder="Formuleer hier het subdoel">${esc(S.sd[n].doel)}</textarea>
+      <details class="nlog" ${S.sd[n].nlog.length?'open':''}><summary>Logboek subdoel <span data-sdsum="${n}">${sdSumHtml(n)}</span></summary><div data-sdlog="${n}">${sdLogHtml(n)}</div></details></div>
       <div class="sd-nul"><label>Nulmeting van dit subdoel <input type="date" data-sdnul="${n}" value="${esc((sdKpis(n)[0]||{d:['']}).d[0])}"></label><span class="muted">Zet de nulmeting-datum van alle KPI’s in dit subdoel in één keer. Per KPI kun je alle meetdata ook apart wijzigen in de tabel Meetmoment.</span></div>
       <div class="kt kt-head"><div>Titel KPI</div><div>Type</div><div>Norm</div><div>Bijsturingssignaal</div><div>Nulmeting</div><div>Voortgangscheck</div><div>Eindmeting</div></div>
       ${sdKpis(n).map(k=>kpiHtml(k)).join('')}
@@ -1473,27 +1612,30 @@ function viewKpi(){
   ${secs}`;
 }
 function kpiBarsHtml(k){
-  const rows=k.bars.map((b,i)=>`<tr><td>${inpT('kpis',k.id,'bars.'+i+'.l',b.l,'Categorie')}</td><td>${inpN('kpis',k.id,'bars.'+i+'.g',b.g,'placeholder="–"')}<span ${B('kpi.bwas',k.id+'|'+i)}></span></td><td>${inpN('kpis',k.id,'bars.'+i+'.w',b.w,'placeholder="–"')}</td><td class="pc" ${B('kpi.barpct',k.id+'|'+i)}></td><td>${k.bars.length>1?`<button class="icon-btn" data-act="delbar" data-id="${k.id}" data-i="${i}" title="Categorie verwijderen" aria-label="Categorie verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('');
+  const dagen=k.d.slice(1);
+  const rows=k.bars.map((b,i)=>`<tr><td class="cat">${txa('kpis',k.id,'bars.'+i+'.l',b.l,'Categorie')}</td><td>${inpN('kpis',k.id,'bars.'+i+'.g',b.g,'placeholder="–"')}<span ${B('kpi.bwas',k.id+'|'+i)}></span></td>${dagen.map((d,j)=>`<td>${inpN('kpis',k.id,'bars.'+i+'.wd.'+j,b.wd?b.wd[j]:null,'placeholder="–"')}</td>`).join('')}<td class="tot" ${B('kpi.bartot',k.id+'|'+i)}></td><td class="pc" ${B('kpi.barpct',k.id+'|'+i)}></td><td>${k.bars.length>1?`<button class="icon-btn" data-act="delbar" data-id="${k.id}" data-i="${i}" title="Categorie verwijderen" aria-label="Categorie verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('');
   return `<article class="kpi" ${B('kpi.due',k.id,'data-t="cls" data-base="kpi"')}>
     <div class="kt">
       <div class="kc kc-title"><span class="kid">${k.id}</span><div style="flex:1"><span class="kl">Titel KPI</span>${txa('kpis',k.id,'titel',k.titel)}</div></div>
       <div class="kc"><span class="kl">Type</span>${selP('kpis',k.id,'type',['Strategisch','Proces'],k.type)}</div>
       <div class="kc"><span class="kl">Norm</span>${txa('kpis',k.id,'norm',k.norm)}<div class="nbadge" ${B('kpi.nb',k.id)}></div></div>
       <div class="kc sig" ${B('kpi.flag',k.id,'data-t="cls" data-base="kc sig"')}><span class="kl">Bijsturingssignaal</span>${txa('kpis',k.id,'signaal',k.signaal)}</div>
-      <div class="kc" style="grid-column:span 3"><span class="kl">Meting op de dag van de PR-stunt</span><div class="chk">${inpD('kpis',k.id,'d.1',k.d[1])}<small>Eén meting. Zet de datum hier zodra die bekend is.</small></div></div>
+      <div class="kc" style="grid-column:span 3"><span class="kl">Meetdata PR-stunt</span><div class="prd">${dagen.map((d,j)=>`<span>${inpD('kpis',k.id,'d.'+(j+1),d).replace('data-c','data-re="1" data-c')}${dagen.length>1?`<button class="icon-btn" data-act="delpr" data-id="${k.id}" data-i="${j+1}" title="Datum verwijderen" aria-label="Datum verwijderen">${icon('trash-2',16)}</button>`:''}</span>`).join('')}<button class="btn sm" data-act="addpr" data-id="${k.id}">${icon('plus',16)}Datum toevoegen</button></div></div>
     </div>
-    <div class="kviz">
+    <div class="kviz wide">
       <div class="chartbox"><div class="legend"><span><i class="sw bg"></i>Gewenst</span><span><i class="sw bw"></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Logboek: norm bijsturen met datum en reden">${icon('pencil',16)}Logboek</button></div><div ${B('kpi.chart',k.id)}></div></div>
-      <div><table class="mt"><thead><tr><th>Categorie</th><th>Gewenst (aantal)</th><th>Werkelijk (aantal)</th><th class="pc">% van bezoekers</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+      <div><table class="mt bars"><thead><tr><th>Categorie</th><th>Gewenst</th>${dagen.map((d,j)=>`<th>Werkelijk ${lbl(k,j+1)}</th>`).join('')}<th>Totaal</th><th class="pc">% van bezoekers</th><th></th></tr></thead><tbody>${rows}</tbody></table>
       <div style="margin-top:8px"><button class="btn sm" data-act="addbar" data-id="${k.id}">${icon('plus',16)}Categorie toevoegen</button></div>
-      <p class="hint" style="margin-top:6px">Vul op de dag van de PR-stunt de aantallen in. Het percentage rekent af tegen het aantal bezoekers (eerste regel). Namen en aantal categorieën kun je zelf aanpassen.</p>
+      <p class="hint" style="margin-top:6px">Vul per datum van de PR-stunt de aantallen in; het totaal telt vanzelf op. Het percentage rekent het totaal af tegen het aantal bezoekers (eerste regel). Namen en aantal categorieën kun je zelf aanpassen.</p>
       <div class="meth"><span class="kl">Hoe meten</span>${txa('kpis',k.id,'meting',k.meting)}</div></div>
     </div>
     <details class="nlog" ${k.nlog.length?'open':''}><summary>Logboek <span data-nlogn="${k.id}">${nSumHtml(k)}</span></summary><div data-nlog="${k.id}">${nlogHtml(k)}</div></details>
   </article>`;
 }
+const KOL={aanv:'Aanvragen (aantal)',interviews:'Interviews (aantal)',gezien:'Gezien of gehoord (aantal)'};
 function kpiHtml(k){
   if(k.bars)return kpiBarsHtml(k);
+  if((k.kol==='interviews'||k.kol==='gezien')&&!k.x)k.x=k.d.map(()=>null);
   const u=k.unit==='%'?'%':'',cur=curIdx(k);
   return `<article class="kpi" ${B('kpi.due',k.id,'data-t="cls" data-base="kpi"')}>
     <div class="kt">
@@ -1501,17 +1643,17 @@ function kpiHtml(k){
       <div class="kc"><span class="kl">Type</span>${selP('kpis',k.id,'type',['Strategisch','Proces'],k.type)}</div>
       <div class="kc"><span class="kl">Norm</span>${txa('kpis',k.id,'norm',k.norm)}<div class="eindrow">Eindnorm ${inpN('kpis',k.id,'eind',k.eind,'placeholder="–"')} ${esc(k.unit)}${k.basis?` <small ${B('kpi.pct',k.id+'|eind')}></small>`:''}</div>${k.basis?`<div class="eindrow">100% = ${inpN('kpis',k.id,'basis',k.basis)} afnemers</div>`:''}<div class="nbadge" ${B('kpi.nb',k.id)}></div></div>
       <div class="kc sig" ${B('kpi.flag',k.id,'data-t="cls" data-base="kc sig"')}><span class="kl">Bijsturingssignaal</span>${txa('kpis',k.id,'signaal',k.signaal)}</div>
-      <div class="kc"><span class="kl">Nulmeting</span><div class="chk"><div class="row">${inpN('kpis',k.id,'w.0',k.w[0],'placeholder="invullen"')}<span class="muted">${esc(u||k.unit)}</span></div>${k.basis?`<small ${B('kpi.pct',k.id+'|w.0')}></small>`:''}${inpD('kpis',k.id,'d.0',k.d[0])}${k.nulNvt?'<small>In het projectplan n.v.t.; vul in als je toch een beginwaarde hebt.</small>':'<small>Beginmeting vóór de start.</small>'}</div></div>
+      <div class="kc"><span class="kl">Nulmeting</span><div class="chk"><div class="row">${inpN('kpis',k.id,'w.0',k.w[0],'placeholder="invullen"')}<span class="muted">${esc(u||k.unit)}</span></div>${k.basis?`<small ${B('kpi.pct',k.id+'|w.0')}></small>`:''}${inpD('kpis',k.id,'d.0',k.d[0])}${k.id==='4.2'?'<small>Stand bij de start van de nieuwe werkwijze.</small>':k.nulNvt?'<small>In het projectplan n.v.t.; vul in als je toch een beginwaarde hebt.</small>':'<small>Beginmeting vóór de start.</small>'}</div></div>
       <div class="kc"><span class="kl">Voortgangscheck</span><div class="chk"><div class="row"><small>${lbl(k,cur)}${cur>0&&k.d[cur]&&k.d[cur]>todayStr()?' · volgende':''}</small>${inpN('kpis',k.id,'w.'+cur,k.w[cur],'placeholder="invullen"')}<span class="muted">${esc(u||k.unit)}</span></div>${k.basis?`<small ${B('kpi.pct',k.id+'|w.'+cur)}></small>`:''}<small ${B('kpi.chkstat',k.id)}></small></div></div>
       <div class="kc"><span class="kl">Eindmeting</span><div class="chk"><div class="row">${inpN('kpis',k.id,'eindmeting',k.eindmeting,'placeholder="invullen"')}<span class="muted">${esc(u||k.unit)}</span></div>${k.basis?`<small ${B('kpi.pct',k.id+'|eindmeting')}></small>`:''}<div ${B('kpi.endstat',k.id)}></div></div></div>
     </div>
-    <div class="kviz">
-      <div class="chartbox"><div class="legend"><span><i class="g"></i>Gewenst</span><span><i></i>Werkelijk</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Logboek: norm bijsturen met datum en reden">${icon('pencil',16)}Logboek</button></div><div ${B('kpi.chart',k.id)}></div></div>
-      <div><table class="mt"><thead><tr><th>Meetmoment (datum)</th>${k.basis?'<th>Gewenst (aantal)</th><th class="pc">%</th><th>Werkelijk (aantal)</th><th class="pc">%</th>':'<th>Gewenst</th><th>Werkelijk</th>'}<th></th><th></th></tr></thead><tbody>
-        ${k.d.map((d,i)=>`<tr ${B('kpi.rowdue',k.id+'|'+i,`data-t="cls" data-base="${i===cur?'cur':''}"`)}><td class="dt">${i===0?'<small>Nulmeting</small>':''}${inpD('kpis',k.id,'d.'+i,d).replace('data-c','data-re="1" data-c')}${inHerfst(d)?'<small class="bad-t">Herfstvakantie: niet meten</small>':''}${i>0&&!d?'<small class="muted">Datum volgt</small>':''}</td><td><input class="num" type="number" step="any" inputmode="decimal" ${da('kpis',k.id,'g.'+i)} value="${k.g[i]==null?'':k.g[i]}" placeholder="–" ${B('kpi.gph',k.id+'|'+i,'data-t="ph"')}><span ${B('kpi.gwas',k.id+'|'+i)}></span></td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|g.'+i)}></td>`:''}<td>${inpN('kpis',k.id,'w.'+i,k.w[i],'placeholder="–"')}</td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|w.'+i)}></td>`:''}<td ${B('kpi.mstat',k.id+'|'+i)}></td><td>${i>0?`<button class="icon-btn" data-act="delmom" data-id="${k.id}" data-i="${i}" title="Meetmoment verwijderen" aria-label="Meetmoment verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('')}
+    <div class="kviz${k.kol?' wide':''}">
+      <div class="chartbox"><div class="legend"><span><i class="g"></i>Gewenst</span><span><i></i>${k.kol==='gezien'?'Weet het echt':'Werkelijk'}</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Logboek: norm bijsturen met datum en reden">${icon('pencil',16)}Logboek</button></div><div ${B('kpi.chart',k.id)}></div></div>
+      <div><table class="mt"><thead><tr><th>Meetmoment (datum)</th>${k.kol?`<th>${KOL[k.kol]}</th>`:''}${k.basis?`<th>Gewenst (aantal)</th><th class="pc">%</th><th>${k.kol==='gezien'?'Weet het echt':'Werkelijk'} (aantal)</th><th class="pc">%</th>`:'<th>Gewenst</th><th>Werkelijk</th>'}<th></th><th></th></tr></thead><tbody>
+        ${k.d.map((d,i)=>`<tr ${B('kpi.rowdue',k.id+'|'+i,`data-t="cls" data-base="${i===cur?'cur':''}"`)}><td class="dt">${i===0?'<small>Nulmeting</small>':''}${inpD('kpis',k.id,'d.'+i,d).replace('data-c','data-re="1" data-c')}${inHerfst(d)?'<small class="bad-t">Herfstvakantie: niet meten</small>':''}${i>0&&!d?'<small class="muted">Datum volgt</small>':''}</td>${k.kol==='aanv'?`<td ${B('kpi.aanv',k.id+'|'+i)}></td>`:k.kol?`<td class="xin">${inpN('kpis',k.id,'x.'+i,k.x[i],'placeholder="–"')}</td>`:''}<td><input class="num" type="number" step="any" inputmode="decimal" ${da('kpis',k.id,'g.'+i)} value="${k.g[i]==null?'':k.g[i]}" placeholder="–" ${B('kpi.gph',k.id+'|'+i,'data-t="ph"')}><span ${B('kpi.gwas',k.id+'|'+i)}></span></td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|g.'+i)}></td>`:''}<td>${inpN('kpis',k.id,'w.'+i,k.w[i],'placeholder="–"')}</td>${k.basis?`<td class="pc" ${B('kpi.pct',k.id+'|w.'+i)}></td>`:''}<td ${B('kpi.mstat',k.id+'|'+i)}></td><td>${i>0?`<button class="icon-btn" data-act="delmom" data-id="${k.id}" data-i="${i}" title="Meetmoment verwijderen" aria-label="Meetmoment verwijderen">${icon('trash-2',16)}</button>`:''}</td></tr>`).join('')}
       </tbody></table>
       <div style="margin-top:8px"><button class="btn sm" data-act="addmom" data-id="${k.id}">${icon('plus',16)}Meetmoment toevoegen</button></div>
-      <p class="hint" style="margin-top:6px">Hier staan alleen de momenten waarop deze KPI wordt gemeten; niet elke KPI is wekelijks. Op 17 t/m 25 oktober (herfstvakantie) wordt niet gemeten. Grijze waarden bij Gewenst zijn automatisch: de lijn loopt gelijkmatig omhoog van de startwaarde (nulmeting) naar de volgende norm.</p>
+      <p class="hint" style="margin-top:6px">${k.tweew?'Deze KPI wordt om de week op dinsdag gemeten; in de herfstvakantie niet.':'Hier staan alleen de momenten waarop deze KPI wordt gemeten; niet elke KPI is wekelijks. Op 17 t/m 25 oktober (herfstvakantie) wordt niet gemeten.'}${k.kol==='aanv'?' De aantallen aanvragen komen automatisch uit KPI 4.2 (zelfde datum).':''} Grijze waarden bij Gewenst zijn automatisch: de lijn loopt gelijkmatig omhoog van de startwaarde (nulmeting) naar de volgende norm.</p>
       <div class="meth"><span class="kl">Hoe meten</span>${txa('kpis',k.id,'meting',k.meting)}</div></div>
     </div>
     <details class="nlog" ${k.nlog.length?'open':''}><summary>Logboek <span data-nlogn="${k.id}">${nSumHtml(k)}</span></summary><div data-nlog="${k.id}">${nlogHtml(k)}</div></details>
@@ -1739,6 +1881,7 @@ const BESTYPE=['Formeel akkoord','Projectkeuze','Bijsturing','Escalatie'];
 const BESTAT=['Open','In uitvoering','Afgerond'];
 function bijsturHtml(){
   const all=[];S.kpis.forEach(k=>(k.nlog||[]).forEach(e=>all.push({k,e})));
+  Object.keys(S.sd||{}).forEach(n=>S.sd[n].nlog.forEach(e=>all.push({k:{id:'Subdoel '+n,titel:SD[n].naam},e:Object.assign({wat:'Subdoeltekst'},e)})));
   all.sort((a,b)=>(a.e.d||'').localeCompare(b.e.d||''));
   if(!all.length)return '<div class="empty-state">Nog geen bijsturingen. Stuur een norm bij via de knop Logboek bij de grafiek van een KPI.</div>';
   const rows=all.map(({k,e})=>`<tr><td class="nowrap">${e.d?fmtD(e.d):''}</td><td><b>${esc(k.id)}</b> · ${esc(k.titel)}</td><td>${esc(e.wat)}</td><td><s>${esc(e.van===''?'–':e.van)}</s> → <b>${esc(e.naar===''?'–':e.naar)}</b></td><td>${esc(e.reden||'')}</td></tr>`).join('');
@@ -2035,12 +2178,24 @@ function viewPlan(){
 
 const VIEWS={kpi:viewKpi,risks:viewRisks,notes:viewNotes,meetings:viewMeetings,meet:viewMeet,log:viewLog,wait:viewWait,fin:viewFin,taken:viewTaken,plan:viewPlan};
 function autosize(el){el.style.height='auto';if(el.offsetParent!==null||el.scrollHeight)el.style.height=Math.max(36,el.scrollHeight+2)+'px'}
+/* Back-up herinnering: de gegevens staan alleen in deze browser */
+function bkDays(){const b=UI.backup;if(!b)return null;const p=b.split('-').map(Number),n=todayStr().split('-').map(Number);return Math.round((new Date(n[0],n[1]-1,n[2])-new Date(p[0],p[1]-1,p[2]))/864e5)}
+function bkUpdate(){
+  const d=bkDays(),st=$('#bkState'),bar=$('#bkbar');if(!st||!bar)return;
+  st.textContent=d===null?'Nog geen back-up':d===0?'Laatste back-up: vandaag':d===1?'Laatste back-up: gisteren':`Laatste back-up: ${d} dagen geleden`;
+  const late=d===null||d>=7;
+  if(late&&UI.bkHide!==todayStr()){
+    bar.hidden=false;
+    bar.innerHTML=`${icon('triangle-alert',18)}<span>${d===null?'Je hebt nog geen back-up gemaakt.':`Je laatste back-up is ${d} dagen geleden.`} Je gegevens staan alleen in deze browser en zijn weg als je de browsergegevens wist.</span><span class="grow"></span><button class="btn sm cta" data-act="export">${icon('download',16)}Back-up opslaan</button><button class="btn sm ghost" data-act="bkhide">Later</button>`;
+  }else{bar.hidden=true;bar.innerHTML=''}
+}
 function render(keepScroll=true){
   const y=window.scrollY;
   renderTiles();
   $('#main').innerHTML=VIEWS[UI.tab]();
   $$('#main textarea').forEach(autosize);
   applyBindings();
+  bkUpdate();
   if(keepScroll)window.scrollTo(0,y);
 }
 
@@ -2065,6 +2220,7 @@ document.addEventListener('input',e=>{
   setPath(o,el.dataset.f,v);
   if(el.dataset.c==='plan'&&el.dataset.f==='vg'&&tPct(o)>=100){o.bezig={};$$('input.chkb[data-c="plan"]').forEach(x=>{if(x.dataset.id===o.id)x.checked=false})}
   if(el.dataset.c==='kpis'&&/^d\.[1-9]\d*$/.test(el.dataset.f))sortMoments(o);
+  if(el.dataset.c==='kpis'&&/\.wd\.\d+$/.test(el.dataset.f))sumBars(o);
   if(el.dataset.c==='plan'&&(el.dataset.f==='start'||el.dataset.f==='end')&&o.start&&o.end&&o.end<o.start){
     if(el.dataset.f==='start')o.end=o.start;else o.start=o.end;
     $$('[data-c="plan"]').forEach(x=>{if(x.dataset.id===o.id&&(x.dataset.f==='start'||x.dataset.f==='end'))x.value=o[x.dataset.f]});
@@ -2087,6 +2243,8 @@ document.addEventListener('keydown',e=>{
   else{t.value=v.slice(0,pos)+'\n* '+v.slice(t.selectionEnd);t.setSelectionRange(pos+3,pos+3)}
   t.dispatchEvent(new Event('input',{bubbles:true}));
 });
+document.addEventListener('change',e=>{const el=e.target;if(el.dataset&&/^sd\.\d+$/.test(el.dataset.c||'')&&el.dataset.f==='doel')sdTrack(el.dataset.c.slice(3))});
+document.addEventListener('input',e=>{const el=e.target,c=el.dataset&&el.dataset.c;if(c&&/^sd\.\d+$/.test(c)&&/^nlog\.\d+\.(reden|d)$/.test(el.dataset.f)){if(el.dataset.f.endsWith('reden'))el.classList.toggle('need',!el.value.trim());sdSum(c.slice(3))}});
 document.addEventListener('change',e=>{const el=e.target;if(el.dataset&&el.dataset.c==='kpis'&&/^(eind|norm|g\.\d+|bars\.\d+\.g)$/.test(el.dataset.f)){const k=S.kpis.find(x=>x.id===el.dataset.id);normTrack(k)}});
 document.addEventListener('input',e=>{const el=e.target;if(el.dataset&&el.dataset.c==='kpis'&&/^nlog\.\d+\.(reden|d)$/.test(el.dataset.f)){const k=S.kpis.find(x=>x.id===el.dataset.id);if(el.dataset.f.endsWith('reden'))el.classList.toggle('need',!el.value.trim());nSum(k)}});
 document.addEventListener('change',e=>{
@@ -2219,19 +2377,22 @@ const ACT={
     }else if(confirm(`“${t.naam}” verwijderen? De taak verdwijnt ook uit de planning.`)){S.plan=S.plan.filter(x=>x.id!==t.id);save();render()}
   },
   gomeet(a){const id=a.dataset.id;const mm=S.meet.find(x=>x.id===id);UI.tab=mm&&mm.soort==='Mijlpaal'?'log':'meet';UI.f.meet='alle';UI.open['m'+id]=true;saveUI();render(false);const el=$('#m'+id);el&&el.scrollIntoView({block:'center'})},
-  addbar(a){const k=S.kpis.find(x=>x.id===a.dataset.id);k.bars.push({l:'',g:null,w:null});if(k.ob)k.ob.push(null);if(k.sb)k.sb.push(null);save();render()},
+  addbar(a){const k=S.kpis.find(x=>x.id===a.dataset.id);k.bars.push({l:'',g:null,w:null,wd:k.d.slice(1).map(()=>null)});if(k.ob)k.ob.push(null);if(k.sb)k.sb.push(null);save();render()},
   delbar(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k.bars.length>1&&confirm('Deze categorie verwijderen?')){k.bars.splice(+a.dataset.i,1);if(k.ob)k.ob.splice(+a.dataset.i,1);if(k.sb)k.sb.splice(+a.dataset.i,1);save();render()}},
   addmom(a){
     const k=S.kpis.find(x=>x.id===a.dataset.id);
     const last=k.d.slice(1).filter(Boolean).sort().pop();
-    let d=last?fromDay(toDay(last)+7):todayStr();
+    let d=last?fromDay(toDay(last)+(k.tweew?14:7)):todayStr();
     while(inHerfst(d))d=fromDay(toDay(d)+1);
-    k.d.push(d);k.g.push(null);k.w.push(null);if(k.og)k.og.push(null);if(k.sg)k.sg.push(null);sortMoments(k);save();render();
+    k.d.push(d);k.g.push(null);k.w.push(null);if(k.x)k.x.push(null);if(k.og)k.og.push(null);if(k.sg)k.sg.push(null);sortMoments(k);save();render();
   },
   delmom(a){
     const k=S.kpis.find(x=>x.id===a.dataset.id),i=+a.dataset.i;
-    if(i>0&&confirm('Dit meetmoment verwijderen, inclusief de ingevulde waarde?')){k.d.splice(i,1);k.g.splice(i,1);k.w.splice(i,1);if(k.og)k.og.splice(i,1);if(k.sg)k.sg.splice(i,1);save();render()}
+    if(i>0&&confirm('Dit meetmoment verwijderen, inclusief de ingevulde waarde?')){k.d.splice(i,1);k.g.splice(i,1);k.w.splice(i,1);if(k.x)k.x.splice(i,1);if(k.og)k.og.splice(i,1);if(k.sg)k.sg.splice(i,1);save();render()}
   },
+  addpr(a){const k=S.kpis.find(x=>x.id===a.dataset.id);const last=k.d.slice(1).filter(Boolean).sort().pop();k.d.push(last?fromDay(toDay(last)+1):todayStr());['g','w','og','sg'].forEach(p=>{if(k[p])k[p].push(null)});k.bars.forEach(b=>{if(b.wd)b.wd.push(null)});sortMoments(k);save();render()},
+  delpr(a){const k=S.kpis.find(x=>x.id===a.dataset.id),i=+a.dataset.i;if(k.d.length>2&&confirm('Deze datum verwijderen, inclusief de ingevulde aantallen?')){['d','g','w','og','sg'].forEach(p=>{if(k[p])k[p].splice(i,1)});k.bars.forEach(b=>{if(b.wd)b.wd.splice(i-1,1)});sumBars(k);save();render()}},
+  delsdl(a){const n=a.dataset.id;if(confirm('Deze regel uit het logboek verwijderen? Het subdoel zelf blijft zoals het nu is.')){S.sd[n].nlog.splice(+a.dataset.i,1);save();sdUI(n);toast('Regel uit het logboek verwijderd')}},
   delnl(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k&&confirm('Deze regel uit het logboek verwijderen? De norm zelf blijft zoals hij nu is.')){k.nlog.splice(+a.dataset.i,1);save();nlogUI(k);applyBindings();toast('Regel uit het logboek verwijderd')}},
   addbes(){S.bes.push({id:uid(),datum:todayStr(),type:'Projectkeuze',besluit:'',onderbouwing:'',door:'',betrokkenen:'',opvolging:'',status:'Open'});save();render();const el=$$('textarea[data-c="bes"][data-f="besluit"]');el.length&&el[el.length-1].focus()},
   delbes(a){if(confirm('Dit besluit uit het besluitenlog verwijderen?')){S.bes=S.bes.filter(x=>x.id!==a.dataset.id);save();render()}},
@@ -2266,9 +2427,10 @@ const ACT={
   addtask(a){openTask(null,a.dataset.id?{owners:[a.dataset.id]}:{})},
   edittask(a){openTask(a.dataset.id)},
   color(a,e){e.stopPropagation();openPop(a.dataset.id,a)},
-  export(){const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const l=document.createElement('a');l.href=URL.createObjectURL(blob);l.download=`impact-desk-back-up-${todayStr()}.json`;l.click();setTimeout(()=>URL.revokeObjectURL(l.href),1000);toast('Back-up opgeslagen in je downloads')},
+  export(){const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});const l=document.createElement('a');l.href=URL.createObjectURL(blob);l.download=`impact-desk-back-up-${todayStr()}.json`;l.click();setTimeout(()=>URL.revokeObjectURL(l.href),1000);UI.backup=todayStr();saveUI();bkUpdate();toast('Back-up opgeslagen in je downloads')},
+  bkhide(){UI.bkHide=todayStr();saveUI();bkUpdate()},
   import(){$('#importFile').click()},
-  reset(){if(confirm('Alle ingevulde gegevens vervangen door de startgegevens uit het projectplan? Dit kan niet ongedaan worden gemaakt (maak eerst een back-up).')){S=defaults();ensureExtra();ensureNorm();save();render();toast('Startgegevens hersteld')}}
+  reset(){if(confirm('Alle ingevulde gegevens vervangen door de startgegevens uit het projectplan? Dit kan niet ongedaan worden gemaakt (maak eerst een back-up).')){S=defaults();migrate();save();render();toast('Startgegevens hersteld')}}
 };
 function syncTogAll(){const b=$('#togall');if(!b)return;const all=activeSd().every(n=>UI.open['sd'+n]);b.innerHTML=icon(all?'chevrons-down-up':'chevrons-up-down')+(all?'Alles inklappen':'Alles uitklappen')}
 document.addEventListener('click',e=>{
