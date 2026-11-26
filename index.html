@@ -105,6 +105,26 @@ table.mt td.cat textarea{width:100%;min-height:0}
 table.mt.bars td input.num{width:62px}
 .nlog td textarea{width:100%;min-width:220px}
 .nlog td textarea.need{border-color:var(--warn);background:var(--warn-soft)}
+.crit-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px;margin-top:12px}
+.crit-grid figure{margin:0;min-width:0}
+.crit-grid figcaption{display:flex;justify-content:space-between;gap:8px;font-size:13px;margin-bottom:4px;min-height:36px;line-height:1.3}
+.crit-grid figcaption span{color:var(--muted)}
+.chart rect.bwlow{fill:var(--bad)}
+.legend i.sw.bwlow{background:var(--bad)}
+.chart line.critmin{stroke:var(--muted);stroke-width:1;stroke-dasharray:3 4;opacity:.6}
+table.mt.crit td.cat{min-width:190px;width:auto}
+table.mt.crit th.crit-m{text-align:center;border-left:1px solid var(--line)}
+table.mt.crit th.crit-m small{display:block;color:var(--blue)}
+table.mt.crit th.crit-m div{display:flex;justify-content:center;align-items:center;gap:2px}
+table.mt.crit th.crit-m input{width:140px}
+table.mt.crit th.crit-s{text-align:center;font-size:10.5px}
+table.mt.crit td.crit-g{border-left:1px solid var(--line);text-align:center}
+table.mt.crit td input.num{width:64px}
+table.mt.crit td.crit-w{white-space:nowrap}
+table.mt.crit td.crit-w input.num{width:54px;margin-right:3px}
+table.mt.crit td.tot{text-align:center}
+table.mt.crit tr.crit-tot td{border-top:2px solid var(--line)}
+@media(max-width:900px){.crit-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .sd-nul{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 0 12px;font-size:13.5px}
 .sd-nul label{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
 .sd-nul input{width:150px}
@@ -997,7 +1017,7 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
-  ensureExtra();ensureNorm();ensureSd();kpi26();kpi30();kpi42base();kpi42oud();kpi41op();
+  ensureExtra();ensureNorm();ensureSd();kpi26();kpi30();kpi42base();kpi42oud();kpi41op();kpi22crit();sd2crit();
   S.kpis.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
   syncPeople();syncSd();
 }
@@ -1240,6 +1260,36 @@ function kpi41op(){
   }
   S.kpi41A=1;
 }
+/* 2.2: vier gewogen criteria, elk met gewenst en werkelijk per meetmoment; het totaal wordt berekend */
+const CRIT0=[['Zichtbaarheid en toewijzing',34],['Gebruiksgemak',24],['Opvolging',24],['Inhoud',18]];
+const CRITMIN=3;
+function kpi22crit(){
+  if(S.kpi22V)return;
+  const k=S.kpis.find(x=>x.id==='2.2');
+  if(k&&!k.bars&&!k.crit){
+    k.crit=CRIT0.map(([l,wg])=>({l,wg,g:k.d.map((d,i)=>i&&k.g[i]!=null?k.g[i]:null),w:k.d.map(()=>null)}));
+    k.signaal=String(k.signaal||'').replace(/Alle 3 de criteria onder de (3|6): bijsturen \(maximaal 2×\)\./,'Eén criterium onder de 3: dat onderdeel bijsturen (maximaal 2×).');
+    k.meting=String(k.meting||'').replace(/Interview met 3 gewogen criteria: [^.]*\./,'Interview met 4 gewogen criteria: zichtbaarheid en toewijzing, gebruiksgemak, opvolging en inhoud.');
+  }
+  S.kpi22V=1;
+}
+function critTot(k,i){
+  const sw=sum(k.crit.map(c=>c.wg));
+  if(!sw||k.crit.some(c=>+c.wg>0&&c.w[i]==null))return null;
+  return Math.round(sum(k.crit.map(c=>(+c.w[i]||0)*(+c.wg||0)))/sw*100)/100;
+}
+const critLow=(k,i)=>!!k.crit&&k.crit.some(c=>c.w[i]!=null&&c.w[i]<CRITMIN);
+/* subdoel 2: KPI 2.2 meet vier gewogen criteria */
+function sd2crit(){
+  if(S.sd2V)return;
+  const x=S.sd&&S.sd[2];
+  if(x&&String(x.doel).includes('3 gewogen toetscriteria')){
+    const nw=x.doel.replace('3 gewogen toetscriteria','4 gewogen toetscriteria');
+    x.nlog.push({id:uid(),d:'2026-11-26',van:x.doel,naar:nw,reden:'De bruikbaarheid wordt op 4 gewogen criteria beoordeeld.'});
+    x.doel=x.sn=nw;
+  }
+  S.sd2V=1;
+}
 function sumBars(k){k.bars.forEach(b=>{if(!b.wd)return;const v=b.wd.filter(x=>x!=null);b.w=v.length?sum(v):null})}
 
 /* Subdoelen aanpasbaar, met logboek */
@@ -1297,7 +1347,7 @@ function toast(m){const t=$('#toast');t.textContent=m;t.classList.add('show');cl
 const lbl=(k,i)=>{if(i===0)return 'Nulm.';const d=k.d[i];return d?(+d.slice(8,10))+'/'+(+d.slice(5,7)):'?'};
 const inHerfst=d=>!!d&&d>='2026-10-17'&&d<='2026-10-25';
 function sortMoments(k){
-  const rows=k.d.map((d,i)=>({d,g:k.g[i],w:k.w[i],og:k.og?k.og[i]:null,sg:k.sg?k.sg[i]:null,x:k.x?k.x[i]:null,wd:k.bars&&i>0?k.bars.map(b=>b.wd?b.wd[i-1]:null):null}));
+  const rows=k.d.map((d,i)=>({d,g:k.g[i],w:k.w[i],og:k.og?k.og[i]:null,sg:k.sg?k.sg[i]:null,x:k.x?k.x[i]:null,cg:k.crit?k.crit.map(c=>c.g[i]):null,cw:k.crit?k.crit.map(c=>c.w[i]):null,wd:k.bars&&i>0?k.bars.map(b=>b.wd?b.wd[i-1]:null):null}));
   const rest=rows.slice(1).sort((a,b)=>(a.d||'9999').localeCompare(b.d||'9999'));
   const all=[rows[0],...rest],nz=v=>v==null?null:v;
   k.d=all.map(r=>r.d);k.g=all.map(r=>r.g);k.w=all.map(r=>r.w);
@@ -1305,6 +1355,7 @@ function sortMoments(k){
   if(k.sg)k.sg=all.map(r=>nz(r.sg));
   if(k.x)k.x=all.map(r=>nz(r.x));
   if(k.bars)k.bars.forEach((b,j)=>{if(b.wd)b.wd=all.slice(1).map(r=>nz(r.wd[j]))});
+  if(k.crit)k.crit.forEach((c,j)=>{c.g=all.map(r=>nz(r.cg[j]));c.w=all.map(r=>nz(r.cw[j]))});
 }
 /* Het meetmoment waar je nu zit: het laatste moment dat geweest is (de nulmeting telt niet mee).
    Is er nog geen echt meetmoment geweest, dan het eerstvolgende. */
@@ -1328,11 +1379,11 @@ function gEffA(k){
   }
   return {v,auto};
 }
-const kStatAt=(k,i)=>{const w=k.w[i];if(w==null)return 'none';const G=gEffA(k),g=G.v[i];if(g==null||(i===0&&G.auto[0]))return 'meas';return w>=g?'ok':w>=g*.9?'warn':'bad'};
+const kStatAt=(k,i)=>{if(critLow(k,i))return 'bad';const w=k.w[i];if(w==null)return 'none';const G=gEffA(k),g=G.v[i];if(g==null||(i===0&&G.auto[0]))return 'meas';return w>=g?'ok':w>=g*.9?'warn':'bad'};
 const kLast=k=>{for(let i=k.w.length-1;i>=0;i--)if(k.w[i]!=null)return i;return -1};
 const endStat=k=>k.eindmeting==null?'none':k.eind==null?'meas':k.eindmeting>=k.eind?'ok':'bad';
 const barStat=k=>{const bs=k.bars||[];if(!bs.some(b=>b.w!=null))return 'none';const rs=bs.filter(b=>b.w!=null&&b.g>0).map(b=>b.w/b.g);if(!rs.length)return 'meas';const r=Math.min(...rs);return r>=1?'ok':r>=.9?'warn':'bad'};
-const kStat=k=>{if(k.bars)return barStat(k);if(k.eindmeting!=null)return endStat(k);const i=kLast(k);return i<0?'none':kStatAt(k,i)};
+const kStat=k=>{if(k.bars)return barStat(k);if(k.crit&&critLow(k,curIdx(k)))return 'bad';if(k.eindmeting!=null)return endStat(k);const i=kLast(k);return i<0?'none':kStatAt(k,i)};
 const kPct=k=>{if(k.bars){const bs=k.bars.filter(b=>b.g>0);return bs.length?avg(bs.map(b=>clamp((b.w||0)/b.g,0,1))):null}if(k.eind==null||!k.eind)return null;const v=k.eindmeting!=null?k.eindmeting:(kLast(k)>=0?k.w[kLast(k)]:null);return v==null?0:clamp(v/k.eind,0,1)};
 const sdKpis=n=>S.kpis.filter(k=>k.sd===n);
 const sdPct=n=>{const a=sdKpis(n).map(kPct).filter(v=>v!=null);return a.length?avg(a):0};
@@ -1722,9 +1773,55 @@ function kpiBarsHtml(k){
     <details class="nlog" ${k.nlog.length?'open':''}><summary>Logboek <span data-nlogn="${k.id}">${nSumHtml(k)}</span></summary><div data-nlog="${k.id}">${nlogHtml(k)}</div></details>
   </article>`;
 }
+const c1=v=>v==null?'–':nf(v,v%1?(Math.round(v*10)===v*10?1:2):0);
+/* klein staafgrafiekje per criterium: gewenst (licht) naast werkelijk */
+function critSvg(k,c){
+  const n=k.d.length,W=230,H=150,T=16,Bt=22,base=H-Bt,y=v=>T+(base-T)*(1-clamp(v,0,5)/5),gw=W/n,bw=Math.min(22,gw/2.8);
+  let s=`<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(c.l)}: gewenst en werkelijk per meetmoment"><line class="gl" x1="0" x2="${W}" y1="${base}" y2="${base}"/><line class="critmin" x1="0" x2="${W}" y1="${y(CRITMIN)}" y2="${y(CRITMIN)}"><title>Ondergrens ${CRITMIN}</title></line>`;
+  k.d.forEach((d,i)=>{
+    const cx=gw*i+gw/2,g=c.g[i],w=c.w[i];
+    const staaf=(v,x,cls,naam)=>`<rect class="${cls}" x="${x}" y="${y(v)}" width="${bw}" height="${Math.max(0,base-y(v))}" rx="3"><title>${naam} ${lbl(k,i)}: ${c1(v)}</title></rect><text class="bl" x="${x+bw/2}" y="${y(v)-4}" text-anchor="middle">${c1(v)}</text>`;
+    if(g!=null)s+=staaf(g,cx-bw-1,'bg','Gewenst');
+    if(w!=null)s+=staaf(w,g!=null?cx+1:cx-bw/2,w<CRITMIN?'bwlow':'bw','Werkelijk');
+    s+=`<text class="ax${i===curIdx(k)?' cur':''}" x="${cx}" y="${H-6}" text-anchor="middle">${lbl(k,i)}</text>`;
+  });
+  return s+'</svg>';
+}
+BIND['kpi.crit']=id=>{const k=KPI(id);return k.crit.map(c=>`<figure><figcaption><b>${esc(c.l||'Criterium')}</b><span>${c1(c.wg)}%</span></figcaption>${critSvg(k,c)}</figure>`).join('')};
+BIND['kpi.ctot']=a=>{const [id,i]=a.split('|');return c1(KPI(id).w[+i])};
+BIND['kpi.cwg']=id=>{const t=sum(KPI(id).crit.map(c=>c.wg));return t===100?'':`<span class="bad-t">De wegingen tellen op tot ${c1(t)}% in plaats van 100%.</span>`};
+BIND['kpi.cnul']=id=>{const v=KPI(id).w[0];return v==null?'<span class="muted">nog niet gemeten</span>':`<b>${c1(v)}</b> cijfer`};
+BIND['kpi.cnow']=id=>{const k=KPI(id),i=curIdx(k);return `<small>${lbl(k,i)}</small> ${k.w[i]==null?'<span class="muted">nog niet gemeten</span>':`<b>${c1(k.w[i])}</b> cijfer`}`};
+BIND['kpi.cend']=id=>{const k=KPI(id),v=k.eindmeting!=null?k.eindmeting:k.w[k.w.length-1];return v==null?'<span class="muted">nog niet gemeten</span>':`<b>${c1(v)}</b> cijfer`};
+function kpiCritHtml(k){
+  const cur=curIdx(k);
+  const head=k.d.map((d,i)=>`<th colspan="2" class="crit-m">${i===0?'<small>Nulmeting</small>':''}<div>${inpD('kpis',k.id,'d.'+i,d).replace('data-c','data-re="1" data-c')}${i>0?`<button class="icon-btn" data-act="delmom" data-id="${k.id}" data-i="${i}" title="Meetmoment verwijderen" aria-label="Meetmoment verwijderen">${icon('trash-2',16)}</button>`:''}</div></th>`).join('');
+  const sub=k.d.map(()=>'<th class="crit-s">Gewenst</th><th class="crit-s">Werkelijk</th>').join('');
+  const inp=(f,v,i,gew)=>gew&&i===0?'<td class="crit-g muted">–</td>':`<td${gew?' class="crit-g"':''}>${inpN('kpis',k.id,f,v,'placeholder="–" min="1" max="5"')}</td>`;
+  const rows=k.crit.map((c,j)=>`<tr><td class="cat">${txa('kpis',k.id,'crit.'+j+'.l',c.l,'Criterium')}</td><td class="crit-w">${inpN('kpis',k.id,'crit.'+j+'.wg',c.wg)}<span class="muted">%</span></td>${k.d.map((d,i)=>inp(`crit.${j}.g.${i}`,c.g[i],i,true)+inp(`crit.${j}.w.${i}`,c.w[i],i,false)).join('')}</tr>`).join('');
+  const tot=k.d.map((d,i)=>(i===0?'<td class="crit-g muted">–</td>':`<td class="crit-g">${inpN('kpis',k.id,'g.'+i,k.g[i],'placeholder="–"')}<span ${B('kpi.gwas',k.id+'|'+i)}></span></td>`)+`<td class="tot" ${B('kpi.ctot',k.id+'|'+i)}></td>`).join('');
+  return `<article class="kpi" ${B('kpi.due',k.id,'data-t="cls" data-base="kpi"')}>
+    <div class="kt">
+      <div class="kc kc-title"><span class="kid">${k.id}</span><div style="flex:1"><span class="kl">Titel KPI</span>${txa('kpis',k.id,'titel',k.titel)}</div></div>
+      <div class="kc"><span class="kl">Type</span>${selP('kpis',k.id,'type',['Strategisch','Proces'],k.type)}</div>
+      <div class="kc"><span class="kl">Norm</span>${txa('kpis',k.id,'norm',k.norm)}<div class="eindrow">Eindnorm ${inpN('kpis',k.id,'eind',k.eind,'placeholder="–"')} ${esc(k.unit)}</div><div class="nbadge" ${B('kpi.nb',k.id)}></div></div>
+      <div class="kc sig" ${B('kpi.flag',k.id,'data-t="cls" data-base="kc sig"')}><span class="kl">Bijsturingssignaal</span>${txa('kpis',k.id,'signaal',k.signaal)}</div>
+      <div class="kc"><span class="kl">Nulmeting</span><div class="chk"><div ${B('kpi.cnul',k.id)}></div></div></div>
+      <div class="kc"><span class="kl">Voortgangscheck</span><div class="chk"><div ${B('kpi.cnow',k.id)}></div></div></div>
+      <div class="kc"><span class="kl">Eindmeting</span><div class="chk"><div ${B('kpi.cend',k.id)}></div></div></div>
+    </div>
+    <div class="chartbox" style="margin-top:14px"><div class="legend"><span><i class="sw bg"></i>Gewenst</span><span><i class="sw bw"></i>Werkelijk</span><span><i class="sw bwlow"></i>Onder de ondergrens van ${CRITMIN}</span><span ${B('kpi.stat',k.id)} style="margin-left:auto"></span><button class="btn sm pri" data-act="bijstuur" data-id="${k.id}" title="Logboek: norm bijsturen met datum en reden">${icon('pencil',16)}Logboek</button></div><div class="crit-grid" ${B('kpi.crit',k.id)}></div></div>
+    <div class="tw" style="margin-top:12px"><table class="mt crit"><thead><tr><th rowspan="2">Criterium</th><th rowspan="2">Weging</th>${head}</tr><tr>${sub}</tr></thead><tbody>${rows}<tr class="crit-tot"><td colspan="2"><b>Gewogen totaal</b></td>${tot}</tr></tbody></table></div>
+    <p class="hint" style="margin-top:6px"><span ${B('kpi.cwg',k.id)}></span> Vul per criterium een cijfer van 1 tot 5 in; het gewogen totaal verschijnt zodra alle criteria van een meetmoment zijn ingevuld.</p>
+    <div style="margin-top:8px"><button class="btn sm" data-act="addmom" data-id="${k.id}">${icon('plus',16)}Meetmoment toevoegen</button></div>
+    <div class="meth"><span class="kl">Hoe meten</span>${txa('kpis',k.id,'meting',k.meting)}</div>
+    <details class="nlog" ${k.nlog.length?'open':''}><summary>Logboek <span data-nlogn="${k.id}">${nSumHtml(k)}</span></summary><div data-nlog="${k.id}">${nlogHtml(k)}</div></details>
+  </article>`;
+}
 const KOL={aanv:'Aanvragen (aantal)',interviews:'Interviews (aantal)',gezien:'Gezien of gehoord (aantal)'};
 function kpiHtml(k){
   if(k.bars)return kpiBarsHtml(k);
+  if(k.crit)return kpiCritHtml(k);
   if((k.kol==='interviews'||k.kol==='gezien')&&!k.x)k.x=k.d.map(()=>null);
   const u=k.unit==='%'?'%':'',cur=curIdx(k);
   return `<article class="kpi" ${B('kpi.due',k.id,'data-t="cls" data-base="kpi"')}>
@@ -2311,6 +2408,7 @@ document.addEventListener('input',e=>{
   if(el.dataset.c==='plan'&&el.dataset.f==='vg'&&tPct(o)>=100){o.bezig={};$$('input.chkb[data-c="plan"]').forEach(x=>{if(x.dataset.id===o.id)x.checked=false})}
   if(el.dataset.c==='kpis'&&/^d\.[1-9]\d*$/.test(el.dataset.f))sortMoments(o);
   if(el.dataset.c==='kpis'&&/\.wd\.\d+$/.test(el.dataset.f))sumBars(o);
+  if(el.dataset.c==='kpis'&&o.crit){const m=/^crit\.\d+\.w\.(\d+)$/.exec(el.dataset.f);if(m)o.w[+m[1]]=critTot(o,+m[1]);else if(/^crit\.\d+\.wg$/.test(el.dataset.f))o.d.forEach((d,i)=>{if(o.crit.some(c=>c.w[i]!=null))o.w[i]=critTot(o,i)})}
   if(el.dataset.c==='plan'&&(el.dataset.f==='start'||el.dataset.f==='end')&&o.start&&o.end&&o.end<o.start){
     if(el.dataset.f==='start')o.end=o.start;else o.start=o.end;
     $$('[data-c="plan"]').forEach(x=>{if(x.dataset.id===o.id&&(x.dataset.f==='start'||x.dataset.f==='end'))x.value=o[x.dataset.f]});
@@ -2474,11 +2572,11 @@ const ACT={
     const last=k.d.slice(1).filter(Boolean).sort().pop();
     let d=last?fromDay(toDay(last)+(k.tweew?14:7)):todayStr();
     while(inHerfst(d))d=fromDay(toDay(d)+1);
-    k.d.push(d);k.g.push(null);k.w.push(null);if(k.x)k.x.push(null);if(k.og)k.og.push(null);if(k.sg)k.sg.push(null);sortMoments(k);save();render();
+    k.d.push(d);k.g.push(null);k.w.push(null);if(k.x)k.x.push(null);if(k.crit)k.crit.forEach(c=>{c.g.push(null);c.w.push(null)});if(k.og)k.og.push(null);if(k.sg)k.sg.push(null);sortMoments(k);save();render();
   },
   delmom(a){
     const k=S.kpis.find(x=>x.id===a.dataset.id),i=+a.dataset.i;
-    if(i>0&&confirm('Dit meetmoment verwijderen, inclusief de ingevulde waarde?')){k.d.splice(i,1);k.g.splice(i,1);k.w.splice(i,1);if(k.x)k.x.splice(i,1);if(k.og)k.og.splice(i,1);if(k.sg)k.sg.splice(i,1);save();render()}
+    if(i>0&&confirm('Dit meetmoment verwijderen, inclusief de ingevulde waarde?')){k.d.splice(i,1);k.g.splice(i,1);k.w.splice(i,1);if(k.x)k.x.splice(i,1);if(k.crit)k.crit.forEach(c=>{c.g.splice(i,1);c.w.splice(i,1)});if(k.og)k.og.splice(i,1);if(k.sg)k.sg.splice(i,1);save();render()}
   },
   addpr(a){const k=S.kpis.find(x=>x.id===a.dataset.id);const last=k.d.slice(1).filter(Boolean).sort().pop();k.d.push(last?fromDay(toDay(last)+1):todayStr());['g','w','og','sg'].forEach(p=>{if(k[p])k[p].push(null)});k.bars.forEach(b=>{if(b.wd)b.wd.push(null)});sortMoments(k);save();render()},
   delpr(a){const k=S.kpis.find(x=>x.id===a.dataset.id),i=+a.dataset.i;if(k.d.length>2&&confirm('Deze datum verwijderen, inclusief de ingevulde aantallen?')){['d','g','w','og','sg'].forEach(p=>{if(k[p])k[p].splice(i,1)});k.bars.forEach(b=>{if(b.wd)b.wd.splice(i-1,1)});sumBars(k);save();render()}},
