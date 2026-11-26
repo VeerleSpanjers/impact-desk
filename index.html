@@ -92,6 +92,7 @@ table.mt td.cat textarea{width:100%;min-height:0}
 table.mt.bars td input.num{width:62px}
 .nlog td textarea{width:100%;min-width:220px}
 .nlog td textarea.need{border-color:var(--warn);background:var(--warn-soft)}
+.nl-base{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:10px;font-size:13px}
 .sd-nul{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:6px 0 12px;font-size:13.5px}
 .sd-nul label{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
 .sd-nul input{width:150px}
@@ -1064,9 +1065,15 @@ function nOrigHtml(k){
   const block=(t,eind,norm,b=k.basis)=>`<div class="nl-col"><span class="kl">${t}</span>${ev(eind,b)}<div class="nl-t">${esc(norm||'–')}</div></div>`;
   return `<div class="nl-cmp">${same&&!k.nlog.length?block('Norm (nog niet bijgestuurd)',cur,k.norm):block('Oorspronkelijke norm',k.o.eind,k.o.norm,k.o.basis||k.basis)+block('Huidige norm',cur,k.norm)}</div>`;
 }
+/* Knop om de norm zoals die nu is vast te leggen als oorspronkelijke norm */
+function nBaseBtn(k){
+  const j=a=>JSON.stringify((a||[]).map(v=>v==null?null:v));
+  const anders=k.nlog.length||(k.o&&((k.o.norm||'')!==(k.norm||'')||(!k.bars&&(k.o.eind!==(k.eind==null?null:k.eind)||j(k.og)!==j(k.g)))))||(k.bars&&k.ob&&j(k.ob)!==j(k.bars.map(b=>b.g)));
+  return anders?`<div class="nl-base"><button class="btn sm" data-act="nbase" data-id="${k.id}">${icon('check',16)}Huidige norm is de oorspronkelijke norm</button><span class="muted">Gebruik dit als je de norm nog aan het opbouwen was. Daarna begint het bijsturen vanaf deze waarden.</span></div>`:'';
+}
 function nlogHtml(k){
   const rows=k.nlog.map((e,i)=>`<tr><td class="nl-d">${inpD('kpis',k.id,'nlog.'+i+'.d',e.d)}</td><td>${esc(e.wat)}</td><td class="nl-v"><s>${esc(e.van===''?'–':e.van)}</s> → <b>${esc(e.naar===''?'–':e.naar)}</b></td><td><textarea rows="2" class="${(e.reden||'').trim()?'':'need'}" ${da('kpis',k.id,'nlog.'+i+'.reden')} placeholder="Waarom bijgestuurd?">${esc(e.reden)}</textarea></td><td><button class="btn sm" data-act="delnl" data-id="${k.id}" data-i="${i}" title="Deze regel uit het logboek verwijderen" aria-label="Regel uit logboek verwijderen">${icon('trash-2',16)}Verwijderen</button></td></tr>`).join('');
-  return nOrigHtml(k)+(k.nlog.length?`<table><thead><tr><th>Datum bijsturing</th><th>Wat</th><th>Was → nu</th><th>Reden voor bijsturing</th><th></th></tr></thead><tbody>${rows}</tbody></table><p class="hint" style="margin:6px 0 0">Elke aanpassing staat hier met datum en reden, zodat je later kunt teruglezen wat er is bijgestuurd en waarom. De datum kun je aanpassen.</p>`:'<p class="hint" style="margin:8px 0 0">Nog niets bijgestuurd. Pas hierboven de norm, de eindnorm of een gewenste waarde aan: de oude norm blijft hier zichtbaar staan en de aanpassing komt automatisch in dit logboek, met datum. Vul daarna de reden in.</p>');
+  return nOrigHtml(k)+nBaseBtn(k)+(k.nlog.length?`<table><thead><tr><th>Datum bijsturing</th><th>Wat</th><th>Was → nu</th><th>Reden voor bijsturing</th><th></th></tr></thead><tbody>${rows}</tbody></table><p class="hint" style="margin:6px 0 0">Elke aanpassing staat hier met datum en reden, zodat je later kunt teruglezen wat er is bijgestuurd en waarom. De datum kun je aanpassen.</p>`:'<p class="hint" style="margin:8px 0 0">Nog niets bijgestuurd. Pas hierboven de norm, de eindnorm of een gewenste waarde aan: de oude norm blijft hier zichtbaar staan en de aanpassing komt automatisch in dit logboek, met datum. Vul daarna de reden in.</p>');
 }
 function nSumHtml(k){
   if(!k.nlog.length)return '<span class="muted" style="font-weight:400">nog niet bijgestuurd</span>';
@@ -2416,6 +2423,16 @@ const ACT={
   addpr(a){const k=S.kpis.find(x=>x.id===a.dataset.id);const last=k.d.slice(1).filter(Boolean).sort().pop();k.d.push(last?fromDay(toDay(last)+1):todayStr());['g','w','og','sg'].forEach(p=>{if(k[p])k[p].push(null)});k.bars.forEach(b=>{if(b.wd)b.wd.push(null)});sortMoments(k);save();render()},
   delpr(a){const k=S.kpis.find(x=>x.id===a.dataset.id),i=+a.dataset.i;if(k.d.length>2&&confirm('Deze datum verwijderen, inclusief de ingevulde aantallen?')){['d','g','w','og','sg'].forEach(p=>{if(k[p])k[p].splice(i,1)});k.bars.forEach(b=>{if(b.wd)b.wd.splice(i-1,1)});sumBars(k);save();render()}},
   delsdl(a){const n=a.dataset.id;if(confirm('Deze regel uit het logboek verwijderen? Het subdoel zelf blijft zoals het nu is.')){S.sd[n].nlog.splice(+a.dataset.i,1);save();sdUI(n);toast('Regel uit het logboek verwijderd')}},
+  nbase(a){
+    const k=S.kpis.find(x=>x.id===a.dataset.id);if(!k)return;
+    const n=k.nlog.length;
+    if(!confirm(`De norm van KPI ${k.id} zoals die nu is (eindnorm, normtekst en alle gewenste waarden) wordt de oorspronkelijke norm.${n?` De ${n===1?'regel':n+' regels'} in dit logboek ${n===1?'wordt':'worden'} gewist.`:''} Doorgaan?`))return;
+    k.o={eind:k.eind==null?null:k.eind,norm:k.norm||''};k.og=(k.g||[]).slice();k.sg=(k.g||[]).slice();k.sn={eind:k.o.eind,norm:k.o.norm};
+    if(k.bars){k.ob=k.bars.map(b=>b.g==null?null:b.g);k.sb=k.ob.slice()}
+    k.nlog=[];save();render();
+    const box=document.querySelector(`[data-nlog="${k.id}"]`);if(box){const dt=box.closest('details');if(dt)dt.open=true}
+    toast('Vastgelegd als oorspronkelijke norm');
+  },
   delnl(a){const k=S.kpis.find(x=>x.id===a.dataset.id);if(k&&confirm('Deze regel uit het logboek verwijderen? De norm zelf blijft zoals hij nu is.')){k.nlog.splice(+a.dataset.i,1);save();nlogUI(k);applyBindings();toast('Regel uit het logboek verwijderd')}},
   addbes(){S.bes.push({id:uid(),datum:todayStr(),type:'Projectkeuze',besluit:'',onderbouwing:'',door:'',betrokkenen:'',opvolging:'',status:'Open'});save();render();const el=$$('textarea[data-c="bes"][data-f="besluit"]');el.length&&el[el.length-1].focus()},
   delbes(a){if(confirm('Dit besluit uit het besluitenlog verwijderen?')){S.bes=S.bes.filter(x=>x.id!==a.dataset.id);save();render()}},
