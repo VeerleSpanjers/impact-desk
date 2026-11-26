@@ -997,7 +997,7 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
-  ensureExtra();ensureNorm();ensureSd();kpi26();kpi30();kpi42base();kpi42oud();
+  ensureExtra();ensureNorm();ensureSd();kpi26();kpi30();kpi42base();kpi42oud();kpi41op();
   S.kpis.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
   syncPeople();syncSd();
 }
@@ -1226,6 +1226,19 @@ function kpi42oud(){
     k.nlog=(k.nlog||[]).filter(e=>!(e.wat==='Gewenst 27/10'&&String(e.van)==='30'&&!(e.reden||'').trim()));
   }
   S.kpi42C=1;
+}
+/* 4.1: oplopende norm vanaf 16-10 (70% naar 90%), vastgelegd als oorspronkelijke norm.
+   Werkelijke waarden, normtekst en bijsturingen met een reden blijven staan. */
+function kpi41op(){
+  if(S.kpi41A)return;
+  const k=S.kpis.find(x=>x.id==='4.1');
+  if(k&&!k.bars){
+    const op={'2026-10-16':70,'2026-10-27':75,'2026-11-03':80,'2026-11-17':85,'2026-12-01':90,'2026-12-15':90,'2026-12-18':90};
+    k.g=k.d.map((d,i)=>i&&op[d]!==undefined?op[d]:(k.g[i]==null?null:k.g[i]));
+    k.og=k.g.slice();k.sg=k.g.slice();
+    k.nlog=(k.nlog||[]).filter(e=>!(String(e.wat).startsWith('Gewenst ')&&!(e.reden||'').trim()));
+  }
+  S.kpi41A=1;
 }
 function sumBars(k){k.bars.forEach(b=>{if(!b.wd)return;const v=b.wd.filter(x=>x!=null);b.w=v.length?sum(v):null})}
 
