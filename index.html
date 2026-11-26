@@ -984,7 +984,7 @@ function migrate(){
   Object.values(S.aanw).forEach(mt=>Object.values(mt).forEach(c=>{if(c&&c.o!==undefined){if(c.s==='Aanwezig'&&c.o)c.s='Online aanwezig';delete c.o}}));
   S.meetings.forEach(m=>{if(m.aanw===undefined)m.aanw=['Teammeeting','PDCA-evaluatie'].includes(m.soort)});
   if(!S.weeklyAdded){S.meetings.push(...weeklyTeamMeetings(S.meetings));S.weeklyAdded=true}
-  ensureExtra();ensureNorm();ensureSd();kpi26();
+  ensureExtra();ensureNorm();ensureSd();kpi26();kpi30();
   S.kpis.sort((a,b)=>a.id.localeCompare(b.id,undefined,{numeric:true}));
   syncPeople();syncSd();
 }
@@ -1105,13 +1105,11 @@ function kpi26(){
   ['1.1','4.1'].forEach(id=>{const k=K(id);if(k)k.kol='aanv'});
   if(!K('4.2')){
     const t=n=>`Minimaal ${n} aanvragen sinds de nieuwe werkwijze (vanaf 16-10), uiterlijk 18 december 2026.`;
-    const d=['2026-10-16',...TWEEW.filter(x=>x>'2026-10-16')],last=d.length-1,g=d.map((_,i)=>i===last?20:null);
-    S.kpis.push({id:'4.2',sd:4,titel:'Aantal aanvragen sinds de nieuwe werkwijze (vanaf 16-10)',type:'Proces',unit:'aanvragen',eind:20,norm:t(20),signaal:'',
+    const d=['2026-10-16',...TWEEW.filter(x=>x>'2026-10-16')],last=d.length-1,g=d.map((_,i)=>i===last?30:null);
+    S.kpis.push({id:'4.2',sd:4,titel:'Aantal aanvragen sinds de nieuwe werkwijze (vanaf 16-10)',type:'Proces',unit:'aanvragen',eind:30,norm:t(30),signaal:'',
       meting:'Om de week op dinsdag het totaal aantal aanvragen sinds 16-10 tellen (optellend).',d,g,w:d.map((_,i)=>i?null:0),nulNvt:true,eindmeting:null,eindD:'18 dec',tweew:true,
-      o:{eind:30,norm:t(30)},og:d.map((_,i)=>i===last?30:null),sn:{eind:20,norm:t(20)},sg:g.slice(),nlog:[{id:uid(),d:'2026-11-12',wat:'Eindnorm',van:'30',naar:'20',reden:''}]});
+      o:{eind:30,norm:t(30)},og:g.slice(),sn:{eind:30,norm:t(30)},sg:g.slice(),nlog:[]});
   }
-  const k41=K('4.1');
-  if(k41&&(k41.norm||'').includes('±30'))setNormTxt(k41,k41.norm.replace('±30','±20'),'2026-11-12','');
   const why='4 uit 5 geeft beoordelaars een duidelijker middelpunt en minder keuzeopties.';
   ['1.2','2.2'].forEach(id=>{const k=K(id);if(!k||k.bars)return;
     const half=v=>v!=null&&v>5?v/2:v;
@@ -1152,18 +1150,43 @@ function kpi26(){
   if(k11&&(k11.norm||'').includes('±25 testafnemers')){
     const was=k11.norm.replace('±25 testafnemers','±30 afnemers');
     k11.norm=was;k11.sn.norm=was;if(k11.o)k11.o.norm=was;
-    setNormTxt(k11,was.replace('±30','±20'),'2026-11-12','');
     k11.signaal=(k11.signaal||'').replace('vóór de volgende afnemer test','vóór de volgende afnemer het formulier invult');
   }
   const sdSet=(n,reps,d,reden)=>{const x=S.sd[n];let nw=x.doel;reps.forEach(([a,b])=>{nw=nw.replace(a,b)});if(nw===x.doel)return;x.nlog.push({id:uid(),d,van:x.doel,naar:nw,reden});x.doel=x.sn=nw};
   const s1=S.sd[1],oud='25 afnemers die deelnemen aan de test';
   if(s1.doel.includes(oud)){['o','doel','sn'].forEach(p=>{s1[p]=s1[p].replace(oud,'30 afnemers')})}
-  sdSet(1,[['30 afnemers','20 afnemers']],'2026-11-12','');
   sdSet(1,[['een 8 (cijfer uit 10)','een 4 (cijfer uit 5)'],['ondergrens 6','ondergrens 3']],'2026-11-25',why);
   sdSet(2,[['met 8 uit 10','met 4 uit 5']],'2026-11-25',why);
   sdSet(3,[['90% (27) van de 30 warme contacten onder de bestaande afnemers','90% (90) van de 100 contacten']],'2026-11-25','De aantallen van de experience en de Raad van Advies komen erbij.');
-  sdSet(4,[['geschatte 30 aanvragen','geschatte 20 aanvragen']],'2026-11-12','');
   S.kpiV26=1;
+}
+/* 30 is de oorspronkelijke norm; het bijsturen naar 20 gebeurt zelf via het logboek.
+   Alleen vooraf ingevulde regels zonder eigen reden worden teruggedraaid. */
+function kpi30(){
+  if(S.kpi30V)return;
+  const K=id=>S.kpis.find(x=>x.id===id);
+  const leeg=e=>!!e&&e.d==='2026-11-12'&&!(e.reden||'').trim();
+  const k=K('4.2'),e=k&&k.nlog&&k.nlog[0];
+  if(k&&k.eind===20&&k.nlog.length===1&&leeg(e)&&e.wat==='Eindnorm'&&e.van==='30'&&e.naar==='20'){
+    k.eind=30;k.g=k.g.map(v=>v===20?30:v);k.norm=(k.norm||'').replace('Minimaal 20 aanvragen','Minimaal 30 aanvragen');
+    k.o={eind:30,norm:k.norm};k.og=k.g.slice();k.sg=k.g.slice();k.sn={eind:30,norm:k.norm};k.nlog=[];
+  }
+  ['1.1','4.1'].forEach(id=>{
+    const k=K(id);if(!k||!k.nlog)return;
+    const i=k.nlog.findIndex(e=>leeg(e)&&e.wat==='Normtekst'&&String(e.van).includes('±30')&&String(e.naar).includes('±20'));if(i<0)return;
+    k.nlog.splice(i,1);
+    const fix=t=>String(t||'').replace('±20 ','±30 ');
+    k.norm=fix(k.norm);k.sn.norm=k.norm;
+    k.nlog.forEach(e=>{if(e.wat==='Normtekst'){e.van=fix(e.van);e.naar=fix(e.naar)}});
+  });
+  [['1','30 afnemers','20 afnemers'],['4','30 aanvragen','20 aanvragen']].forEach(([n,oud,nieuw])=>{
+    const x=S.sd&&S.sd[n];if(!x)return;
+    const i=x.nlog.findIndex(e=>leeg(e)&&e.van.includes(oud)&&e.naar.includes(nieuw));if(i<0)return;
+    x.nlog.splice(i,1);
+    const fix=t=>String(t||'').replace(nieuw,oud);
+    x.doel=fix(x.doel);x.sn=fix(x.sn);x.nlog.forEach(e=>{e.van=fix(e.van);e.naar=fix(e.naar)});
+  });
+  S.kpi30V=1;
 }
 function sumBars(k){k.bars.forEach(b=>{if(!b.wd)return;const v=b.wd.filter(x=>x!=null);b.w=v.length?sum(v):null})}
 
